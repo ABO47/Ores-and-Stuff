@@ -1,3 +1,3 @@
-# Ores and Stuff
+#Ores and Stuff
 
-A mod that add different ores and other Stuff
+A mod that addS different ores and other Stuff
