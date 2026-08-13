@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.block.Block;
 
 public class OreNodeBlock extends BaseEntityBlock {
     public static final IntegerProperty QUALITY = IntegerProperty.create("quality", 0, 2);
@@ -38,7 +39,7 @@ public class OreNodeBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(QUALITY);
     }
 }

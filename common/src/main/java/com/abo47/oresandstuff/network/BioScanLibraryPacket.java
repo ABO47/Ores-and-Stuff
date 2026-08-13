@@ -6,6 +6,7 @@ import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.abo47.oresandstuff.client.OasClient;
 
 public final class BioScanLibraryPacket implements IPacket {
     private List<Entry> entries = List.of();
@@ -40,7 +41,7 @@ public final class BioScanLibraryPacket implements IPacket {
 
     @Override
     public void execute(IHandlerContext handler) {
-        com.abo47.oresandstuff.client.OasClient.onBioScanLibrary(this);
+        OasClient.onBioScanLibrary(this);
     }
 
     public List<Entry> entries() {

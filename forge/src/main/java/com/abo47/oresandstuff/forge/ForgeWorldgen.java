@@ -19,6 +19,9 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
 public final class ForgeWorldgen {
     private static final DeferredRegister<Feature<?>> FEATURES = DeferredRegister.create(ForgeRegistries.FEATURES, OresAndStuffMod.MOD_ID);
@@ -50,11 +53,11 @@ public final class ForgeWorldgen {
         }
 
         private boolean isVanillaOre(ConfiguredFeature<?, ?> feature) {
-            return feature.feature() == Feature.ORE && feature.config() instanceof net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration ore && ore.targetStates.stream().anyMatch(target -> isVanillaOre(target.state.getBlock()));
+            return feature.feature() == Feature.ORE && feature.config() instanceof OreConfiguration ore && ore.targetStates.stream().anyMatch(target -> isVanillaOre(target.state.getBlock()));
         }
 
-        private boolean isVanillaOre(net.minecraft.world.level.block.Block block) {
-            return block == net.minecraft.world.level.block.Blocks.COAL_ORE || block == net.minecraft.world.level.block.Blocks.IRON_ORE || block == net.minecraft.world.level.block.Blocks.COPPER_ORE || block == net.minecraft.world.level.block.Blocks.GOLD_ORE || block == net.minecraft.world.level.block.Blocks.REDSTONE_ORE || block == net.minecraft.world.level.block.Blocks.LAPIS_ORE || block == net.minecraft.world.level.block.Blocks.DIAMOND_ORE || block == net.minecraft.world.level.block.Blocks.EMERALD_ORE || block == net.minecraft.world.level.block.Blocks.NETHER_GOLD_ORE || block == net.minecraft.world.level.block.Blocks.NETHER_QUARTZ_ORE || block == net.minecraft.world.level.block.Blocks.ANCIENT_DEBRIS;
+        private boolean isVanillaOre(Block block) {
+            return block == Blocks.COAL_ORE || block == Blocks.IRON_ORE || block == Blocks.COPPER_ORE || block == Blocks.GOLD_ORE || block == Blocks.REDSTONE_ORE || block == Blocks.LAPIS_ORE || block == Blocks.DIAMOND_ORE || block == Blocks.EMERALD_ORE || block == Blocks.NETHER_GOLD_ORE || block == Blocks.NETHER_QUARTZ_ORE || block == Blocks.ANCIENT_DEBRIS;
         }
 
         @Override

@@ -5,5 +5,7 @@
   "item.oresandstuff.bio_scanner": "Bio Scanner",
   "block.oresandstuff.ore_node": "Ore Node",
   "block.oresandstuff.miner_mk1": "Miner Mk1",
-  "block.oresandstuff.infinite_battery": "Infinite FE Battery"
+  "block.oresandstuff.infinite_battery": "Infinite FE Battery",
+  "key.categories.oresandstuff": "Ores and Stuff",
+  "key.oresandstuff.open_settings": "Open Settings"
 }

@@ -7,6 +7,7 @@ import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.abo47.oresandstuff.client.OasClient;
 
 public final class BioScanInfoPacket implements IPacket {
     private String entityId = "minecraft:pig";
@@ -52,7 +53,7 @@ public final class BioScanInfoPacket implements IPacket {
 
     @Override
     public void execute(IHandlerContext handler) {
-        com.abo47.oresandstuff.client.OasClient.onBioScanInfo(this);
+        OasClient.onBioScanInfo(this);
     }
 
     public String entityId() { return entityId; }

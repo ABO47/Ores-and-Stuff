@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import com.abo47.oresandstuff.network.NetworkChannels;
+import net.minecraft.world.item.Items;
 
 public final class OasClient {
     private OasClient() {
@@ -100,6 +102,13 @@ public final class OasClient {
 
     public static void clientTick() {
         if (minecraft == null || minecraft.player == null) return;
+        if (OasKeyBindings.OPEN_SETTINGS.consumeClick() && minecraft.player != null) {
+            if (minecraft.screen instanceof ModSettingsScreen.SettingsContainer) {
+                minecraft.setScreen(null);
+            } else if (minecraft.screen == null) {
+                ModSettingsScreen.open(minecraft.player);
+            }
+        }
         boolean oreScannerHeld = holdingOreScanner();
         long now = System.currentTimeMillis();
         if (oreScannerHeld) {
@@ -160,7 +169,7 @@ public final class OasClient {
             if (activeBioScan.progress01 >= 1f && !activeBioScan.requestSent) {
                 activeBioScan.requestSent = true;
                 pendingBioNotificationUntilMs = System.currentTimeMillis() + 12000L;
-                com.abo47.oresandstuff.network.NetworkChannels.bioScanRequest(activeBioScan.entityId);
+                NetworkChannels.bioScanRequest(activeBioScan.entityId);
                 int cooldown = OasVisuals.BIO_SCAN_COOLDOWN_TICKS;
                 if (cooldown > 0) {
                     minecraft.player.getCooldowns().addCooldown(ModItems.BIO_SCANNER, cooldown);
@@ -281,7 +290,7 @@ public final class OasClient {
                 OreNodeDataManager.INSTANCE.getNodeType(currentOreType).ifPresent(type -> {
                     ResourceLocation outItem = type.outputItem();
                     Item item = outItem == null ? null : BuiltInRegistries.ITEM.get(outItem);
-                    if (item == null || item == net.minecraft.world.item.Items.AIR) return;
+                    if (item == null || item == Items.AIR) return;
                     for (ScannerFxTypes.TargetMarker marker : markers) {
                         if (!marker.visible(now)) continue;
                         if (!NodeClusterTracker.isNodeTouched(marker.pos)) continue;
@@ -294,11 +303,6 @@ public final class OasClient {
                 });
             }
             if (markers.isEmpty()) g.drawCenteredString(minecraft.font, "No scan target", cx, y + 18, OasColors.TEXT_MUTED);
-            if (OasVisuals.SCANNER_VISUAL_MODE == 1) {
-                String status = ScannerPostProcessFx.isShaderReady() ? "Holographic Sweep: READY" : "Holographic Sweep: SHADER MISSING";
-                int color = ScannerPostProcessFx.isShaderReady() ? OasColors.SUCCESS : OasColors.ERROR;
-                g.drawCenteredString(minecraft.font, status, cx, y + 30, color);
-            }
         }
 
         if (activeBioScan != null) {

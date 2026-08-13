@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.abo47.oresandstuff.client.OasClient;
 
 public final class ScannerResultPacket implements IPacket {
     private ResourceLocation oreType = new ResourceLocation("oresandstuff", "iron");
@@ -52,7 +53,7 @@ public final class ScannerResultPacket implements IPacket {
 
     @Override
     public void execute(IHandlerContext handler) {
-        com.abo47.oresandstuff.client.OasClient.onScannerResult(this);
+        OasClient.onScannerResult(this);
     }
 
     public record NodeHit(BlockPos pos, int distance) {

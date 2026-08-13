@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import com.google.gson.GsonBuilder;
 
 public class OreNodeDataManager extends SimpleJsonResourceReloadListener {
     public static final OreNodeDataManager INSTANCE = new OreNodeDataManager();
@@ -42,7 +43,7 @@ public class OreNodeDataManager extends SimpleJsonResourceReloadListener {
     private NodeGenerationConfig generationConfig = NodeGenerationConfig.defaults();
 
     private OreNodeDataManager() {
-        super(new com.google.gson.GsonBuilder().create(), "");
+        super(new GsonBuilder().create(), "");
     }
 
     @Override

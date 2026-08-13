@@ -18,6 +18,7 @@ import org.joml.Matrix4f;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.lwjgl.opengl.GL11;
 
 final class BioScanVisualRenderer {
     private BioScanVisualRenderer() {
@@ -152,9 +153,9 @@ final class BioScanVisualRenderer {
         RenderSystem.defaultBlendFunc();
     }
 
-    private static int GL11_SRC_ALPHA() { return org.lwjgl.opengl.GL11.GL_SRC_ALPHA; }
-    private static int GL11_ONE() { return org.lwjgl.opengl.GL11.GL_ONE; }
-    private static int GL11_ONE_MINUS_SRC_ALPHA() { return org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA; }
+    private static int GL11_SRC_ALPHA() { return GL11.GL_SRC_ALPHA; }
+    private static int GL11_ONE() { return GL11.GL_ONE; }
+    private static int GL11_ONE_MINUS_SRC_ALPHA() { return GL11.GL_ONE_MINUS_SRC_ALPHA; }
 
     private record Plane(float x0, float x1, float z0, float z1, float y0, float y1, float scanY) {
     }

@@ -28,6 +28,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.resources.ResourceLocation;
 
 public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
     public OreNodeFeature() {
@@ -53,7 +55,7 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
             int z = origin.getZ() + random.nextInt(16);
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
             BlockPos pos = new BlockPos(x, y, z);
-            Holder<net.minecraft.world.level.biome.Biome> biome = level.getBiome(pos);
+            Holder<Biome> biome = level.getBiome(pos);
             String biomeName = biome.unwrapKey().map(key -> key.location().toString()).orElse("minecraft:plains");
             BiomeDistributionRule rule = rules.stream().filter(value -> biomeName.contains(value.biomePattern())).findFirst().orElse(rules.get(0));
             if (random.nextInt(Math.max(1, 4 - rule.maxNodesPerChunk())) != 0 || !level.getBlockState(pos).isSolidRender(level, pos)) {
@@ -71,7 +73,7 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
         return placed;
     }
 
-    private void placeCluster(WorldGenLevel level, BlockPos center, net.minecraft.resources.ResourceLocation typeId, Purity purity, RandomSource random) {
+    private void placeCluster(WorldGenLevel level, BlockPos center, ResourceLocation typeId, Purity purity, RandomSource random) {
         int radius = Math.max(2, OresAndStuffConfig.worldgen().nodeClusterRadius + random.nextInt(2));
         int quality = purity == Purity.PURE ? 2 : purity == Purity.NORMAL ? 1 : 0;
         UUID nodeId = UUID.nameUUIDFromBytes((level.getLevel().dimension().location() + ":" + center).getBytes(StandardCharsets.UTF_8));

@@ -39,22 +39,24 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionResult;
 
 public final class FabricPlatformHooks implements PlatformHooks {
     @Override
     public void registerGameplayEvents() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> DevCommands.register(dispatcher));
         PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) -> {
-            if (world instanceof net.minecraft.server.level.ServerLevel level && NodeProtectionHandler.isProtected(level, pos, state.getBlock(), player)) {
+            if (world instanceof ServerLevel level && NodeProtectionHandler.isProtected(level, pos, state.getBlock(), player)) {
                 return false;
             }
             return true;
         });
         AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) -> {
-            if (world instanceof net.minecraft.server.level.ServerLevel && ManualNodeMiningHandler.handle(world, player, pos)) {
-                return net.minecraft.world.InteractionResult.FAIL;
+            if (world instanceof ServerLevel && ManualNodeMiningHandler.handle(world, player, pos)) {
+                return InteractionResult.FAIL;
             }
-            return net.minecraft.world.InteractionResult.PASS;
+            return InteractionResult.PASS;
         });
     }
 
@@ -78,11 +80,11 @@ public final class FabricPlatformHooks implements PlatformHooks {
         EnergyStorage.SIDED.registerForBlockEntity(FabricPlatformHooks::batteryEnergy, ModBlockEntities.INFINITE_BATTERY);
     }
 
-    private static EnergyStorage minerEnergy(BlockEntity be, net.minecraft.core.Direction dir) {
+    private static EnergyStorage minerEnergy(BlockEntity be, Direction dir) {
         return be instanceof MinerBlockEntity miner ? new FabricEnergyCap(miner.getEnergyStorage()) : null;
     }
 
-    private static EnergyStorage batteryEnergy(BlockEntity be, net.minecraft.core.Direction dir) {
+    private static EnergyStorage batteryEnergy(BlockEntity be, Direction dir) {
         return be instanceof InfiniteBatteryBlockEntity battery ? new FabricEnergyCap(battery.getEnergyStorage()) : null;
     }
 

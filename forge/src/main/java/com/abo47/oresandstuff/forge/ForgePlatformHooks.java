@@ -45,6 +45,11 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.level.BlockEvent.BreakEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock;
+import com.abo47.oresandstuff.energy.EnergyStorage;
+import net.minecraft.server.level.ServerLevel;
 
 public final class ForgePlatformHooks implements PlatformHooks {
     private static final DeferredRegister<BlockEntityType<?>> BE_TYPES =
@@ -87,13 +92,13 @@ public final class ForgePlatformHooks implements PlatformHooks {
 
     @Override
     public void registerGameplayEvents() {
-        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.RegisterCommandsEvent event) -> DevCommands.register(event.getDispatcher()));
-        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.level.BlockEvent.BreakEvent event) -> {
-            if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel level && NodeProtectionHandler.isProtected(level, event.getPos(), event.getState().getBlock(), event.getPlayer())) {
+        MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> DevCommands.register(event.getDispatcher()));
+        MinecraftForge.EVENT_BUS.addListener((BreakEvent event) -> {
+            if (event.getLevel() instanceof ServerLevel level && NodeProtectionHandler.isProtected(level, event.getPos(), event.getState().getBlock(), event.getPlayer())) {
                 event.setCanceled(true);
             }
         });
-        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event) -> {
+        MinecraftForge.EVENT_BUS.addListener((LeftClickBlock event) -> {
             if (ManualNodeMiningHandler.handle(event.getLevel(), event.getEntity(), event.getPos())) {
                 event.setCanceled(true);
             }
@@ -150,14 +155,14 @@ public final class ForgePlatformHooks implements PlatformHooks {
         }
     }
 
-    private static ICapabilityProvider energyProvider(Supplier<com.abo47.oresandstuff.energy.EnergyStorage> storage) {
+    private static ICapabilityProvider energyProvider(Supplier<EnergyStorage> storage) {
         return new ICapabilityProvider() {
             @Override
             public <T> LazyOptional<T> getCapability(Capability<T> c, Direction side) {
                 if (c != ForgeCapabilities.ENERGY) {
                     return LazyOptional.empty();
                 }
-                com.abo47.oresandstuff.energy.EnergyStorage value = storage.get();
+                EnergyStorage value = storage.get();
                 return value == null ? LazyOptional.empty() : LazyOptional.of(() -> new ForgeEnergyCap(value)).cast();
             }
         };

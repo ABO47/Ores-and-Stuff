@@ -9,6 +9,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.Minecraft;
 
 public class BioScanLibraryScreen extends Screen {
     private final List<BioScanLibraryPacket.Entry> entries;
@@ -34,7 +36,7 @@ public class BioScanLibraryScreen extends Screen {
         list = new EntryList(minecraft, listW, height - 56, top, height - 36, 20);
         for (BioScanLibraryPacket.Entry e : filtered) list.addRow(e);
         addWidget(list);
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.literal("Done"), b -> onClose()).bounds(width - 94, height - 30, 72, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(width - 94, height - 30, 72, 20).build());
     }
 
     private void refreshFilter() {
@@ -73,7 +75,7 @@ public class BioScanLibraryScreen extends Screen {
     }
 
     private class EntryList extends ObjectSelectionList<Row> {
-        EntryList(net.minecraft.client.Minecraft mc, int w, int h, int y0, int y1, int itemH) {
+        EntryList(Minecraft mc, int w, int h, int y0, int y1, int itemH) {
             super(mc, w, h, y0, y1, itemH);
         }
 

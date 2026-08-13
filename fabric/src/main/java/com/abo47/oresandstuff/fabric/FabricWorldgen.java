@@ -16,6 +16,7 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 import java.util.List;
+import com.abo47.oresandstuff.world.OreNodeFeature;
 
 public final class FabricWorldgen {
     public static final ResourceKey<PlacedFeature> ORE_NODE_PLACED = ResourceKey.create(Registries.PLACED_FEATURE, id("ore_node"));
@@ -36,7 +37,7 @@ public final class FabricWorldgen {
     }
 
     public static void registerFeature() {
-        ModFeatures.ORE_NODE = Registry.register(BuiltInRegistries.FEATURE, id("ore_node"), new com.abo47.oresandstuff.world.OreNodeFeature());
+        ModFeatures.ORE_NODE = Registry.register(BuiltInRegistries.FEATURE, id("ore_node"), new OreNodeFeature());
     }
 
     public static void register() {
