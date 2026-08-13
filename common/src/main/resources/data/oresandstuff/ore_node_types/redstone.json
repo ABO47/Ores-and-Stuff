@@ -1,0 +1,7 @@
+{
+  "output_item": "minecraft:redstone",
+  "base_rate_per_second": 0.4,
+  "scanner_color": "#D12222",
+  "hardness": 100.0,
+  "visual_block": "minecraft:redstone_ore"
+}

@@ -1,0 +1,7 @@
+{
+  "output_item": "minecraft:coal",
+  "base_rate_per_second": 0.9,
+  "scanner_color": "#2E2E2E",
+  "hardness": 100.0,
+  "visual_block": "minecraft:coal_ore"
+}

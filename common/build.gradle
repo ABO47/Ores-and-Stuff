@@ -1,0 +1,38 @@
+architectury {
+    common(rootProject.enabled_platforms.split(','))
+}
+
+dependencies {
+    modImplementation("net.fabricmc:fabric-loader:${fabric_loader_version}")
+    modImplementation("com.lowdragmc.ldlib:ldlib-common-${minecraft_version}:${ldlib_version}") {
+        transitive = false
+    }
+    compileOnly("dev.emi:emi-xplat-mojmap:${emi_version}:api") {
+        transitive = false
+    }
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+sourceSets {
+    test {
+        java.srcDir 'src/test/java'
+        resources.srcDir 'src/test/resources'
+    }
+}
+
+tasks.named('compileTestJava').configure {
+    enabled = true
+}
+
+tasks.named('processTestResources').configure {
+    enabled = true
+}
+
+tasks.named('testClasses').configure {
+    enabled = true
+}
+
+tasks.named('test', Test).configure {
+    enabled = true
+    useJUnitPlatform()
+}

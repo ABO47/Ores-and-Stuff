@@ -1,0 +1,17 @@
+{
+  "biome_pattern": "nether",
+  "dimension": "minecraft:the_nether",
+  "min_nodes_per_chunk": 1,
+  "max_nodes_per_chunk": 2,
+  "ore_weights": {
+    "oresandstuff:coal": 30,
+    "oresandstuff:iron": 30,
+    "oresandstuff:copper": 30,
+    "oresandstuff:redstone": 10
+  },
+  "purity_weights": {
+    "impure": 40,
+    "normal": 45,
+    "pure": 15
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "biome_pattern": "desert",
+  "dimension": "minecraft:overworld",
+  "min_nodes_per_chunk": 0,
+  "max_nodes_per_chunk": 1,
+  "ore_weights": {
+    "oresandstuff:copper": 35,
+    "oresandstuff:iron": 30,
+    "oresandstuff:coal": 25,
+    "oresandstuff:redstone": 10
+  },
+  "purity_weights": {
+    "impure": 60,
+    "normal": 35,
+    "pure": 5
+  }
+}

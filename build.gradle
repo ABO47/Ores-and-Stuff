@@ -1,0 +1,242 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://maven.fabricmc.net/' }
+        maven { url = 'https://maven.architectury.dev/' }
+        maven { url = 'https://maven.minecraftforge.net/' }
+        gradlePluginPortal()
+    }
+    configurations.classpath {
+        resolutionStrategy.force 'com.google.code.gson:gson:2.10.1'
+    }
+    dependencies {
+        classpath 'architectury-plugin:architectury-plugin.gradle.plugin:3.4-SNAPSHOT'
+        classpath 'dev.architectury:architectury-loom:1.6-SNAPSHOT'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+apply plugin: 'architectury-plugin'
+architectury {
+    minecraft = minecraft_version
+}
+
+allprojects {
+    group = mod_group_id
+    version = mod_version
+
+    repositories {
+        mavenCentral()
+        maven { url = 'https://api.modrinth.com/maven' }
+        maven {
+            name = 'firstdarkdev'
+            url = 'https://maven.firstdark.dev/snapshots'
+        }
+        maven { url = 'https://maven.fabricmc.net/' }
+        maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = 'https://maven.architectury.dev/' }
+        maven {
+            name = "Progwml6's maven"
+            url = 'https://dvs1.progwml6.com/files/maven/'
+        }
+        maven {
+            name = "Jared's maven"
+            url = 'https://maven.blamejared.com/'
+        }
+        maven {
+            name = 'TerraformersMC'
+            url = 'https://maven.terraformersmc.com/'
+        }
+        maven {
+            name = 'ModMaven'
+            url = 'https://modmaven.dev'
+        }
+        maven { url = 'https://maven.parchmentmc.org' }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+    apply plugin: 'architectury-plugin'
+    apply plugin: 'dev.architectury.loom'
+
+    base {
+        archivesName = "${mod_id}-${project.name.substring(project.name.lastIndexOf('-') + 1)}"
+    }
+
+    java {
+        toolchain.languageVersion = JavaLanguageVersion.of(17)
+        withSourcesJar()
+    }
+
+    sourceSets {
+        test {
+            java.srcDirs = []
+            resources.srcDirs = []
+        }
+    }
+
+    loom {
+        silentMojangMappingsLicense()
+    }
+
+    tasks.matching { task ->
+        task.name in ['compileTestJava', 'processTestResources', 'testClasses', 'test']
+    }.configureEach {
+        enabled = false
+    }
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${minecraft_version}"
+        mappings loom.layered {
+            officialMojangMappings()
+            parchment("org.parchmentmc.data:parchment-${mapping_version}@zip")
+        }
+        compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    }
+}
+
+sourceSets {
+    assetTools {
+        java.srcDir 'tools/asset-tools/src/main/java'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    assetToolsImplementation 'org.apache.xmlgraphics:batik-transcoder:1.17'
+    assetToolsRuntimeOnly 'org.apache.xmlgraphics:batik-codec:1.17'
+}
+
+def commonResources = layout.projectDirectory.dir('common/src/main/resources')
+def uiIconSvgDir = layout.projectDirectory.dir('art/source-icons')
+def uiIconTextureDir = commonResources.dir('assets/oresandstuff/textures/gui/icons')
+def sanitizedUiIconSvgDir = layout.buildDirectory.dir('generated/sanitized-ui-icon-svgs')
+def uiTextureSvgDir = layout.projectDirectory.dir('art/source-textures')
+def uiTextureDir = commonResources.dir('assets/oresandstuff/textures/gui')
+def sanitizedUiTextureSvgDir = layout.buildDirectory.dir('generated/sanitized-ui-texture-svgs')
+def modLogoSvgFile = layout.projectDirectory.file('art/source-logo/oresandstuff.svg')
+def modLogoPngDir = commonResources
+
+tasks.register('generateUiIconPngs') {
+    group = 'assets'
+    description = 'Rasterizes SVG files from art/source-icons into Minecraft PNG UI textures.'
+    dependsOn(tasks.named('assetToolsClasses'))
+
+    inputs.files(fileTree(uiIconSvgDir) { include '**/*.svg' }).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.property('uiIconSize', providers.gradleProperty('uiIconSize').orElse('256'))
+    inputs.property('uiIconColor', providers.gradleProperty('uiIconColor').orElse('#ffffff'))
+    outputs.dir(uiIconTextureDir)
+
+    doLast {
+        def svgFiles = fileTree(uiIconSvgDir) { include '**/*.svg' }.files.sort { left, right -> left.absolutePath <=> right.absolutePath }
+        if (svgFiles.isEmpty()) {
+            logger.lifecycle("No SVG UI icons found in ${uiIconSvgDir.asFile}; skipping icon export.")
+            return
+        }
+        def iconSize = providers.gradleProperty('uiIconSize').orElse('256').get()
+        def iconColor = providers.gradleProperty('uiIconColor').orElse('#ffffff').get()
+        def sanitizedDir = sanitizedUiIconSvgDir.get().asFile
+        def outputDir = uiIconTextureDir.asFile
+        project.delete(sanitizedDir)
+        sanitizedDir.mkdirs()
+        outputDir.mkdirs()
+        def sourceRoot = uiIconSvgDir.asFile.toPath()
+        def sanitizedFiles = svgFiles.collect { svgFile ->
+            def relativePath = sourceRoot.relativize(svgFile.toPath()).toString()
+            def sanitizedFile = new File(sanitizedDir, relativePath)
+            sanitizedFile.parentFile.mkdirs()
+            sanitizedFile.setText(svgFile.getText('UTF-8').replace('currentColor', iconColor), 'UTF-8')
+            sanitizedFile
+        }
+        javaexec {
+            classpath = sourceSets.assetTools.runtimeClasspath
+            mainClass = 'com.abo47.oresandstuff.tools.SvgIconRasterizer'
+            args iconSize, outputDir.absolutePath
+            args sanitizedFiles.collect { it.absolutePath }
+        }
+    }
+}
+
+tasks.register('generateUiTexturePngs') {
+    group = 'assets'
+    description = 'Rasterizes SVG files from art/source-textures into Minecraft PNG UI textures.'
+    dependsOn(tasks.named('assetToolsClasses'))
+
+    inputs.files(fileTree(uiTextureSvgDir) { include '**/*.svg' }).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.property('uiTextureSize', providers.gradleProperty('uiTextureSize').orElse('256'))
+    inputs.property('uiIconColor', providers.gradleProperty('uiIconColor').orElse('#ffffff'))
+    outputs.dir(uiTextureDir)
+
+    doLast {
+        def svgFiles = fileTree(uiTextureSvgDir) { include '**/*.svg' }.files.sort { left, right -> left.absolutePath <=> right.absolutePath }
+        if (svgFiles.isEmpty()) {
+            logger.lifecycle("No SVG UI textures found in ${uiTextureSvgDir.asFile}; skipping texture export.")
+            return
+        }
+        def textureSize = providers.gradleProperty('uiTextureSize').orElse('256').get()
+        def iconColor = providers.gradleProperty('uiIconColor').orElse('#ffffff').get()
+        def sanitizedDir = sanitizedUiTextureSvgDir.get().asFile
+        def outputDir = uiTextureDir.asFile
+        project.delete(sanitizedDir)
+        sanitizedDir.mkdirs()
+        outputDir.mkdirs()
+        def sourceRoot = uiTextureSvgDir.asFile.toPath()
+        def sanitizedFiles = svgFiles.collect { svgFile ->
+            def relativePath = sourceRoot.relativize(svgFile.toPath()).toString()
+            def sanitizedFile = new File(sanitizedDir, relativePath)
+            sanitizedFile.parentFile.mkdirs()
+            sanitizedFile.setText(svgFile.getText('UTF-8').replace('currentColor', iconColor), 'UTF-8')
+            sanitizedFile
+        }
+        javaexec {
+            classpath = sourceSets.assetTools.runtimeClasspath
+            mainClass = 'com.abo47.oresandstuff.tools.SvgIconRasterizer'
+            args textureSize, outputDir.absolutePath
+            args sanitizedFiles.collect { it.absolutePath }
+        }
+    }
+}
+
+tasks.register('generateModLogoPng') {
+    group = 'assets'
+    description = 'Rasterizes the mod logo SVG into the shared logo PNG.'
+    dependsOn(tasks.named('assetToolsClasses'))
+
+    inputs.file(modLogoSvgFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.property('modLogoSize', providers.gradleProperty('modLogoSize').orElse('512'))
+    outputs.file(modLogoPngDir.file('oresandstuff.png'))
+
+    doLast {
+        def logoSize = providers.gradleProperty('modLogoSize').orElse('512').get()
+        def outputDir = modLogoPngDir.asFile
+        outputDir.mkdirs()
+        javaexec {
+            classpath = sourceSets.assetTools.runtimeClasspath
+            mainClass = 'com.abo47.oresandstuff.tools.SvgIconRasterizer'
+            args logoSize, outputDir.absolutePath, modLogoSvgFile.asFile.absolutePath
+        }
+    }
+}
+
+project(':oresandstuff-common') {
+    tasks.named('processResources').configure {
+        dependsOn rootProject.tasks.named('generateUiIconPngs')
+        dependsOn rootProject.tasks.named('generateUiTexturePngs')
+        dependsOn rootProject.tasks.named('generateModLogoPng')
+    }
+    tasks.named('sourcesJar').configure {
+        dependsOn rootProject.tasks.named('generateUiIconPngs')
+        dependsOn rootProject.tasks.named('generateUiTexturePngs')
+        dependsOn rootProject.tasks.named('generateModLogoPng')
+    }
+}

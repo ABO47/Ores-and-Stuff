@@ -1,0 +1,119 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+configurations {
+    common
+    shadowCommon
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
+}
+
+def devRecipeViewers = (findProperty('dev_recipe_viewers') ?: '')
+        .split(',')
+        .collect { it.trim().toLowerCase() }
+        .findAll { !it.isEmpty() } as Set
+def useDevRecipeViewer = { String id ->
+    devRecipeViewers.contains('all') || devRecipeViewers.contains(id)
+}
+
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    common(project(path: ':oresandstuff-common', configuration: 'namedElements')) {
+        transitive = false
+    }
+    shadowCommon(project(path: ':oresandstuff-common', configuration: 'transformProductionFabric')) {
+        transitive = false
+    }
+    modImplementation("com.lowdragmc.ldlib:ldlib-fabric-${minecraft_version}:${ldlib_version}") {
+        transitive = false
+    }
+    // Fabric-side energy (TechReborn / other Fabric energy mods interop). Forge uses native Forge Energy API.
+    modImplementation("teamreborn:energy:${teamreborn_energy_version}")
+    modCompileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}") {
+        transitive = false
+    }
+    modCompileOnly("mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}") {
+        transitive = false
+    }
+    if (useDevRecipeViewer('jei')) {
+        modRuntimeOnly("mezz.jei:jei-${minecraft_version}-fabric:${jei_version}")
+    }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}") {
+        transitive = false
+    }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:${rei_version}") {
+        transitive = false
+    }
+    compileOnly("me.shedaniel.cloth:basic-math:0.6.1") {
+        transitive = false
+    }
+    if (useDevRecipeViewer('rei')) {
+        modRuntimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}")
+    }
+    modCompileOnly("dev.emi:emi-fabric:${emi_version}:api") {
+        transitive = false
+    }
+    if (useDevRecipeViewer('emi')) {
+        modRuntimeOnly("dev.emi:emi-fabric:${emi_version}")
+    }
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    def replaceProperties = [
+            minecraft_version    : minecraft_version,
+            fabric_loader_version: fabric_loader_version,
+            fabric_api_version   : fabric_api_version,
+            ldlib_version        : ldlib_version,
+            mod_id               : mod_id,
+            mod_name             : mod_name,
+            mod_license          : mod_license,
+            mod_version          : mod_version,
+            mod_authors          : mod_authors,
+            mod_description      : mod_description,
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['fabric.mod.json', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    archiveClassifier = 'dev'
+}
+
+shadowJar {
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = 'dev-shadow'
+}
+
+remapJar {
+    inputFile.set shadowJar.archiveFile
+    dependsOn shadowJar
+    archiveClassifier = null
+}
+
+tasks.named('runClient', JavaExec).configure {
+    jvmArgs '-Xmx4G'
+}
+
+sourcesJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    def commonSources = project(':oresandstuff-common').tasks.named('sourcesJar')
+    dependsOn commonSources
+    from commonSources.map { zipTree(it.archiveFile.get().asFile) }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}

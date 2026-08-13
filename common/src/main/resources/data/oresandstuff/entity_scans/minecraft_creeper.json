@@ -1,0 +1,7 @@
+{
+  "entity": "minecraft:creeper",
+  "title": "Creeper",
+  "category": "Hostile",
+  "summary": "A silent explosive hostile mob.",
+  "facts": ["Temperament: Hostile", "Explodes when close", "Drops: Gunpowder"]
+}

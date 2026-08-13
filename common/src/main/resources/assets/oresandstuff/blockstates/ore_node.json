@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "quality=0": { "model": "oresandstuff:block/ore_node_stone" },
+    "quality=1": { "model": "oresandstuff:block/ore_node_stone" },
+    "quality=2": { "model": "oresandstuff:block/ore_node_deepslate" }
+  }
+}

@@ -1,0 +1,40 @@
+# eclipse
+bin
+*.launch
+.settings
+.metadata
+.classpath
+.project
+
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea
+.vscode
+
+# gradle
+build
+.gradle
+
+# other
+eclipse
+run
+tests/
+docs/
+logs/
+crash-reports/
+*.log
+*.hprof
+hs_err_pid*
+replay_pid*
+local.properties
+.env
+.env.*
+.DS_Store
+Thumbs.db
+temp/
+designs/
+plans/
+references/

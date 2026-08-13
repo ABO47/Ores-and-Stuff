@@ -1,0 +1,17 @@
+{
+  "biome_pattern": "mountain",
+  "dimension": "minecraft:overworld",
+  "min_nodes_per_chunk": 1,
+  "max_nodes_per_chunk": 3,
+  "ore_weights": {
+    "oresandstuff:iron": 45,
+    "oresandstuff:copper": 20,
+    "oresandstuff:coal": 20,
+    "oresandstuff:redstone": 15
+  },
+  "purity_weights": {
+    "impure": 20,
+    "normal": 50,
+    "pure": 30
+  }
+}

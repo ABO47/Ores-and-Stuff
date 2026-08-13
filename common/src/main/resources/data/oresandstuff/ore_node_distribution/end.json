@@ -1,0 +1,17 @@
+{
+  "biome_pattern": "end",
+  "dimension": "minecraft:the_end",
+  "min_nodes_per_chunk": 0,
+  "max_nodes_per_chunk": 1,
+  "ore_weights": {
+    "oresandstuff:redstone": 40,
+    "oresandstuff:iron": 20,
+    "oresandstuff:copper": 20,
+    "oresandstuff:coal": 20
+  },
+  "purity_weights": {
+    "impure": 35,
+    "normal": 45,
+    "pure": 20
+  }
+}

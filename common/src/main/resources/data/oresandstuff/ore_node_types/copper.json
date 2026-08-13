@@ -1,0 +1,7 @@
+{
+  "output_item": "minecraft:raw_copper",
+  "base_rate_per_second": 0.7,
+  "scanner_color": "#C97142",
+  "hardness": 100.0,
+  "visual_block": "minecraft:copper_ore"
+}

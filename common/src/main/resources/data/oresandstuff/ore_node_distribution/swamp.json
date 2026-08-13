@@ -1,0 +1,17 @@
+{
+  "biome_pattern": "swamp",
+  "dimension": "minecraft:overworld",
+  "min_nodes_per_chunk": 1,
+  "max_nodes_per_chunk": 2,
+  "ore_weights": {
+    "oresandstuff:coal": 55,
+    "oresandstuff:copper": 20,
+    "oresandstuff:iron": 15,
+    "oresandstuff:redstone": 10
+  },
+  "purity_weights": {
+    "impure": 45,
+    "normal": 45,
+    "pure": 10
+  }
+}
