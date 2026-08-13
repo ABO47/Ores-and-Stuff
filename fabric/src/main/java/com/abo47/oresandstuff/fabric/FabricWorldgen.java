@@ -19,10 +19,19 @@ import java.util.List;
 
 public final class FabricWorldgen {
     public static final ResourceKey<PlacedFeature> ORE_NODE_PLACED = ResourceKey.create(Registries.PLACED_FEATURE, id("ore_node"));
+    // Keys must match the actual vanilla 1.20.1 PLACED_FEATURE registry entries.
     private static final List<ResourceKey<PlacedFeature>> VANILLA_ORES = List.of(
-            placed("ore_coal"), placed("ore_iron"), placed("ore_gold"), placed("ore_redstone"),
-            placed("ore_diamond"), placed("ore_lapis"), placed("ore_copper"), placed("ore_emerald"),
-            placed("ore_nether_gold"), placed("ore_nether_quartz"), placed("ore_ancient_debris"));
+            placed("ore_coal_upper"), placed("ore_coal_lower"),
+            placed("ore_iron_upper"), placed("ore_iron_middle"), placed("ore_iron_small"),
+            placed("ore_gold"), placed("ore_gold_extra"), placed("ore_gold_lower"),
+            placed("ore_redstone"), placed("ore_redstone_lower"),
+            placed("ore_diamond"), placed("ore_diamond_large"), placed("ore_diamond_buried"),
+            placed("ore_lapis"), placed("ore_lapis_buried"),
+            placed("ore_copper"), placed("ore_copper_large"),
+            placed("ore_emerald"),
+            placed("ore_gold_nether"),
+            placed("ore_quartz_nether"),
+            placed("ore_ancient_debris_large"), placed("ore_ancient_debris_small"));
 
     private FabricWorldgen() {
     }
@@ -35,7 +44,13 @@ public final class FabricWorldgen {
         BiomeModifications.create(id("features")).add(ModificationPhase.ADDITIONS, BiomeSelectors.all(), (selection, modification) -> modification.getGenerationSettings().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, ORE_NODE_PLACED));
         if (OresAndStuffConfig.worldgen().removeVanillaOres) {
             for (ResourceKey<PlacedFeature> key : VANILLA_ORES) {
-                BiomeModifications.create(id("remove_" + key.location().getPath())).add(ModificationPhase.REMOVALS, BiomeSelectors.all(), (selection, modification) -> modification.getGenerationSettings().removeFeature(GenerationStep.Decoration.UNDERGROUND_ORES, key));
+                BiomeModifications.create(id("remove_" + key.location().getPath())).add(ModificationPhase.REMOVALS, BiomeSelectors.all(), (selection, modification) -> {
+                    // Tolerate keys absent from the registry (datapack override / version drift) instead of crashing.
+                    try {
+                        modification.getGenerationSettings().removeFeature(GenerationStep.Decoration.UNDERGROUND_ORES, key);
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                });
             }
         }
     }

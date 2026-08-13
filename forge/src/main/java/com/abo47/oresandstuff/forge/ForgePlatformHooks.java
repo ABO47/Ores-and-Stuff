@@ -1,6 +1,10 @@
 package com.abo47.oresandstuff.forge;
 
 import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.command.DevCommands;
+import com.abo47.oresandstuff.network.NetworkChannels;
+import com.abo47.oresandstuff.world.ManualNodeMiningHandler;
+import com.abo47.oresandstuff.world.NodeProtectionHandler;
 import com.abo47.oresandstuff.content.ModBlockEntities;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.miner.InfiniteBatteryBlockEntity;
@@ -65,6 +69,26 @@ public final class ForgePlatformHooks implements PlatformHooks {
             return 0;
         }
         return source.extractEnergy(max, false);
+    }
+
+    @Override
+    public void registerGameplayEvents() {
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.RegisterCommandsEvent event) -> DevCommands.register(event.getDispatcher()));
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.level.BlockEvent.BreakEvent event) -> {
+            if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel level && NodeProtectionHandler.isProtected(level, event.getPos(), event.getState().getBlock(), event.getPlayer())) {
+                event.setCanceled(true);
+            }
+        });
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event) -> {
+            if (ManualNodeMiningHandler.handle(event.getLevel(), event.getEntity(), event.getPos())) {
+                event.setCanceled(true);
+            }
+        });
+    }
+
+    @Override
+    public void registerNetwork() {
+        NetworkChannels.register();
     }
 
     @Override

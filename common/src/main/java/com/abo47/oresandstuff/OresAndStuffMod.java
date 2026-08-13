@@ -17,8 +17,10 @@ public final class OresAndStuffMod {
         LOGGER.info("{} bootstrapped", MOD_NAME);
         Services.hooks().onCommonInit();
         ModRegistries.bootstrap();
-        Services.hooks().registerEnergy();
         Services.hooks().registerBlockEntities();
+        Services.hooks().registerGameplayEvents();
+        Services.hooks().registerNetwork();
+        Services.hooks().registerEnergy();
         OresAndStuffConfig.load();
     }
 }

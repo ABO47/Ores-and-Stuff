@@ -115,12 +115,9 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
     }
 
     private boolean passesSpacing(WorldGenLevel level, BlockPos pos, int spacing) {
-        for (var entry : level.getLevel().getChunkAt(pos).getBlockEntities().values()) {
-            if (entry instanceof OreNodeBlockEntity && entry.getBlockPos().distSqr(pos) < (double) spacing * spacing) {
-                return false;
-            }
-        }
-        return true;
+        int spacingChunks = Math.max(1, (spacing + 15) / 16);
+        long hash = level.getSeed() ^ ((long) (pos.getX() >> 4) * 73428767L) ^ ((long) (pos.getZ() >> 4) * 912931L);
+        return Math.floorMod(hash, spacingChunks) == 0;
     }
 
     private boolean isObstructed(WorldGenLevel level, BlockPos center, int radius) {

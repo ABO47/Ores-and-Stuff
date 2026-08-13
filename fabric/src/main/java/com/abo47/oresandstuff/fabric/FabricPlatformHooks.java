@@ -1,12 +1,19 @@
 package com.abo47.oresandstuff.fabric;
 
 import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.command.DevCommands;
 import com.abo47.oresandstuff.content.ModBlockEntities;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.miner.InfiniteBatteryBlockEntity;
 import com.abo47.oresandstuff.miner.MinerBlockEntity;
+import com.abo47.oresandstuff.network.NetworkChannels;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
 import com.abo47.oresandstuff.platform.PlatformHooks;
+import com.abo47.oresandstuff.world.ManualNodeMiningHandler;
+import com.abo47.oresandstuff.world.NodeProtectionHandler;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import team.reborn.energy.api.EnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 
@@ -30,6 +37,24 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 public final class FabricPlatformHooks implements PlatformHooks {
+    @Override
+    public void registerGameplayEvents() {
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> DevCommands.register(dispatcher));
+        PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) -> {
+            if (world instanceof net.minecraft.server.level.ServerLevel level && NodeProtectionHandler.isProtected(level, pos, state.getBlock(), player)) {
+                return false;
+            }
+            return true;
+        });
+        AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) -> {
+            if (world instanceof net.minecraft.server.level.ServerLevel && ManualNodeMiningHandler.handle(world, player, pos)) {
+                return net.minecraft.world.InteractionResult.FAIL;
+            }
+            return net.minecraft.world.InteractionResult.PASS;
+        });
+    }
+
+
     @Override
     public void registerBlockEntities() {
         ModBlockEntities.ORE_NODE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
