@@ -40,7 +40,7 @@ public final class BioScanLibraryPacket implements IPacket {
 
     @Override
     public void execute(IHandlerContext handler) {
-        NetworkClientState.setBioLibrary(this);
+        com.abo47.oresandstuff.client.OasClient.onBioScanLibrary(this);
     }
 
     public List<Entry> entries() {

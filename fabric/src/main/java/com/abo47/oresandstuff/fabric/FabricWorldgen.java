@@ -19,7 +19,6 @@ import java.util.List;
 
 public final class FabricWorldgen {
     public static final ResourceKey<PlacedFeature> ORE_NODE_PLACED = ResourceKey.create(Registries.PLACED_FEATURE, id("ore_node"));
-    // Keys must match the actual vanilla 1.20.1 PLACED_FEATURE registry entries.
     private static final List<ResourceKey<PlacedFeature>> VANILLA_ORES = List.of(
             placed("ore_coal_upper"), placed("ore_coal_lower"),
             placed("ore_iron_upper"), placed("ore_iron_middle"), placed("ore_iron_small"),
@@ -45,7 +44,6 @@ public final class FabricWorldgen {
         if (OresAndStuffConfig.worldgen().removeVanillaOres) {
             for (ResourceKey<PlacedFeature> key : VANILLA_ORES) {
                 BiomeModifications.create(id("remove_" + key.location().getPath())).add(ModificationPhase.REMOVALS, BiomeSelectors.all(), (selection, modification) -> {
-                    // Tolerate keys absent from the registry (datapack override / version drift) instead of crashing.
                     try {
                         modification.getGenerationSettings().removeFeature(GenerationStep.Decoration.UNDERGROUND_ORES, key);
                     } catch (IllegalArgumentException ignored) {

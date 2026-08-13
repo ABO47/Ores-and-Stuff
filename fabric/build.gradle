@@ -35,7 +35,6 @@ dependencies {
     modImplementation("com.lowdragmc.ldlib:ldlib-fabric-${minecraft_version}:${ldlib_version}") {
         transitive = false
     }
-    // Fabric-side energy (TechReborn / other Fabric energy mods interop). Forge uses native Forge Energy API.
     modImplementation("teamreborn:energy:${teamreborn_energy_version}")
     modCompileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}") {
         transitive = false

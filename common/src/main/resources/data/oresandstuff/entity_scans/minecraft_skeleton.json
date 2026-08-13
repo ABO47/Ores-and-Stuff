@@ -1,0 +1,7 @@
+{
+  "entity": "minecraft:skeleton",
+  "title": "Skeleton",
+  "category": "Hostile",
+  "summary": "An undead archer that fires arrows from range.",
+  "facts": ["Temperament: Hostile", "Drops: Bones, Arrows", "Weak to daylight", "Ranged attacker"]
+}

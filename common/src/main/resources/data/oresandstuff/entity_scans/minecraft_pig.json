@@ -1,0 +1,7 @@
+{
+  "entity": "minecraft:pig",
+  "title": "Pig",
+  "category": "Fauna",
+  "summary": "A passive farm animal. Breed with carrots; saddle for riding.",
+  "facts": ["Temperament: Passive", "Drops: Porkchop", "Breed item: Carrot", "Saddleable"]
+}

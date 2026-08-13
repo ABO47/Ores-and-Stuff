@@ -129,12 +129,12 @@ public final class OresAndStuffConfigSections {
         public int nodeMinSpacingBlocks = 220;
         public int nodeAttemptsPerChunk = 1;
         public int nodeClusterRadius = 2;
-        public int nodeScatterCount = 8;
+        public int nodeScatterCount = 0;
         public boolean removeVanillaOres = true;
         public List<String> disabledNodeTypes = new ArrayList<>();
 
         void read(JsonObject root) {
-            nodeMinSpacingBlocks = clampInt(intValue(root, "nodeMinSpacingBlocks", nodeMinSpacingBlocks), 64, 4000);
+            nodeMinSpacingBlocks = clampInt(intValue(root, "nodeMinSpacingBlocks", nodeMinSpacingBlocks), 16, 4000);
             nodeAttemptsPerChunk = clampInt(intValue(root, "nodeAttemptsPerChunk", nodeAttemptsPerChunk), 1, 8);
             nodeClusterRadius = clampInt(intValue(root, "nodeClusterRadius", nodeClusterRadius), 1, 8);
             nodeScatterCount = clampInt(intValue(root, "nodeScatterCount", nodeScatterCount), 0, 64);

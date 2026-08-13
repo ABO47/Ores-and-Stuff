@@ -1,0 +1,7 @@
+{
+  "entity": "minecraft:zombie",
+  "title": "Zombie",
+  "category": "Hostile",
+  "summary": "A common undead hostile mob that shambles toward players and villagers.",
+  "facts": ["Temperament: Hostile", "Drops: Rotten Flesh", "Burns in daylight", "Can infect villagers"]
+}

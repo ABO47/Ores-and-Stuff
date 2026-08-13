@@ -1,6 +1,7 @@
 package com.abo47.oresandstuff.fabric;
 
 import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.client.OasClient;
 import com.abo47.oresandstuff.command.DevCommands;
 import com.abo47.oresandstuff.content.ModBlockEntities;
 import com.abo47.oresandstuff.content.ModBlocks;
@@ -14,9 +15,12 @@ import com.abo47.oresandstuff.world.NodeProtectionHandler;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import team.reborn.energy.api.EnergyStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
@@ -96,6 +100,21 @@ public final class FabricPlatformHooks implements PlatformHooks {
             }
         }
         return 0;
+    }
+
+    @Override
+    public void registerNetwork() {
+        NetworkChannels.register();
+    }
+
+    @Override
+    public void onClientInit() {
+        OasClient.init(Minecraft.getInstance());
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> OasClient.clientTick());
+        HudRenderCallback.EVENT.register((g, tickDelta) -> {
+            Minecraft mc = Minecraft.getInstance();
+            OasClient.renderHud(g, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+        });
     }
 
     @Override

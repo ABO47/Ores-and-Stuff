@@ -1,0 +1,31 @@
+{
+  "blend": {
+    "func": "add",
+    "srcrgb": "srcalpha",
+    "dstrgb": "1-srcalpha"
+  },
+  "vertex": "terrain_scan",
+  "fragment": "terrain_scan",
+  "attributes": [
+    "Position",
+    "UV0"
+  ],
+  "samplers": [
+    { "name": "depthTex" }
+  ],
+  "uniforms": [
+    { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] },
+    { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] },
+    { "name": "center", "type": "float", "count": 3, "values": [0, 64, 0] },
+    { "name": "invViewMat", "type": "matrix4x4", "count": 16, "values": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] },
+    { "name": "invProjMat", "type": "matrix4x4", "count": 16, "values": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] },
+    { "name": "radius", "type": "float", "count": 1, "values": [0] },
+    { "name": "ringWidth", "type": "float", "count": 1, "values": [12] },
+    { "name": "scanlineStrength", "type": "float", "count": 1, "values": [0.4] },
+    { "name": "use3dDistance", "type": "float", "count": 1, "values": [0] },
+    { "name": "distanceMode", "type": "float", "count": 1, "values": [0] },
+    { "name": "useBounds", "type": "float", "count": 1, "values": [0] },
+    { "name": "boundMin", "type": "float", "count": 3, "values": [0, 0, 0] },
+    { "name": "boundMax", "type": "float", "count": 3, "values": [0, 0, 0] }
+  ]
+}

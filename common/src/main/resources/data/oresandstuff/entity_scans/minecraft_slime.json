@@ -1,0 +1,7 @@
+{
+  "entity": "minecraft:slime",
+  "title": "Slime",
+  "category": "Hostile",
+  "summary": "A gelatinous mob that splits into smaller slimes when killed in swamps.",
+  "facts": ["Temperament: Hostile", "Drops: Slimeball", "Splits on death", "Common in swamps"]
+}

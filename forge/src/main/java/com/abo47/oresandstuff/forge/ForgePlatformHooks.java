@@ -1,6 +1,8 @@
 package com.abo47.oresandstuff.forge;
 
 import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.client.OasClient;
+import com.abo47.oresandstuff.client.OasShaders;
 import com.abo47.oresandstuff.command.DevCommands;
 import com.abo47.oresandstuff.network.NetworkChannels;
 import com.abo47.oresandstuff.world.ManualNodeMiningHandler;
@@ -19,6 +21,13 @@ import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterShadersEvent;
+import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -52,6 +61,11 @@ public final class ForgePlatformHooks implements PlatformHooks {
     public ForgePlatformHooks() {
         MinecraftForge.EVENT_BUS.addListener(this::onAddReloadListeners);
         BE_TYPES.register(FMLJavaModLoadingContext.get().getModEventBus());
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onRegisterShaders);
+    }
+
+    private void onRegisterShaders(RegisterShadersEvent event) {
+        OasShaders.init(event.getResourceProvider());
     }
 
     @Override
@@ -84,6 +98,29 @@ public final class ForgePlatformHooks implements PlatformHooks {
                 event.setCanceled(true);
             }
         });
+    }
+
+    @Override
+    public void onClientInit() {
+        OasClient.init(Minecraft.getInstance());
+        MinecraftForge.EVENT_BUS.addListener(this::onRenderLevel);
+        MinecraftForge.EVENT_BUS.addListener(this::onRenderHud);
+        MinecraftForge.EVENT_BUS.addListener(this::onClientTick);
+    }
+
+    private void onRenderLevel(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
+        OasClient.renderLevel(event.getPoseStack(), event.getPartialTick(), event.getProjectionMatrix());
+    }
+
+    private void onRenderHud(RenderGuiOverlayEvent.Post event) {
+        OasClient.renderHud(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
+    }
+
+    private void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            OasClient.clientTick();
+        }
     }
 
     @Override

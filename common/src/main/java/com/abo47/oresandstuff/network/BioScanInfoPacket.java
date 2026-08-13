@@ -52,7 +52,7 @@ public final class BioScanInfoPacket implements IPacket {
 
     @Override
     public void execute(IHandlerContext handler) {
-        NetworkClientState.setBioInfo(this);
+        com.abo47.oresandstuff.client.OasClient.onBioScanInfo(this);
     }
 
     public String entityId() { return entityId; }

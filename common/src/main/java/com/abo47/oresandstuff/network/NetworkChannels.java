@@ -15,4 +15,12 @@ public final class NetworkChannels {
         LDLNetworking.NETWORK.registerS2C(BioScanInfoPacket.class);
         LDLNetworking.NETWORK.registerS2C(BioScanLibraryPacket.class);
     }
+
+    public static void bioScanRequest(int entityId) {
+        LDLNetworking.NETWORK.sendToServer(new BioScanRequestPacket(entityId));
+    }
+
+    public static void sendScannerRequest(ResourceLocation oreType) {
+        LDLNetworking.NETWORK.sendToServer(new ScannerRequestPacket(oreType));
+    }
 }

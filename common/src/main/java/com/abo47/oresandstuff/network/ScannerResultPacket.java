@@ -52,7 +52,7 @@ public final class ScannerResultPacket implements IPacket {
 
     @Override
     public void execute(IHandlerContext handler) {
-        NetworkClientState.setScannerResult(this);
+        com.abo47.oresandstuff.client.OasClient.onScannerResult(this);
     }
 
     public record NodeHit(BlockPos pos, int distance) {

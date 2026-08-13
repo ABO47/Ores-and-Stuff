@@ -5,6 +5,7 @@ import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.block.OreNodeBlock;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.data.BiomeDistributionRule;
+import com.abo47.oresandstuff.data.NodeGenerationConfig;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.node.NodeVisuals;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
@@ -43,8 +44,9 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
             return false;
         }
 
-        int attempts = OresAndStuffConfig.worldgen().nodeAttemptsPerChunk;
-        int spacing = OresAndStuffConfig.worldgen().nodeMinSpacingBlocks;
+        NodeGenerationConfig gen = OreNodeDataManager.INSTANCE.generationConfig();
+        int attempts = gen.placementAttempts();
+        int spacing = gen.minSpacingBlocks();
         boolean placed = false;
         for (int i = 0; i < attempts; i++) {
             int x = origin.getX() + random.nextInt(16);

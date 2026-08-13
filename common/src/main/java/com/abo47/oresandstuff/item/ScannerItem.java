@@ -1,9 +1,10 @@
 package com.abo47.oresandstuff.item;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
+import com.abo47.oresandstuff.client.screen.ScannerSelectScreen;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
-import com.abo47.oresandstuff.network.ScannerRequestPacket;
-import com.lowdragmc.lowdraglib.networking.LDLNetworking;
+import com.abo47.oresandstuff.network.NetworkChannels;
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -24,10 +25,16 @@ public class ScannerItem extends Item {
         if (player.getCooldowns().isOnCooldown(this)) {
             return InteractionResultHolder.fail(stack);
         }
+        if (player.isShiftKeyDown()) {
+            if (level.isClientSide) {
+                Minecraft.getInstance().setScreen(new ScannerSelectScreen(stack));
+            }
+            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+        }
         if (!level.isClientSide) {
             return InteractionResultHolder.success(stack);
         }
-        LDLNetworking.NETWORK.sendToServer(new ScannerRequestPacket(getSelectedType(stack)));
+        NetworkChannels.sendScannerRequest(getSelectedType(stack));
         if (OresAndStuffConfig.scanner().cooldownTicks > 0) {
             player.getCooldowns().addCooldown(this, OresAndStuffConfig.scanner().cooldownTicks);
         }

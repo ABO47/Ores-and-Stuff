@@ -1,0 +1,7 @@
+{
+  "entity": "minecraft:wolf",
+  "title": "Wolf",
+  "category": "Fauna",
+  "summary": "A tamable mob that defends its owner and hunts skeletons.",
+  "facts": ["Temperament: Neutral / Tamable", "Drops: Bone", "Breed item: Any meat", "Scared of creepers"]
+}

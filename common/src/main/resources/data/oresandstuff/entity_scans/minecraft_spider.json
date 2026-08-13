@@ -1,0 +1,7 @@
+{
+  "entity": "minecraft:spider",
+  "title": "Spider",
+  "category": "Hostile",
+  "summary": "A fast nocturnal arthropod that climbs walls and pounces.",
+  "facts": ["Temperament: Hostile at night", "Drops: String, Spider Eye", "Climbs walls", "Neutral in daylight"]
+}
