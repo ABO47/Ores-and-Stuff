@@ -1,5 +1,6 @@
 package com.abo47.oresandstuff.client;
 
+import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -53,7 +54,7 @@ final class BioScanVisualRenderer {
         if (minecraft == null || minecraft.player == null) return;
 
         float bbW = Math.min(target.getBbWidth(), 3.0f);
-        float rayStyle = OasVisuals.BIO_SCAN_RAY_STYLE;
+        float rayStyle = (float) OresAndStuffConfig.bioScan().rayStyle;
 
         double px = Mth.lerp(partialTick, minecraft.player.xo, minecraft.player.getX());
         double py = Mth.lerp(partialTick, minecraft.player.yo, minecraft.player.getY());

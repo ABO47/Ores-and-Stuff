@@ -27,11 +27,11 @@ public final class DevCommands {
             ServerPlayer player = source.getPlayerOrException();
             var result = NodeLocatorService.findNearest(player.serverLevel(), player.blockPosition(), type, OresAndStuffConfig.scanner().radiusCap);
             if (result == null) {
-                source.sendFailure(Component.literal("No node found for " + type));
+                source.sendFailure(Component.translatable("No node found for %s", type));
                 return 0;
             }
             player.teleportTo(result.pos().getX() + 0.5D, result.pos().getY() + 1.0D, result.pos().getZ() + 0.5D);
-            source.sendSuccess(() -> Component.literal("Teleported to " + type + " node at " + result.pos()), false);
+            source.sendSuccess(() -> Component.translatable("Teleported to %s node at %s", type, result.pos()), false);
             return 1;
         } catch (Exception exception) {
             return 0;

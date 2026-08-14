@@ -149,26 +149,19 @@ public final class ModSettingsScreen {
             tabLayer = new WidgetGroup(0, CONTENT_INSET, bodyW, TAB_H + TAB_ENLARGE);
             mainPanel.addWidget(tabLayer);
 
-            searchField = StyledTextFields.commitField(
+            searchField = StyledTextFields.search(
                     SEARCH_INSET,
                     CONTENT_INSET + TAB_H + TAB_ENLARGE + TAB_GAP,
                     Math.max(40, bodyW - SEARCH_INSET * 2),
                     HEADER_H,
                     () -> search,
+                    Integer.MAX_VALUE,
                     raw -> {
                         search = raw;
                         refresh.run();
                     },
-                    () -> {
-                    },
-                    () -> {
-                    },
-                    () -> {
+                    focused -> {
                     });
-            searchField.setClientSideWidget();
-            searchField.setMaxStringLength(Integer.MAX_VALUE);
-            searchField.setTextColor(OasColors.TEXT_PRIMARY);
-            searchField.setBackground(SurfaceFactory.bordered(OasColors.SURFACE_BASE, OasColors.BORDER_BASE));
             mainPanel.addWidget(searchField);
 
             optionsPanel = new WidgetGroup(SEARCH_INSET, listY(), bodyW - SEARCH_INSET * 2, listH());
@@ -202,13 +195,13 @@ public final class ModSettingsScreen {
             WidgetGroup bg = active
                     ? enlargedTabBg(w, fill, border)
                     : panel(0, TAB_ENLARGE, w, h, fill, border);
-            LabelWidget text = label(8, TAB_ENLARGE + 6, crop(label, fontWidth(label, Math.max(8, w - 16))), active ? OasColors.TEXT_PRIMARY : OasColors.TEXT_MUTED);
+            LabelWidget text = label(8, TAB_ENLARGE + 6, crop(tr(label), fontWidth(tr(label), Math.max(8, w - 16))), active ? OasColors.TEXT_PRIMARY : OasColors.TEXT_MUTED);
             ButtonWidget hit = active
                     ? flatHitButton(0, 0, w, h + TAB_ENLARGE, click -> selectTab(tabIndex))
                     : flatHitButton(0, TAB_ENLARGE, w, h, click -> selectTab(tabIndex));
             hit.setHoverTexture(GlowShaderHelper.hoverGlow());
             hit.setClickedTexture(SurfaceFactory.fill(OasColors.withAlpha(OasColors.INTERACTIVE, 82)));
-            hit.setHoverTooltips(Component.literal(label));
+            hit.setHoverTooltips(Component.translatable(label));
             container.addWidget(bg);
             container.addWidget(text);
             container.addWidget(hit);
@@ -239,9 +232,9 @@ public final class ModSettingsScreen {
             List<RowSpec> all = rowsFor(selectedTab);
             List<RowSpec> entries = search.isBlank()
                     ? all
-                    : all.stream().filter(r -> r.label.toLowerCase().contains(search.toLowerCase())).toList();
+                    : all.stream().filter(r -> tr(r.label).toLowerCase().contains(search.toLowerCase())).toList();
             if (entries.isEmpty()) {
-                optionsPanel.addWidget(label(8, LIST_V_PAD, "No matching options", OasColors.TEXT_MUTED));
+                optionsPanel.addWidget(label(8, LIST_V_PAD, tr("No matching options"), OasColors.TEXT_MUTED));
                 return;
             }
             int x = LIST_INNER_PAD;
@@ -304,7 +297,7 @@ public final class ModSettingsScreen {
         }
 
         private void renderRow(WidgetGroup list, RowSpec o, int rowY, int rowW) {
-            Component[] tips = {Component.literal(o.label)};
+            Component[] tips = tooltipFor(o);
             if (o.toggle) {
                 int rowH = ROW_H - ROW_INSET;
                 int cardW = rowW;
@@ -318,7 +311,7 @@ public final class ModSettingsScreen {
                 int textW = Math.max(16, switchX - 14);
                 int crop = Math.max(14, textW / 6);
                 int titleColor = enabled ? OasColors.TEXT_PRIMARY : OasColors.TEXT_SECONDARY;
-                list.addWidget(label(8, rowY + 7, crop(o.label, crop), titleColor));
+                list.addWidget(label(8, rowY + 7, crop(tr(o.label), crop), titleColor));
                 list.addWidget(new ToggleSwitchWidget(
                         o.id,
                         switchX,
@@ -362,44 +355,72 @@ public final class ModSettingsScreen {
                     return;
                 }
                 if (o.integer) {
-                    int parsed = clampInt(parseIntSafe(f.getCurrentString(), (int) Math.round(o.numGet.getAsDouble())), (int) o.min, (int) o.max);
+                    int current = (int) Math.round(o.numGet.getAsDouble());
+                    int parsed = clampInt(parseIntSafe(f.getCurrentString(), current), (int) o.min, (int) o.max);
+                    if (parsed == current) {
+                        f.setCurrentString(String.valueOf(parsed));
+                        return;
+                    }
                     o.numSet.accept((double) parsed);
                     OresAndStuffConfig.save();
-                    f.setCurrentString(String.valueOf(parsed));
+                    refresh.run();
                 } else {
-                    double parsed = clampDouble(parseDoubleSafe(f.getCurrentString(), o.numGet.getAsDouble()), o.min, o.max);
+                    double current = o.numGet.getAsDouble();
+                    double parsed = clampDouble(parseDoubleSafe(f.getCurrentString(), current), o.min, o.max);
+                    if (Math.abs(parsed - current) < 1e-9) {
+                        f.setCurrentString(String.valueOf(parsed));
+                        return;
+                    }
                     o.numSet.accept(parsed);
                     OresAndStuffConfig.save();
-                    f.setCurrentString(String.valueOf(parsed));
+                    refresh.run();
                 }
             };
-            TextFieldWidget field;
-            if (o.integer) {
-                int cur = (int) Math.round(o.numGet.getAsDouble());
-                field = StyledTextFields.numberField(
-                        fieldX, rowY + 4, fieldW, GRID_14, cur, (int) o.min, (int) o.max, o.maxLen,
-                        raw -> {
-                        }, commit, commit, commit);
-            } else {
-                String[] live = {String.valueOf(o.numGet.getAsDouble())};
-                Runnable reset = () -> {
-                    live[0] = String.valueOf(o.numGet.getAsDouble());
-                    refresh.run();
-                };
-                field = StyledTextFields.commitField(
-                        fieldX, rowY + 4, fieldW, GRID_14,
-                        () -> live[0],
-                        raw -> live[0] = raw,
-                        commit,
-                        reset,
-                        commit);
-                StyledTextFields.applyStandardStyle(field, OasColors.SURFACE_BASE, OasColors.BORDER_BASE);
-            }
+            String[] live = {o.integer
+                    ? String.valueOf((int) Math.round(o.numGet.getAsDouble()))
+                    : String.valueOf(o.numGet.getAsDouble())};
+            Runnable reset = () -> {
+                live[0] = o.integer
+                        ? String.valueOf((int) Math.round(o.numGet.getAsDouble()))
+                        : String.valueOf(o.numGet.getAsDouble());
+                refresh.run();
+            };
+            TextFieldWidget field = StyledTextFields.commitField(
+                    fieldX, rowY + 4, fieldW, GRID_14,
+                    () -> live[0],
+                    raw -> live[0] = raw,
+                    commit,
+                    reset,
+                    commit);
+            StyledTextFields.applyStandardStyle(field, OasColors.SURFACE_BASE, OasColors.BORDER_BASE);
             field.setClientSideWidget();
+            if (o.integer) {
+                field.setNumbersOnly((int) o.min, (int) o.max);
+            } else {
+                field.setNumbersOnly((float) o.min, (float) o.max);
+            }
             field.setMaxStringLength(o.maxLen);
             field.setHoverTooltips(tips);
             holder[0] = field;
             list.addWidget(field);
+        }
+
+        private Component[] tooltipFor(RowSpec o) {
+            if (o.toggle) {
+                return new Component[]{Component.translatable(o.boolGet.getAsBoolean() ? "ON" : "OFF")};
+            }
+            return new Component[]{Component.translatable("Range: %s - %s", formatNum(o.min), formatNum(o.max))};
+        }
+
+        private static String formatNum(double v) {
+            if (Math.abs(v - Math.round(v)) < 1e-9) {
+                return String.valueOf((long) Math.round(v));
+            }
+            return String.valueOf(v);
+        }
+
+        private static String tr(String key) {
+            return Component.translatable(key).getString();
         }
 
         private List<RowSpec> rowsFor(int tab) {

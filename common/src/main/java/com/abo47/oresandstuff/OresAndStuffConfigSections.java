@@ -22,8 +22,8 @@ public final class OresAndStuffConfigSections {
         public int pulseWidthBlocks = 12;
         public int qualityPreset = 2;
         public int experimentalVisualMode = 1;
-        public int holographicWidthBlocks = 12;
-        public double holographicScanlineStrength = 0.40;
+        public int holographicWidthBlocks = 100;
+        public double holographicScanlineStrength = 0.0;
         public boolean holographicStatusHud = false;
         public boolean scanSoundEnabled = true;
         public double scanSoundVolume = 0.85;
@@ -81,7 +81,7 @@ public final class OresAndStuffConfigSections {
 
     public static final class BioScan {
         public int notificationMs = 5000;
-        public int durationMs = 2600;
+        public int durationMs = 1000;
         public double drainMultiplier = 2.4;
         public int cooldownTicks = 40;
         public double rayStyle = 1.15;
@@ -129,7 +129,7 @@ public final class OresAndStuffConfigSections {
         public int nodeMinSpacingBlocks = 220;
         public int nodeAttemptsPerChunk = 1;
         public int nodeClusterRadius = 2;
-        public int nodeScatterCount = 0;
+        public int nodeScatterCount = 8;
         public boolean removeVanillaOres = true;
         public List<String> disabledNodeTypes = new ArrayList<>();
 

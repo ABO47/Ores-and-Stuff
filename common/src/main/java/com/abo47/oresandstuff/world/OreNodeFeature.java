@@ -5,7 +5,6 @@ import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.block.OreNodeBlock;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.data.BiomeDistributionRule;
-import com.abo47.oresandstuff.data.NodeGenerationConfig;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.node.NodeVisuals;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
@@ -46,9 +45,10 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
             return false;
         }
 
-        NodeGenerationConfig gen = OreNodeDataManager.INSTANCE.generationConfig();
-        int attempts = gen.placementAttempts();
-        int spacing = gen.minSpacingBlocks();
+        var worldgen = OresAndStuffConfig.worldgen();
+        int attempts = worldgen.nodeAttemptsPerChunk;
+        int spacing = worldgen.nodeMinSpacingBlocks;
+        int scatterCount = worldgen.nodeScatterCount;
         boolean placed = false;
         for (int i = 0; i < attempts; i++) {
             int x = origin.getX() + random.nextInt(16);
@@ -67,13 +67,13 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
             }
             var type = OreNodeDataManager.INSTANCE.rollNodeType(random, rule);
             Purity purity = OreNodeDataManager.INSTANCE.rollPurity(random, rule);
-            placeCluster(level, pos, type.id(), purity, random);
+            placeCluster(level, pos, type.id(), purity, random, scatterCount);
             placed = true;
         }
         return placed;
     }
 
-    private void placeCluster(WorldGenLevel level, BlockPos center, ResourceLocation typeId, Purity purity, RandomSource random) {
+    private void placeCluster(WorldGenLevel level, BlockPos center, ResourceLocation typeId, Purity purity, RandomSource random, int scatterCount) {
         int radius = Math.max(2, OresAndStuffConfig.worldgen().nodeClusterRadius + random.nextInt(2));
         int quality = purity == Purity.PURE ? 2 : purity == Purity.NORMAL ? 1 : 0;
         UUID nodeId = UUID.nameUUIDFromBytes((level.getLevel().dimension().location() + ":" + center).getBytes(StandardCharsets.UTF_8));
@@ -109,6 +109,18 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
                 node.setNodeTypeId(typeId);
                 node.setPurity(purity);
                 node.setNodeId(nodeId);
+            }
+        }
+
+        // Decorative scatter: extra visual ore blocks around the cluster.
+        var scatterBlock = NodeVisuals.visualOre(typeId, purity == Purity.PURE).defaultBlockState();
+        for (int s = 0; s < scatterCount; s++) {
+            int sx = center.getX() + random.nextInt(radius * 2 + 1) - radius;
+            int sy = center.getY() + random.nextInt(3) - 1;
+            int sz = center.getZ() + random.nextInt(radius * 2 + 1) - radius;
+            BlockPos sp = new BlockPos(sx, sy, sz);
+            if (canReplace(level, sp) && level.getBlockState(sp.below()).isSolidRender(level, sp.below())) {
+                level.setBlock(sp, scatterBlock, 2);
             }
         }
     }

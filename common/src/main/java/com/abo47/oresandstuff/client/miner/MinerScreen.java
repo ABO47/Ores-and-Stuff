@@ -128,7 +128,7 @@ public final class MinerScreen {
                 )
         ).setFillDirection(ProgressTexture.FillDirection.DOWN_TO_UP);
         ProgressWidget energyBar = new ProgressWidget(this::uiEnergyRatio, ENERGY_BAR_X, ENERGY_BAR_Y, ENERGY_BAR_W, ENERGY_BAR_H, energyTexture);
-        energyBar.setHoverTooltips(Component.literal("Energy"));
+        energyBar.setHoverTooltips(Component.translatable("Energy"));
         root.addWidget(energyBar);
         root.addWidget(new ImageWidget(ENERGY_BAR_X + 1, ENERGY_BAR_Y, 1, ENERGY_BAR_H, new ColorRectTexture(OasColors.withAlpha(0xFFFFFFFF, 48))));
         root.addWidget(new ImageWidget(ENERGY_BAR_X + ENERGY_BAR_W - 2, ENERGY_BAR_Y, 1, ENERGY_BAR_H, new ColorRectTexture(OasColors.withAlpha(0xFF000000, 64))));
@@ -141,7 +141,7 @@ public final class MinerScreen {
                 )
         ).setFillDirection(ProgressTexture.FillDirection.LEFT_TO_RIGHT);
         ProgressWidget miningBar = new ProgressWidget(this::uiProgress01, PROGRESS_BAR_X, PROGRESS_BAR_Y, PROGRESS_BAR_W, PROGRESS_BAR_H, progressTexture);
-        miningBar.setHoverTooltips(Component.literal("Mining progress"));
+        miningBar.setHoverTooltips(Component.translatable("Mining progress"));
         root.addWidget(miningBar);
         root.addWidget(new ImageWidget(PROGRESS_BAR_X, PROGRESS_BAR_Y, PROGRESS_BAR_W, 2, new ColorRectTexture(OasColors.withAlpha(0xFFFFFFFF, 38))));
         root.addWidget(new ImageWidget(PROGRESS_BAR_X, PROGRESS_BAR_Y + PROGRESS_BAR_H - 2, PROGRESS_BAR_W, 1, new ColorRectTexture(OasColors.withAlpha(0xFF000000, 56))));
@@ -150,7 +150,7 @@ public final class MinerScreen {
         powerToggle.setTexture(rockerTexture(false), rockerTexture(true));
         powerToggle.setHoverBorderTexture(1, OasColors.ACCENT_PRIMARY);
         powerToggle.setSupplier(be::isEnabled);
-        powerToggle.setHoverTooltips(Component.literal("Toggle miner"));
+        powerToggle.setHoverTooltips(Component.translatable("Toggle miner"));
         root.addWidget(powerToggle);
 
         WidgetGroup titleLane = new WidgetGroup(0, TITLE_Y, UI_W, TITLE_H);
@@ -195,7 +195,7 @@ public final class MinerScreen {
         outputSlot.setBackgroundTexture(SlotWidget.ITEM_SLOT_TEXTURE.copy().setColor(OasColors.withAlpha(OasColors.TEXT_MUTED, 255)));
         outputSlot.setLocationInfo(false, false);
         outputSlot.setCanPutItems(false);
-        outputSlot.setHoverTooltips(Component.literal("Output slot"));
+        outputSlot.setHoverTooltips(Component.translatable("Output slot"));
         root.addWidget(outputSlot);
 
         PlayerInventoryWidget playerInventory = new PlayerInventoryWidget(0, 0);
@@ -242,9 +242,8 @@ public final class MinerScreen {
     }
 
     private Component uiTitleComponent() {
-        return Component.empty()
-                .append(Component.literal("Miner ").withStyle(style -> style.withColor(OasColors.TEXT_PRIMARY)))
-                .append(Component.literal(uiTierSuffix()).withStyle(style -> style.withColor(OasColors.ACCENT_PRIMARY)));
+        return Component.translatable("Miner %s", uiTierSuffix())
+                .withStyle(style -> style.withColor(OasColors.TEXT_PRIMARY));
     }
 
     private String uiTierSuffix() {

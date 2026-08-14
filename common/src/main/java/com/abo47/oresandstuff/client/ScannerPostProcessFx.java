@@ -1,5 +1,6 @@
 package com.abo47.oresandstuff.client;
 
+import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.OresAndStuffMod;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
@@ -29,7 +30,8 @@ public final class ScannerPostProcessFx {
     }
 
     public static boolean renderTerrainSweep(ScannerFxTypes.ScanPulse pulse, float radius, Matrix4f invView, Matrix4f invProj) {
-        return renderTerrainSweep(pulse, radius, invView, invProj, OasVisuals.SCANNER_HOLOGRAPHIC_WIDTH_BLOCKS, 0, null);
+        var cfg = OresAndStuffConfig.scanner();
+        return renderTerrainSweep(pulse, radius, invView, invProj, cfg.pulseWidthBlocks, cfg.experimentalVisualMode, null);
     }
 
     public static boolean renderTerrainSweep(ScannerFxTypes.ScanPulse pulse, float radius, Matrix4f invView, Matrix4f invProj, float ringWidth, int distanceMode, AABB bounds) {
@@ -55,7 +57,9 @@ public final class ScannerPostProcessFx {
         shader.safeGetUniform("invProjMat").set(invProj);
         shader.safeGetUniform("radius").set(radius);
         shader.safeGetUniform("ringWidth").set(ringWidth);
-        shader.safeGetUniform("scanlineStrength").set(OasVisuals.SCANNER_HOLOGRAPHIC_SCANLINE_STRENGTH);
+        shader.safeGetUniform("holoWidth").set((float) OresAndStuffConfig.scanner().holographicWidthBlocks);
+        shader.safeGetUniform("scanlineStrength").set((float) OresAndStuffConfig.scanner().holographicScanlineStrength);
+        shader.safeGetUniform("quality").set((float) OresAndStuffConfig.scanner().qualityPreset);
         shader.safeGetUniform("use3dDistance").set(distanceMode == 1 ? 1f : 0f);
         shader.safeGetUniform("distanceMode").set((float) distanceMode);
         if (bounds != null) {

@@ -20,7 +20,7 @@ public class BioScanLibraryScreen extends Screen {
     private EditBox search;
 
     public BioScanLibraryScreen(List<BioScanLibraryPacket.Entry> entries) {
-        super(Component.literal("Bio Scan Library"));
+        super(Component.translatable("Bio Scan Library"));
         this.entries = entries;
         this.filtered = new java.util.ArrayList<>(entries);
     }
@@ -30,13 +30,13 @@ public class BioScanLibraryScreen extends Screen {
         int left = 22;
         int top = 24;
         int listW = width / 2 - 30;
-        search = new EditBox(font, left, 8, listW, 14, Component.literal("Search..."));
+        search = new EditBox(font, left, 8, listW, 14, Component.translatable("Search..."));
         search.setResponder(s -> refreshFilter());
         addRenderableWidget(search);
         list = new EntryList(minecraft, listW, height - 56, top, height - 36, 20);
         for (BioScanLibraryPacket.Entry e : filtered) list.addRow(e);
         addWidget(list);
-        addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(width - 94, height - 30, 72, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("Done"), b -> onClose()).bounds(width - 94, height - 30, 72, 20).build());
     }
 
     private void refreshFilter() {
@@ -56,8 +56,8 @@ public class BioScanLibraryScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         renderBackground(g);
-        g.drawCenteredString(font, "SCANNED LIBRARY", width / 2, 8, OasColors.ACCENT_SOFT);
-        g.drawString(font, "Search", 22, -2 + 8, OasColors.TEXT_MUTED, false);
+        g.drawCenteredString(font, Component.translatable("SCANNED LIBRARY").getString(), width / 2, 8, OasColors.ACCENT_SOFT);
+        g.drawString(font, Component.translatable("Search").getString(), 22, -2 + 8, OasColors.TEXT_MUTED, false);
         list.render(g, mx, my, pt);
 
         int px = width / 2 + 4;
@@ -69,7 +69,7 @@ public class BioScanLibraryScreen extends Screen {
             g.drawString(font, selected.category(), px + 8, py + 32, OasColors.ACCENT_MINT, false);
             g.drawWordWrap(font, Component.literal(selected.summary()), px + 8, py + 48, width - px - 30, OasColors.TEXT_SECONDARY);
         } else {
-            g.drawCenteredString(font, "Select an entry", px + (width - px - 20) / 2, py + 16, OasColors.TEXT_MUTED);
+            g.drawCenteredString(font, Component.translatable("Select an entry").getString(), px + (width - px - 20) / 2, py + 16, OasColors.TEXT_MUTED);
         }
         super.render(g, mx, my, pt);
     }

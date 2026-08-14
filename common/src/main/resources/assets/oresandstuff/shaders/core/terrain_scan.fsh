@@ -5,7 +5,9 @@ uniform mat4 invProjMat;
 uniform vec3 center;
 uniform float radius;
 uniform float ringWidth;
+uniform float holoWidth;
 uniform float scanlineStrength;
+uniform float quality;
 uniform float use3dDistance;
 uniform float distanceMode;
 uniform float useBounds;
@@ -17,7 +19,6 @@ in vec2 texCoord0;
 
 out vec4 fragColor;
 
-const float sharpness = 10.0;
 const vec4 outerColor = vec4(0.80, 1.00, 0.90, 1.0);
 const vec4 midColor = vec4(0.40, 0.50, 0.70, 1.0);
 const vec4 innerColor = vec4(0.10, 0.40, 0.90, 1.0);
@@ -61,6 +62,7 @@ void main() {
         dist = mix(dist2d, dist3d, clamp(use3dDistance, 0.0, 1.0));
     }
     float width = max(1.0, ringWidth);
+    float ringSharpness = mix(4.0, 18.0, clamp(quality, 0.0, 3.0) / 3.0);
 
     if (depth < 0.9999) {
         if (mode > 1.5) {
@@ -75,11 +77,19 @@ void main() {
             }
         } else if (dist < radius && dist > radius - width) {
             float diff = 1.0 - (radius - dist) / width;
-            vec4 edge = mix(midColor, outerColor, pow(diff, sharpness));
+            vec4 edge = mix(midColor, outerColor, pow(diff, ringSharpness));
             color = mix(innerColor, edge, diff);
-            color.rgb += scanlines() * scanlineColor.rgb * diff * scanlineStrength;
+            color.rgb += scanlines() * scanlineColor.rgb * diff * scanlineStrength * (0.5 + clamp(quality, 0.0, 3.0) / 3.0);
             color *= diff;
             color.a = clamp(color.a, 0.0, 1.0);
+        }
+        // Holographic sweep band: soft fill whose width is set by holoWidth,
+        // distinct from the sharp pulse ring (ringWidth).
+        if (holoWidth > 0.5 && dist < radius) {
+            float band = 1.0 - smoothstep(max(0.0, radius - holoWidth), radius, dist);
+            vec3 holo = vec3(0.10, 0.40, 0.90);
+            color.rgb += holo * band * 0.30;
+            color.a = max(color.a, band * 0.20);
         }
     }
 

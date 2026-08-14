@@ -1,6 +1,8 @@
 package com.abo47.oresandstuff.client;
 
 import com.abo47.oresandstuff.client.OasShaders;
+import net.minecraft.network.chat.Component;
+import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.client.screen.BioScanLibraryScreen;
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 import com.abo47.oresandstuff.content.ModBlocks;
@@ -20,6 +22,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -46,6 +49,7 @@ public final class OasClient {
     }
 
     private static Minecraft minecraft;
+    private static int scannerAutoUpdateCounter = 0;
     private static ResourceLocation currentOreType;
     private static final List<ScannerFxTypes.TargetMarker> markers = new ArrayList<>();
     private static final List<ScannerFxTypes.ScanPulse> pulses = new ArrayList<>();
@@ -71,10 +75,16 @@ public final class OasClient {
         }
         targetExpireMs = now + 60000;
         pulses.clear();
-        pulses.add(new ScannerFxTypes.ScanPulse(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), OasVisuals.SCANNER_PULSE_DURATION_MS));
-        if (minecraft.level != null) {
-            minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.85f, 1.08f, false);
+        var scannerCfg = OresAndStuffConfig.scanner();
+        pulses.add(new ScannerFxTypes.ScanPulse(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), scannerCfg.pulseDurationMs));
+        playConfigSound(SoundEvents.BEACON_POWER_SELECT, scannerCfg.scanSoundEnabled, scannerCfg.scanSoundVolume, scannerCfg.scanSoundPitch);
+    }
+
+    private static void playConfigSound(SoundEvent event, boolean enabled, double volume, double pitch) {
+        if (!enabled || minecraft == null || minecraft.player == null || minecraft.level == null) {
+            return;
         }
+        minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), event, SoundSource.PLAYERS, (float) volume, (float) pitch, false);
     }
 
     public static void onBioScanInfo(BioScanInfoPacket packet) {
@@ -84,7 +94,7 @@ public final class OasClient {
         pendingBioNotificationUntilMs = 0L;
         ResourceLocation entityId = ResourceLocation.tryParse(packet.entityId());
         EntityType<?> type = entityId == null ? null : BuiltInRegistries.ENTITY_TYPE.get(entityId);
-        activeBioNotification = new BioScanNotification(packet, type, OasVisuals.BIO_SCAN_NOTIFICATION_MS);
+        activeBioNotification = new BioScanNotification(packet, type, OresAndStuffConfig.bioScan().notificationMs);
     }
 
     public static void onBioScanLibrary(BioScanLibraryPacket packet) {
@@ -133,6 +143,20 @@ public final class OasClient {
                 float smoothing = marker.distance < 14.0f ? 0.10f : 0.16f;
                 marker.smoothOffset = Mth.clamp(marker.smoothOffset + (desiredOffset - marker.smoothOffset) * smoothing, -102f, 102f);
             }
+
+            int updateTicks = OresAndStuffConfig.scanner().updateTicks;
+            if (updateTicks > 0) {
+                scannerAutoUpdateCounter++;
+                if (scannerAutoUpdateCounter >= updateTicks) {
+                    scannerAutoUpdateCounter = 0;
+                    ItemStack held = minecraft.player.getMainHandItem();
+                    if (held.getItem() instanceof ScannerItem si && !minecraft.player.getCooldowns().isOnCooldown(si)) {
+                        NetworkChannels.sendScannerRequest(ScannerItem.getSelectedType(held));
+                    }
+                }
+            } else {
+                scannerAutoUpdateCounter = 0;
+            }
         }
 
         if (activeBioScan != null) {
@@ -160,7 +184,7 @@ public final class OasClient {
             if (stableLock) {
                 activeBioScan.progress01 = Mth.clamp(activeBioScan.progress01 + rate, 0f, 1f);
             } else {
-                activeBioScan.progress01 = Mth.clamp(activeBioScan.progress01 - rate * OasVisuals.BIO_SCAN_DRAIN_MULTIPLIER, 0f, 1f);
+                activeBioScan.progress01 = Mth.clamp(activeBioScan.progress01 - rate * (float) OresAndStuffConfig.bioScan().drainMultiplier, 0f, 1f);
                 if (activeBioScan.progress01 <= 0.001f) {
                     activeBioScan = null;
                     return;
@@ -170,18 +194,20 @@ public final class OasClient {
                 activeBioScan.requestSent = true;
                 pendingBioNotificationUntilMs = System.currentTimeMillis() + 12000L;
                 NetworkChannels.bioScanRequest(activeBioScan.entityId);
-                int cooldown = OasVisuals.BIO_SCAN_COOLDOWN_TICKS;
+                int cooldown = OresAndStuffConfig.bioScan().cooldownTicks;
                 if (cooldown > 0) {
                     minecraft.player.getCooldowns().addCooldown(ModItems.BIO_SCANNER, cooldown);
                 }
-                minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.PLAYERS, 1.0f, 1.25f, false);
+                var sc = OresAndStuffConfig.scanner();
+                playConfigSound(SoundEvents.RESPAWN_ANCHOR_CHARGE, sc.pingSoundEnabled, sc.pingSoundVolume, sc.pingSoundPitch);
             }
         } else if (holdingBioScanner() && minecraft.options.keyUse.isDown()) {
             if (minecraft.player.getCooldowns().isOnCooldown(ModItems.BIO_SCANNER)) return;
             var hit = findBioTarget();
             if (hit != null && hit.getEntity() instanceof LivingEntity living) {
-                activeBioScan = new ActiveBioScan(living.getUUID(), living.getId(), OasVisuals.BIO_SCAN_DURATION_MS);
-                minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.85f, 1.1f, false);
+                activeBioScan = new ActiveBioScan(living.getUUID(), living.getId(), OresAndStuffConfig.bioScan().durationMs);
+                var sc = OresAndStuffConfig.scanner();
+                playConfigSound(SoundEvents.BEACON_POWER_SELECT, sc.pingSoundEnabled, sc.pingSoundVolume, sc.pingSoundPitch);
             }
         }
     }
@@ -221,12 +247,13 @@ public final class OasClient {
 
         long now = System.currentTimeMillis();
         if (oreScannerHeld) {
+            var scannerCfg = OresAndStuffConfig.scanner();
             for (ScannerFxTypes.ScanPulse pulse : pulses) {
                 float tRaw = (now - pulse.startMs) / (float) pulse.durationMs;
                 float t = Mth.clamp(tRaw, 0f, 1f);
-                float maxRadius = OasVisuals.SCANNER_PULSE_RANGE_BLOCKS;
+                float maxRadius = scannerCfg.pulseRangeBlocks;
                 float elapsedSec = (now - pulse.startMs) / 1000f;
-                float speedRadius = elapsedSec * OasVisuals.SCANNER_PULSE_SPEED_BLOCKS_PER_SEC;
+                float speedRadius = (float) (elapsedSec * scannerCfg.pulseSpeedBlocksPerSec);
                 float eased = 1f - (1f - t) * (1f - t);
                 float easedRadius = 3f + eased * maxRadius;
                 float radius = Math.min(maxRadius, Math.min(speedRadius, easedRadius));
@@ -284,7 +311,7 @@ public final class OasClient {
                 int hh = (i % 50 == 0) ? 8 : 4;
                 g.fill(px, y + 3, px + 1, y + 3 + hh, OasColors.withAlpha(OasColors.TEXT_PRIMARY, 0xCC));
             }
-            g.drawCenteredString(minecraft.font, "N", cx, y - 10, OasColors.TEXT_SECONDARY);
+            g.drawCenteredString(minecraft.font, Component.translatable("N").getString(), cx, y - 10, OasColors.TEXT_SECONDARY);
             long now = System.currentTimeMillis();
             if (currentOreType != null) {
                 OreNodeDataManager.INSTANCE.getNodeType(currentOreType).ifPresent(type -> {
@@ -302,7 +329,14 @@ public final class OasClient {
                     }
                 });
             }
-            if (markers.isEmpty()) g.drawCenteredString(minecraft.font, "No scan target", cx, y + 18, OasColors.TEXT_MUTED);
+            if (markers.isEmpty()) g.drawCenteredString(minecraft.font, Component.translatable("No scan target").getString(), cx, y + 18, OasColors.TEXT_MUTED);
+            var scannerCfg = OresAndStuffConfig.scanner();
+            if (scannerCfg.experimentalVisualMode == 1 && scannerCfg.holographicStatusHud) {
+                boolean ready = ScannerPostProcessFx.isShaderReady();
+                g.drawCenteredString(minecraft.font,
+                        ready ? "Holographic Sweep: READY" : "Holographic Sweep: SHADER MISSING",
+                        cx, y + 30, ready ? OasColors.SUCCESS : OasColors.ERROR);
+            }
         }
 
         if (activeBioScan != null) {
@@ -312,7 +346,15 @@ public final class OasClient {
             int by = scaledHeight - 44;
             g.fill(bx, by, bx + bw, by + 8, OasColors.withAlpha(OasColors.BG_0, 0xAA));
             g.fill(bx + 1, by + 1, bx + 1 + (int) ((bw - 2) * p), by + 7, OasColors.ACCENT_PRIMARY);
-            g.drawCenteredString(minecraft.font, activeBioScan.requestSent ? "Decoding..." : "Scanning...", w / 2, by - 10, OasColors.ACCENT_SOFT);
+            g.drawCenteredString(minecraft.font, Component.translatable(activeBioScan.requestSent ? "Decoding..." : "Scanning...").getString(), w / 2, by - 10, OasColors.ACCENT_SOFT);
+            if (OresAndStuffConfig.debug().debugLogging && minecraft.level != null) {
+                Entity dbgEntity = minecraft.level.getEntity(activeBioScan.entityId);
+                if (dbgEntity != null) {
+                    String dbg = String.format("BioDbg id=%d p=%.2f yaw=%.1f pos=(%.1f,%.1f,%.1f)",
+                            dbgEntity.getId(), p, dbgEntity.getYRot(), dbgEntity.getX(), dbgEntity.getY(), dbgEntity.getZ());
+                    g.drawCenteredString(minecraft.font, dbg, w / 2, by + 12, OasColors.TEXT_MUTED);
+                }
+            }
         }
 
         if (activeBioNotification != null) {
@@ -355,7 +397,7 @@ public final class OasClient {
                 }
 
                 int tx = x + leftPaneW + 8;
-                g.drawString(minecraft.font, "BIO SCAN COMPLETE", tx, y + 8, OasColors.ACCENT_SOFT, false);
+                g.drawString(minecraft.font, Component.translatable("BIO SCAN COMPLETE").getString(), tx, y + 8, OasColors.ACCENT_SOFT, false);
                 g.drawString(minecraft.font, activeBioNotification.data.title(), tx, y + 20, OasColors.TEXT_PRIMARY, false);
                 g.drawString(minecraft.font, activeBioNotification.data.category(), tx, y + 31, OasColors.ACCENT_MINT, false);
                 String summary = activeBioNotification.data.summary();

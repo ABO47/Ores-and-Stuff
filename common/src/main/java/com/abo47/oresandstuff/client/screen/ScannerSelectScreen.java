@@ -18,7 +18,7 @@ public class ScannerSelectScreen extends Screen {
     private final ItemStack scannerStack;
 
     public ScannerSelectScreen(ItemStack scannerStack) {
-        super(Component.literal("Scanner Targets"));
+        super(Component.translatable("Scanner Targets"));
         this.scannerStack = scannerStack;
     }
 
@@ -45,7 +45,7 @@ public class ScannerSelectScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
-        graphics.drawCenteredString(font, "Select Ore for Scanner", width / 2, 24, OasColors.TEXT_PRIMARY);
+        graphics.drawCenteredString(font, Component.translatable("Select Ore for Scanner").getString(), width / 2, 24, OasColors.TEXT_PRIMARY);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 }
