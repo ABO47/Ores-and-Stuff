@@ -144,14 +144,16 @@ public final class OasClient {
                 marker.smoothOffset = Mth.clamp(marker.smoothOffset + (desiredOffset - marker.smoothOffset) * smoothing, -102f, 102f);
             }
 
-            int updateTicks = OresAndStuffConfig.scanner().updateTicks;
-            if (updateTicks > 0) {
-                scannerAutoUpdateCounter++;
-                if (scannerAutoUpdateCounter >= updateTicks) {
-                    scannerAutoUpdateCounter = 0;
-                    ItemStack held = minecraft.player.getMainHandItem();
-                    if (held.getItem() instanceof ScannerItem si && !minecraft.player.getCooldowns().isOnCooldown(si)) {
-                        NetworkChannels.sendScannerRequest(ScannerItem.getSelectedType(held));
+            if (OresAndStuffConfig.scanner().scannerAutoRefresh) {
+                int updateTicks = OresAndStuffConfig.scanner().updateTicks;
+                if (updateTicks > 0) {
+                    scannerAutoUpdateCounter++;
+                    if (scannerAutoUpdateCounter >= updateTicks) {
+                        scannerAutoUpdateCounter = 0;
+                        ItemStack held = minecraft.player.getMainHandItem();
+                        if (held.getItem() instanceof ScannerItem si && !minecraft.player.getCooldowns().isOnCooldown(si)) {
+                            NetworkChannels.sendScannerRequest(ScannerItem.getSelectedType(held));
+                        }
                     }
                 }
             } else {

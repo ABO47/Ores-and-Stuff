@@ -14,6 +14,7 @@ public final class OresAndStuffConfigSections {
     public static final class Scanner {
         public int radiusCap = 512;
         public int updateTicks = 12;
+        public boolean scannerAutoRefresh = false;
         public int maxResults = 6;
         public int cooldownTicks = 40;
         public int pulseDurationMs = 4200;
@@ -33,8 +34,8 @@ public final class OresAndStuffConfigSections {
         public double pingSoundPitch = 1.32;
 
         void read(JsonObject root) {
-            radiusCap = clampInt(intValue(root, "scannerRadiusCap", radiusCap), 32, 4096);
-            updateTicks = clampInt(intValue(root, "scannerUpdateTicks", updateTicks), 2, 100);
+            updateTicks = clampInt(intValue(root, "scannerUpdateTicks", updateTicks), 0, 100);
+            scannerAutoRefresh = bool(root, "scannerAutoRefresh", scannerAutoRefresh);
             maxResults = clampInt(intValue(root, "scannerMaxResults", maxResults), 1, 24);
             cooldownTicks = clampInt(intValue(root, "scannerCooldownTicks", cooldownTicks), 0, 1200);
             pulseDurationMs = clampInt(intValue(root, "scannerPulseDurationMs", pulseDurationMs), 800, 20000);
@@ -60,7 +61,7 @@ public final class OresAndStuffConfigSections {
             root.addProperty("scannerUpdateTicks", updateTicks);
             root.addProperty("scannerMaxResults", maxResults);
             root.addProperty("scannerCooldownTicks", cooldownTicks);
-            root.addProperty("scannerPulseDurationMs", pulseDurationMs);
+            root.addProperty("scannerAutoRefresh", scannerAutoRefresh);
             root.addProperty("scannerPulseRangeBlocks", pulseRangeBlocks);
             root.addProperty("scannerPulseSpeedBlocksPerSec", pulseSpeedBlocksPerSec);
             root.addProperty("scannerPulseWidthBlocks", pulseWidthBlocks);
