@@ -39,12 +39,6 @@ import com.abo47.oresandstuff.client.ui.theme.render.SurfaceFactory;
 
 import static com.abo47.oresandstuff.client.ui.theme.tokens.UiThemeTokens.*;
 
-/**
- * Settings UI, laid out 1:1 with the Quests-and-Stuff settings app (tabs, search,
- * option cards, scroll bar) but named in this mod's style. Hosted through a
- * {@link ModularUIGuiContainer} so every widget gets a {@code gui} context and the
- * mouseDragged NPE from driving LDLib widgets off a raw {@link Screen} cannot happen.
- */
 public final class ModSettingsScreen {
 
     private static final int ROOT_W = 563;
@@ -463,7 +457,6 @@ public final class ModSettingsScreen {
         private List<RowSpec> bioScanRows() {
             var s = OresAndStuffConfig.bioScan();
             return List.of(
-                    number("bio.notificationMs", "Notification (ms)", () -> s.notificationMs, v -> s.notificationMs = (int) v, 1000, 20000, 6, true),
                     number("bio.durationMs", "Duration (ms)", () -> s.durationMs, v -> s.durationMs = (int) v, 300, 15000, 6, true),
                     number("bio.cooldownTicks", "Cooldown ticks", () -> s.cooldownTicks, v -> s.cooldownTicks = (int) v, 0, 1200, 4, true),
                     number("bio.drainMul", "Drain multiplier", () -> s.drainMultiplier, v -> s.drainMultiplier = v, 0.5, 10.0, 8, false),

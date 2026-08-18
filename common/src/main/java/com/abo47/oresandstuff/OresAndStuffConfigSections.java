@@ -81,14 +81,12 @@ public final class OresAndStuffConfigSections {
     }
 
     public static final class BioScan {
-        public int notificationMs = 5000;
         public int durationMs = 1000;
         public double drainMultiplier = 2.4;
         public int cooldownTicks = 40;
         public double rayStyle = 1.15;
 
         void read(JsonObject root) {
-            notificationMs = clampInt(intValue(root, "bioScanNotificationMs", notificationMs), 1000, 20000);
             durationMs = clampInt(intValue(root, "bioScanDurationMs", durationMs), 300, 15000);
             drainMultiplier = clampDouble(doubleValue(root, "bioScanDrainMultiplier", drainMultiplier), 0.5, 10.0);
             cooldownTicks = clampInt(intValue(root, "bioScanCooldownTicks", cooldownTicks), 0, 1200);
@@ -97,7 +95,6 @@ public final class OresAndStuffConfigSections {
 
         JsonObject write() {
             JsonObject root = new JsonObject();
-            root.addProperty("bioScanNotificationMs", notificationMs);
             root.addProperty("bioScanDurationMs", durationMs);
             root.addProperty("bioScanDrainMultiplier", drainMultiplier);
             root.addProperty("bioScanCooldownTicks", cooldownTicks);
