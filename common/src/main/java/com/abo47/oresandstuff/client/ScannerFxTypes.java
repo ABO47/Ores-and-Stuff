@@ -5,8 +5,10 @@ import net.minecraft.util.Mth;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class ScannerFxTypes {
     private ScannerFxTypes() {
@@ -32,6 +34,7 @@ public final class ScannerFxTypes {
         final List<PulseTile> cachedTiles = new ArrayList<>();
         final Map<Long, Long> columnHitTime = new HashMap<>();
         final Map<Long, Float> alphaSmoothing = new HashMap<>();
+        final Set<Long> pingedNodeKeys = new HashSet<>();
 
         public ScanPulse(double originX, double originY, double originZ, long durationMs) {
             this.originX = originX;

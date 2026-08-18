@@ -76,7 +76,6 @@ public final class OasClient {
         pulses.clear();
         var scannerCfg = OresAndStuffConfig.scanner();
         pulses.add(new ScannerFxTypes.ScanPulse(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), scannerCfg.pulseDurationMs));
-        playConfigSound(SoundEvents.BEACON_POWER_SELECT, scannerCfg.scanSoundEnabled, scannerCfg.scanSoundVolume, scannerCfg.scanSoundPitch);
     }
 
     private static void playConfigSound(SoundEvent event, boolean enabled, double volume, double pitch) {

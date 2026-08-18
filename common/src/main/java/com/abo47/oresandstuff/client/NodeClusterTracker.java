@@ -1,11 +1,14 @@
 package com.abo47.oresandstuff.client;
 
+import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.node.NodeVisuals;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.Block;
 
 import java.util.ArrayDeque;
@@ -58,7 +61,18 @@ final class NodeClusterTracker {
             double mdx = (marker.pos.getX() + 0.5) - pulse.originX;
             double mdz = (marker.pos.getZ() + 0.5) - pulse.originZ;
             float markerRadius = (float) Math.sqrt(mdx * mdx + mdz * mdz);
-            if (Math.abs(markerRadius - radius) < 1.6f) addNodeClusterFlash(minecraft, marker.pos, oreType, now + 8000L);
+            if (Math.abs(markerRadius - radius) < 1.6f) {
+                addNodeClusterFlash(minecraft, marker.pos, oreType, now + 8000L);
+                long key = ScannerRenderUtil.packPosKey(marker.pos.getX(), marker.pos.getY(), marker.pos.getZ());
+                if (!pulse.pingedNodeKeys.contains(key)) {
+                    pulse.pingedNodeKeys.add(key);
+                    var sc = OresAndStuffConfig.scanner();
+                    if (sc.scanSoundEnabled && minecraft.player != null && minecraft.level != null) {
+                        minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(),
+                                SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, (float) sc.scanSoundVolume, (float) sc.scanSoundPitch, false);
+                    }
+                }
+            }
         }
     }
 
