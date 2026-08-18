@@ -42,16 +42,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import com.abo47.oresandstuff.network.NetworkChannels;
-import net.minecraft.world.item.Items;
 
 public final class OasClient {
     private OasClient() {
     }
 
-    private static Minecraft minecraft;
+    static Minecraft minecraft;
     private static int scannerAutoUpdateCounter = 0;
-    private static ResourceLocation currentOreType;
-    private static final List<ScannerFxTypes.TargetMarker> markers = new ArrayList<>();
+    static ResourceLocation currentOreType;
+    static final List<ScannerFxTypes.TargetMarker> markers = new ArrayList<>();
     private static final List<ScannerFxTypes.ScanPulse> pulses = new ArrayList<>();
     private static long targetExpireMs = 0;
     private static ActiveBioScan activeBioScan;
@@ -102,7 +101,7 @@ public final class OasClient {
         minecraft.setScreen(new BioScanLibraryScreen(packet.entries()));
     }
 
-    private static boolean holdingOreScanner() {
+    static boolean holdingOreScanner() {
         return minecraft != null && minecraft.player != null && minecraft.player.getMainHandItem().getItem() instanceof ScannerItem;
     }
 
@@ -303,42 +302,7 @@ public final class OasClient {
         int w = scaledWidth;
         int cx = w / 2;
         if (oreScannerHeld) {
-            int y = 14;
-            int left = cx - 110;
-            int right = cx + 110;
-            g.fill(left, y, right, y + 14, OasColors.withAlpha(OasColors.TEXT_PRIMARY, 0xAA));
-            g.fill(left + 1, y + 1, right - 1, y + 13, OasColors.withAlpha(OasColors.BG_0, 0x77));
-            for (int i = -100; i <= 100; i += 10) {
-                int px = cx + i;
-                int hh = (i % 50 == 0) ? 8 : 4;
-                g.fill(px, y + 3, px + 1, y + 3 + hh, OasColors.withAlpha(OasColors.TEXT_PRIMARY, 0xCC));
-            }
-            g.drawCenteredString(minecraft.font, Component.translatable("N").getString(), cx, y - 10, OasColors.TEXT_SECONDARY);
-            long now = System.currentTimeMillis();
-            if (currentOreType != null) {
-                OreNodeDataManager.INSTANCE.getNodeType(currentOreType).ifPresent(type -> {
-                    ResourceLocation outItem = type.outputItem();
-                    Item item = outItem == null ? null : BuiltInRegistries.ITEM.get(outItem);
-                    if (item == null || item == Items.AIR) return;
-                    for (ScannerFxTypes.TargetMarker marker : markers) {
-                        if (!marker.visible(now)) continue;
-                        if (!NodeClusterTracker.isNodeTouched(marker.pos)) continue;
-                        int iconX = cx + (int) marker.smoothOffset - 8;
-                        int iconY = y - 2;
-                        g.renderItem(new ItemStack(item), iconX, iconY);
-                        String d = (int) marker.distance + "m";
-                        g.drawCenteredString(minecraft.font, d, iconX + 8, y + 18, OasColors.TEXT_PRIMARY);
-                    }
-                });
-            }
-            if (markers.isEmpty()) g.drawCenteredString(minecraft.font, Component.translatable("No scan target").getString(), cx, y + 18, OasColors.TEXT_MUTED);
-            var scannerCfg = OresAndStuffConfig.scanner();
-            if (scannerCfg.experimentalVisualMode == 1 && scannerCfg.holographicStatusHud) {
-                boolean ready = ScannerPostProcessFx.isShaderReady();
-                g.drawCenteredString(minecraft.font,
-                        ready ? "Holographic Sweep: READY" : "Holographic Sweep: SHADER MISSING",
-                        cx, y + 30, ready ? OasColors.SUCCESS : OasColors.ERROR);
-            }
+            ScannerHud.render(g, cx);
         }
 
         if (activeBioScan != null) {
