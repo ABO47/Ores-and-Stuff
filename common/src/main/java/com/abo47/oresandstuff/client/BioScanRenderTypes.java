@@ -1,17 +1,20 @@
 package com.abo47.oresandstuff.client;
 
-import com.abo47.oresandstuff.OresAndStuffMod;
+import java.io.IOException;
+import java.util.IdentityHashMap;
+import java.util.Map;
+
+import org.lwjgl.opengl.GL11;
+
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceProvider;
-import org.lwjgl.opengl.GL11;
 
-import java.io.IOException;
-import java.util.IdentityHashMap;
-import java.util.Map;
+import com.abo47.oresandstuff.OresAndStuffMod;
 
 final class BioScanRenderTypes extends RenderType {
     private static final Map<RenderType, RenderType> SCAN_WRAP_CACHE = new IdentityHashMap<>();

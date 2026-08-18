@@ -1,55 +1,57 @@
 package com.abo47.oresandstuff.forge;
 
-import com.abo47.oresandstuff.OresAndStuffMod;
-import com.abo47.oresandstuff.client.OasClient;
-import com.abo47.oresandstuff.client.OasShaders;
-import com.abo47.oresandstuff.command.DevCommands;
-import com.abo47.oresandstuff.network.NetworkChannels;
-import com.abo47.oresandstuff.world.ManualNodeMiningHandler;
-import com.abo47.oresandstuff.world.NodeProtectionHandler;
-import com.abo47.oresandstuff.content.ModBlockEntities;
-import com.abo47.oresandstuff.content.ModBlocks;
-import com.abo47.oresandstuff.miner.InfiniteBatteryBlockEntity;
-import com.abo47.oresandstuff.miner.MinerBlockEntity;
-import com.abo47.oresandstuff.node.OreNodeBlockEntity;
-import com.abo47.oresandstuff.platform.PlatformHooks;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+
+import com.lowdragmc.lowdraglib.side.item.forge.ItemTransferHelperImpl;
+
+import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.client.OasClient;
+import com.abo47.oresandstuff.client.OasShaders;
+import com.abo47.oresandstuff.command.DevCommands;
+import com.abo47.oresandstuff.content.ModBlockEntities;
+import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.energy.EnergyStorage;
+import com.abo47.oresandstuff.miner.InfiniteBatteryBlockEntity;
+import com.abo47.oresandstuff.miner.MinerBlockEntity;
+import com.abo47.oresandstuff.network.NetworkChannels;
+import com.abo47.oresandstuff.node.OreNodeBlockEntity;
+import com.abo47.oresandstuff.platform.PlatformHooks;
+import com.abo47.oresandstuff.world.ManualNodeMiningHandler;
+import com.abo47.oresandstuff.world.NodeProtectionHandler;
+
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock;
+import net.minecraftforge.event.level.BlockEvent.BreakEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import com.lowdragmc.lowdraglib.side.item.forge.ItemTransferHelperImpl;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.level.BlockEvent.BreakEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock;
-import com.abo47.oresandstuff.energy.EnergyStorage;
-import net.minecraft.server.level.ServerLevel;
 
 public final class ForgePlatformHooks implements PlatformHooks {
     private static final DeferredRegister<BlockEntityType<?>> BE_TYPES =

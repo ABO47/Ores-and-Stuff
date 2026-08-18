@@ -1,6 +1,7 @@
 package com.abo47.oresandstuff.forge;
 
 import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.client.OasKeyBindings;
 import com.abo47.oresandstuff.platform.Services;
 
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
@@ -9,7 +10,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import com.abo47.oresandstuff.client.OasKeyBindings;
 
 @Mod(OresAndStuffMod.MOD_ID)
 public final class ForgeMod {

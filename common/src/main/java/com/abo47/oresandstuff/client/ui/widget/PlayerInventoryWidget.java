@@ -1,11 +1,12 @@
 package com.abo47.oresandstuff.client.ui.widget;
 
-import com.abo47.oresandstuff.client.theme.tokens.OasColors;
+import net.minecraft.world.entity.player.Inventory;
+
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
-import net.minecraft.world.entity.player.Inventory;
+import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 
 public class PlayerInventoryWidget extends WidgetGroup {
     public PlayerInventoryWidget(int x, int y) {

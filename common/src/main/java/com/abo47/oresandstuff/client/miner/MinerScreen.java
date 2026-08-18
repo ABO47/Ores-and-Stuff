@@ -1,27 +1,6 @@
 package com.abo47.oresandstuff.client.miner;
 
-import com.abo47.oresandstuff.client.theme.tokens.OasColors;
-import com.abo47.oresandstuff.client.ui.render.GradientRectTexture;
-import com.abo47.oresandstuff.client.ui.render.StripeOverlayTexture;
-import com.abo47.oresandstuff.client.ui.widget.PlayerInventoryWidget;
-import com.abo47.oresandstuff.miner.MinerBlockEntity;
-import com.abo47.oresandstuff.miner.MinerStatus;
-import com.abo47.oresandstuff.node.Purity;
-
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.ColorBorderTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.widget.layout.Align;
-import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
-import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
-import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
+import java.util.Locale;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -29,7 +8,28 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.Locale;
+import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
+import com.lowdragmc.lowdraglib.gui.texture.ColorBorderTexture;
+import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
+import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
+import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
+import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
+import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
+import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
+import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
+import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
+import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib.gui.widget.layout.Align;
+import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
+
+import com.abo47.oresandstuff.client.theme.tokens.OasColors;
+import com.abo47.oresandstuff.client.ui.render.GradientRectTexture;
+import com.abo47.oresandstuff.client.ui.render.StripeOverlayTexture;
+import com.abo47.oresandstuff.client.ui.widget.PlayerInventoryWidget;
+import com.abo47.oresandstuff.miner.MinerBlockEntity;
+import com.abo47.oresandstuff.miner.MinerStatus;
+import com.abo47.oresandstuff.node.Purity;
 
 public final class MinerScreen {
     private static final int UI_W = 220;

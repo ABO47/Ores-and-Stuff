@@ -1,12 +1,12 @@
 package com.abo47.oresandstuff.node;
 
-import com.abo47.oresandstuff.content.ModBlocks;
-import com.abo47.oresandstuff.data.OreNodeDataManager;
-
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+
+import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.data.OreNodeDataManager;
 
 public final class NodeVisuals {
     private NodeVisuals() {

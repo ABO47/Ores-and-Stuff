@@ -1,13 +1,14 @@
 package com.abo47.oresandstuff.client;
 
-import com.abo47.oresandstuff.client.theme.tokens.OasColors;
-import com.abo47.oresandstuff.data.OreNodeDataManager;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+
+import com.abo47.oresandstuff.client.theme.tokens.OasColors;
+import com.abo47.oresandstuff.data.OreNodeDataManager;
 
 final class ScannerHud {
     private ScannerHud() {

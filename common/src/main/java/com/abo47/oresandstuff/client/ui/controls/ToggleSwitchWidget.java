@@ -13,8 +13,8 @@ import com.lowdragmc.lowdraglib.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
 
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
-import com.abo47.oresandstuff.client.ui.animation.OasAnimationTimings;
 import com.abo47.oresandstuff.client.ui.animation.AnimProgress;
+import com.abo47.oresandstuff.client.ui.animation.OasAnimationTimings;
 import com.abo47.oresandstuff.client.ui.theme.render.GlowShaderHelper;
 import com.abo47.oresandstuff.client.ui.theme.render.SurfaceFactory;
 

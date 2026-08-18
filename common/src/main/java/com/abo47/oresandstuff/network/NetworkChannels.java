@@ -1,8 +1,10 @@
 package com.abo47.oresandstuff.network;
 
-import com.abo47.oresandstuff.OresAndStuffMod;
-import com.lowdragmc.lowdraglib.networking.LDLNetworking;
 import net.minecraft.resources.ResourceLocation;
+
+import com.lowdragmc.lowdraglib.networking.LDLNetworking;
+
+import com.abo47.oresandstuff.OresAndStuffMod;
 
 public final class NetworkChannels {
     private NetworkChannels() {

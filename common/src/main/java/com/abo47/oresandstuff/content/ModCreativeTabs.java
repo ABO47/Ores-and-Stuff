@@ -1,12 +1,12 @@
 package com.abo47.oresandstuff.content;
 
-import com.abo47.oresandstuff.OresAndStuffMod;
-
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+
+import com.abo47.oresandstuff.OresAndStuffMod;
 
 public final class ModCreativeTabs {
     public static final CreativeModeTab MAIN = CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)

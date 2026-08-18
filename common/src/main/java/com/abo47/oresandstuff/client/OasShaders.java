@@ -1,13 +1,15 @@
 package com.abo47.oresandstuff.client;
 
-import com.abo47.oresandstuff.OresAndStuffMod;
+import java.io.IOException;
+
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceProvider;
 
-import java.io.IOException;
+import com.abo47.oresandstuff.OresAndStuffMod;
 
 public final class OasShaders {
     private OasShaders() {

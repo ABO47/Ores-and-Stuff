@@ -1,6 +1,5 @@
 package com.abo47.oresandstuff.item;
 
-import com.abo47.oresandstuff.network.NetworkServices;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -9,6 +8,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
+
+import com.abo47.oresandstuff.network.NetworkServices;
 
 public class BioScannerItem extends Item {
     public BioScannerItem(Properties properties) {

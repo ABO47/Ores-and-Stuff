@@ -1,6 +1,6 @@
 package com.abo47.oresandstuff.node;
 
-import com.abo47.oresandstuff.content.ModBlockEntities;
+import java.util.UUID;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.UUID;
+import com.abo47.oresandstuff.content.ModBlockEntities;
 
 public class OreNodeBlockEntity extends BlockEntity {
     private ResourceLocation nodeTypeId = new ResourceLocation("oresandstuff", "iron");

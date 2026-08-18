@@ -2,9 +2,9 @@ package com.abo47.oresandstuff.fabric;
 
 import java.nio.file.Path;
 
-import net.fabricmc.loader.api.FabricLoader;
-
 import com.abo47.oresandstuff.platform.PlatformService;
+
+import net.fabricmc.loader.api.FabricLoader;
 
 public final class FabricPlatformService implements PlatformService {
     @Override

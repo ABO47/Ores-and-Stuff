@@ -1,8 +1,8 @@
 package com.abo47.oresandstuff.data;
 
-import net.minecraft.resources.ResourceLocation;
-
 import java.util.List;
+
+import net.minecraft.resources.ResourceLocation;
 
 public record EntityScanEntry(ResourceLocation entityId,
                               String title,

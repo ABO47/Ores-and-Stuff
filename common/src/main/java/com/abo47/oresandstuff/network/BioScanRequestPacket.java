@@ -1,8 +1,9 @@
 package com.abo47.oresandstuff.network;
 
-import com.lowdragmc.lowdraglib.networking.IPacket;
-import com.lowdragmc.lowdraglib.networking.IHandlerContext;
 import net.minecraft.network.FriendlyByteBuf;
+
+import com.lowdragmc.lowdraglib.networking.IHandlerContext;
+import com.lowdragmc.lowdraglib.networking.IPacket;
 
 public final class BioScanRequestPacket implements IPacket {
     private int targetEntityId;

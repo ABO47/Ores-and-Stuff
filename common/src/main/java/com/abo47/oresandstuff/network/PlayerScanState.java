@@ -1,12 +1,12 @@
 package com.abo47.oresandstuff.network;
 
-import net.minecraft.server.level.ServerPlayer;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import net.minecraft.server.level.ServerPlayer;
 
 public final class PlayerScanState {
     private static final Map<UUID, List<String>> BIO_SCANS = new HashMap<>();

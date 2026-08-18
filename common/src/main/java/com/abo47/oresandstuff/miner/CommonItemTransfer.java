@@ -1,8 +1,9 @@
 package com.abo47.oresandstuff.miner;
 
-import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
+
+import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
 
 public class CommonItemTransfer implements IItemTransfer {
     private ItemStack stack = ItemStack.EMPTY;

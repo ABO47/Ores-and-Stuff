@@ -1,17 +1,19 @@
 package com.abo47.oresandstuff.network;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+
+import com.lowdragmc.lowdraglib.networking.LDLNetworking;
+
 import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.data.EntityScanDataManager;
 import com.abo47.oresandstuff.data.EntityScanEntry;
 import com.abo47.oresandstuff.item.ScannerItem;
 import com.abo47.oresandstuff.world.NodeLocatorService;
-import com.lowdragmc.lowdraglib.networking.LDLNetworking;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.LivingEntity;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public final class NetworkServices {
     private NetworkServices() {

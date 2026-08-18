@@ -1,14 +1,15 @@
 package com.abo47.oresandstuff.forge;
 
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+
 import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.content.ModCreativeTabs;
 import com.abo47.oresandstuff.content.ModItems;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;

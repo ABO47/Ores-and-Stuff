@@ -1,12 +1,7 @@
 package com.abo47.oresandstuff.fabric;
 
-import com.abo47.oresandstuff.OresAndStuffConfig;
-import com.abo47.oresandstuff.OresAndStuffMod;
-import com.abo47.oresandstuff.content.ModFeatures;
+import java.util.List;
 
-import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
-import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
-import net.fabricmc.fabric.api.biome.v1.ModificationPhase;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -15,8 +10,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-import java.util.List;
+import com.abo47.oresandstuff.OresAndStuffConfig;
+import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.content.ModFeatures;
 import com.abo47.oresandstuff.world.OreNodeFeature;
+
+import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.biome.v1.ModificationPhase;
 
 public final class FabricWorldgen {
     public static final ResourceKey<PlacedFeature> ORE_NODE_PLACED = ResourceKey.create(Registries.PLACED_FEATURE, id("ore_node"));

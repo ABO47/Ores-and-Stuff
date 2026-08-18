@@ -1,15 +1,15 @@
 package com.abo47.oresandstuff.content;
 
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Tiers;
+
 import com.abo47.oresandstuff.block.InfiniteBatteryBlock;
 import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.block.OreNodeBlock;
 import com.abo47.oresandstuff.item.BioScannerItem;
 import com.abo47.oresandstuff.item.NodeExtractorPickaxeItem;
 import com.abo47.oresandstuff.item.ScannerItem;
-
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Tiers;
 
 public final class ModItems {
     public static final Item ORE_NODE = new BlockItem(ModBlocks.ORE_NODE, new Item.Properties());

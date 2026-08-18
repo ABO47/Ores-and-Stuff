@@ -1,8 +1,9 @@
 package com.abo47.oresandstuff.client.ui.render;
 
+import net.minecraft.client.gui.GuiGraphics;
+
 import com.lowdragmc.lowdraglib.gui.texture.TransformTexture;
 import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
-import net.minecraft.client.gui.GuiGraphics;
 
 public class StripeOverlayTexture extends TransformTexture {
     private final int color;

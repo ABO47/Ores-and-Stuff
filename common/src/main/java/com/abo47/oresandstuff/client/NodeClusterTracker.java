@@ -1,9 +1,12 @@
 package com.abo47.oresandstuff.client;
 
-import com.abo47.oresandstuff.OresAndStuffConfig;
-import com.abo47.oresandstuff.content.ModBlocks;
-import com.abo47.oresandstuff.node.NodeVisuals;
-import com.abo47.oresandstuff.node.OreNodeBlockEntity;
+import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -11,12 +14,10 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.Block;
 
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.abo47.oresandstuff.OresAndStuffConfig;
+import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.node.NodeVisuals;
+import com.abo47.oresandstuff.node.OreNodeBlockEntity;
 
 final class NodeClusterTracker {
     private static final Map<Long, ScannerFxTypes.FlashFx> ACTIVE_FLASHES = new HashMap<>();
@@ -69,7 +70,7 @@ final class NodeClusterTracker {
                     var sc = OresAndStuffConfig.scanner();
                     if (sc.scanSoundEnabled && minecraft.player != null && minecraft.level != null) {
                         minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(),
-                                SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, (float) sc.scanSoundVolume, (float) sc.scanSoundPitch, false);
+                                SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, (float) sc.scanSoundVolume, (float) sc.scanSoundPitch, false);
                     }
                 }
             }

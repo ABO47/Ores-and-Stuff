@@ -1,9 +1,7 @@
 package com.abo47.oresandstuff.block;
 
-import com.abo47.oresandstuff.miner.MinerBlockEntity;
-import com.lowdragmc.lowdraglib.gui.factory.BlockEntityUIFactory;
-
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -15,8 +13,11 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.BlockHitResult;
+
+import com.lowdragmc.lowdraglib.gui.factory.BlockEntityUIFactory;
+
+import com.abo47.oresandstuff.miner.MinerBlockEntity;
 
 public class MinerBlock extends BaseEntityBlock {
     public MinerBlock(BlockBehaviour.Properties properties) {

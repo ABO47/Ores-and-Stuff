@@ -1,10 +1,12 @@
 package com.abo47.oresandstuff.network;
 
-import com.abo47.oresandstuff.item.ScannerItem;
-import com.lowdragmc.lowdraglib.networking.IHandlerContext;
-import com.lowdragmc.lowdraglib.networking.IPacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+
+import com.lowdragmc.lowdraglib.networking.IHandlerContext;
+import com.lowdragmc.lowdraglib.networking.IPacket;
+
+import com.abo47.oresandstuff.item.ScannerItem;
 
 public final class ScannerRequestPacket implements IPacket {
     private ResourceLocation oreType;

@@ -1,5 +1,25 @@
 package com.abo47.oresandstuff.fabric;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.PreparableReloadListener.PreparationBarrier;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+
 import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.client.OasClient;
 import com.abo47.oresandstuff.command.DevCommands;
@@ -12,35 +32,16 @@ import com.abo47.oresandstuff.node.OreNodeBlockEntity;
 import com.abo47.oresandstuff.platform.PlatformHooks;
 import com.abo47.oresandstuff.world.ManualNodeMiningHandler;
 import com.abo47.oresandstuff.world.NodeProtectionHandler;
+
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import team.reborn.energy.api.EnergyStorage;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
-import net.minecraft.world.level.Level;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.resources.PreparableReloadListener.PreparationBarrier;
-import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionResult;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import team.reborn.energy.api.EnergyStorage;
 
 public final class FabricPlatformHooks implements PlatformHooks {
     @Override

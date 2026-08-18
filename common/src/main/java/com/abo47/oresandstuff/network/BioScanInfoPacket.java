@@ -1,13 +1,15 @@
 package com.abo47.oresandstuff.network;
 
-import com.abo47.oresandstuff.data.EntityScanEntry;
-import com.lowdragmc.lowdraglib.networking.IHandlerContext;
-import com.lowdragmc.lowdraglib.networking.IPacket;
-import net.minecraft.network.FriendlyByteBuf;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import net.minecraft.network.FriendlyByteBuf;
+
+import com.lowdragmc.lowdraglib.networking.IHandlerContext;
+import com.lowdragmc.lowdraglib.networking.IPacket;
+
 import com.abo47.oresandstuff.client.OasClient;
+import com.abo47.oresandstuff.data.EntityScanEntry;
 
 public final class BioScanInfoPacket implements IPacket {
     private String entityId = "minecraft:pig";

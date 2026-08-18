@@ -1,16 +1,17 @@
 package com.abo47.oresandstuff.client.screen;
 
-import com.abo47.oresandstuff.client.theme.tokens.OasColors;
-import com.abo47.oresandstuff.network.BioScanLibraryPacket;
+import java.util.List;
+
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-import java.util.List;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.Minecraft;
+import com.abo47.oresandstuff.client.theme.tokens.OasColors;
+import com.abo47.oresandstuff.network.BioScanLibraryPacket;
 
 public class BioScanLibraryScreen extends Screen {
     private final List<BioScanLibraryPacket.Entry> entries;

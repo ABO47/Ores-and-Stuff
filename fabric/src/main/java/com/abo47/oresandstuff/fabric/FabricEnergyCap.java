@@ -1,7 +1,8 @@
 package com.abo47.oresandstuff.fabric;
 
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import com.abo47.oresandstuff.energy.EnergyStorage;
+
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 
 public class FabricEnergyCap implements team.reborn.energy.api.EnergyStorage {
     private final EnergyStorage delegate;

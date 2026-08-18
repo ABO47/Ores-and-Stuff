@@ -1,7 +1,9 @@
 package com.abo47.oresandstuff.client;
 
-import com.abo47.oresandstuff.OresAndStuffConfig;
-import com.abo47.oresandstuff.OresAndStuffMod;
+import java.util.Optional;
+
+import org.joml.Matrix4f;
+
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -11,12 +13,13 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexSorting;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.world.phys.AABB;
-import org.joml.Matrix4f;
 
-import java.util.Optional;
+import com.abo47.oresandstuff.OresAndStuffConfig;
+import com.abo47.oresandstuff.OresAndStuffMod;
 
 public final class ScannerPostProcessFx {
     private ScannerPostProcessFx() {

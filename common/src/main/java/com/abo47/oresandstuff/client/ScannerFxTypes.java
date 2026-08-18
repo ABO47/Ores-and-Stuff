@@ -1,14 +1,14 @@
 package com.abo47.oresandstuff.client;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 
 public final class ScannerFxTypes {
     private ScannerFxTypes() {

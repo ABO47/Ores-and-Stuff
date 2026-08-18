@@ -1,12 +1,12 @@
 package com.abo47.oresandstuff.content;
 
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+
 import com.abo47.oresandstuff.block.InfiniteBatteryBlock;
 import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.block.OreNodeBlock;
-
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.SoundType;
 
 public final class ModBlocks {
     public static final Block ORE_NODE = new OreNodeBlock(BlockBehaviour.Properties.of().strength(-1.0F, 3_600_000.0F).sound(SoundType.STONE).noOcclusion());

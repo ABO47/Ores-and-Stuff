@@ -1,11 +1,12 @@
 package com.abo47.oresandstuff.world;
 
-import com.abo47.oresandstuff.content.ModBlocks;
-import com.abo47.oresandstuff.node.NodeVisuals;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
+
+import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.node.NodeVisuals;
 
 public final class NodeProtectionHandler {
     private NodeProtectionHandler() {

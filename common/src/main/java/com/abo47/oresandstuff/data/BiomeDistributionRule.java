@@ -1,8 +1,8 @@
 package com.abo47.oresandstuff.data;
 
-import net.minecraft.resources.ResourceLocation;
-
 import java.util.Map;
+
+import net.minecraft.resources.ResourceLocation;
 
 public record BiomeDistributionRule(String biomePattern,
                                     String dimension,

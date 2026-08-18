@@ -1,8 +1,39 @@
 package com.abo47.oresandstuff.client;
 
-import com.abo47.oresandstuff.client.OasShaders;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+
+import org.joml.Matrix4f;
+
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
+
 import com.abo47.oresandstuff.OresAndStuffConfig;
+import com.abo47.oresandstuff.client.OasShaders;
 import com.abo47.oresandstuff.client.screen.BioScanLibraryScreen;
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 import com.abo47.oresandstuff.content.ModBlocks;
@@ -12,36 +43,8 @@ import com.abo47.oresandstuff.item.BioScannerItem;
 import com.abo47.oresandstuff.item.ScannerItem;
 import com.abo47.oresandstuff.network.BioScanInfoPacket;
 import com.abo47.oresandstuff.network.BioScanLibraryPacket;
-import com.abo47.oresandstuff.network.ScannerResultPacket;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
-import org.joml.Matrix4f;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
 import com.abo47.oresandstuff.network.NetworkChannels;
+import com.abo47.oresandstuff.network.ScannerResultPacket;
 
 public final class OasClient {
     private OasClient() {
@@ -76,6 +79,7 @@ public final class OasClient {
         pulses.clear();
         var scannerCfg = OresAndStuffConfig.scanner();
         pulses.add(new ScannerFxTypes.ScanPulse(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), scannerCfg.pulseDurationMs));
+        playConfigSound(SoundEvents.BEACON_POWER_SELECT, scannerCfg.scanSoundEnabled, scannerCfg.scanSoundVolume, scannerCfg.scanSoundPitch);
     }
 
     private static void playConfigSound(SoundEvent event, boolean enabled, double volume, double pitch) {

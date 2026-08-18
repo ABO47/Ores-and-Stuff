@@ -2,12 +2,11 @@ package com.abo47.oresandstuff.forge;
 
 import java.nio.file.Path;
 
-import net.minecraftforge.fml.loading.FMLLoader;
-import net.minecraftforge.fml.loading.FMLPaths;
+import com.abo47.oresandstuff.platform.PlatformService;
 
 import net.minecraftforge.fml.ModList;
-
-import com.abo47.oresandstuff.platform.PlatformService;
+import net.minecraftforge.fml.loading.FMLLoader;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 public final class ForgePlatformService implements PlatformService {
     @Override

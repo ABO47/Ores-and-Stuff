@@ -1,16 +1,16 @@
 package com.abo47.oresandstuff.fabric;
 
-import com.abo47.oresandstuff.OresAndStuffMod;
-import com.abo47.oresandstuff.content.ModBlocks;
-import com.abo47.oresandstuff.content.ModCreativeTabs;
-import com.abo47.oresandstuff.content.ModItems;
-
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+
+import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.content.ModCreativeTabs;
+import com.abo47.oresandstuff.content.ModItems;
 
 public final class FabricContent {
     private FabricContent() {

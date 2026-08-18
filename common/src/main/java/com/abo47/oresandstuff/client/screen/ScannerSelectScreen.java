@@ -1,9 +1,7 @@
 package com.abo47.oresandstuff.client.screen;
 
-import com.abo47.oresandstuff.client.theme.tokens.OasColors;
-import com.abo47.oresandstuff.data.OreNodeDataManager;
-import com.abo47.oresandstuff.network.NetworkChannels;
-import com.abo47.oresandstuff.network.ScannerRequestPacket;
+import java.util.List;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -12,7 +10,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.List;
+import com.abo47.oresandstuff.client.theme.tokens.OasColors;
+import com.abo47.oresandstuff.data.OreNodeDataManager;
+import com.abo47.oresandstuff.network.NetworkChannels;
+import com.abo47.oresandstuff.network.ScannerRequestPacket;
 
 public class ScannerSelectScreen extends Screen {
     private final ItemStack scannerStack;

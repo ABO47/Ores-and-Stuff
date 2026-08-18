@@ -1,15 +1,17 @@
 package com.abo47.oresandstuff.command;
 
-import com.abo47.oresandstuff.OresAndStuffConfig;
-import com.abo47.oresandstuff.item.ScannerItem;
-import com.abo47.oresandstuff.world.NodeLocatorService;
 import com.mojang.brigadier.CommandDispatcher;
+
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+
+import com.abo47.oresandstuff.OresAndStuffConfig;
+import com.abo47.oresandstuff.item.ScannerItem;
+import com.abo47.oresandstuff.world.NodeLocatorService;
 
 public final class DevCommands {
     private DevCommands() {

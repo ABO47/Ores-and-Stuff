@@ -1,11 +1,13 @@
 package com.abo47.oresandstuff.network;
 
-import com.lowdragmc.lowdraglib.networking.IHandlerContext;
-import com.lowdragmc.lowdraglib.networking.IPacket;
-import net.minecraft.network.FriendlyByteBuf;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import net.minecraft.network.FriendlyByteBuf;
+
+import com.lowdragmc.lowdraglib.networking.IHandlerContext;
+import com.lowdragmc.lowdraglib.networking.IPacket;
+
 import com.abo47.oresandstuff.client.OasClient;
 
 public final class BioScanLibraryPacket implements IPacket {

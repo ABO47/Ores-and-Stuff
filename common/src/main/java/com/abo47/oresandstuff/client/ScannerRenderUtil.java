@@ -1,12 +1,14 @@
 package com.abo47.oresandstuff.client;
 
+import org.joml.Matrix4f;
+
 import com.mojang.blaze3d.vertex.BufferBuilder;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.Heightmap;
-import org.joml.Matrix4f;
 
 final class ScannerRenderUtil {
     private ScannerRenderUtil() {

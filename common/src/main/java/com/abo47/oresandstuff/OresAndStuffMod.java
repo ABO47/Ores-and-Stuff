@@ -1,9 +1,10 @@
 package com.abo47.oresandstuff;
 
-import com.abo47.oresandstuff.content.ModRegistries;
-import com.abo47.oresandstuff.platform.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.abo47.oresandstuff.content.ModRegistries;
+import com.abo47.oresandstuff.platform.Services;
 
 public final class OresAndStuffMod {
     public static final String MOD_ID = "oresandstuff";

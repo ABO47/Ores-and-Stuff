@@ -1,20 +1,23 @@
 package com.abo47.oresandstuff.client;
 
-import com.abo47.oresandstuff.client.theme.tokens.OasColors;
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.joml.Matrix4f;
+
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
-import org.joml.Matrix4f;
 
-import java.util.ArrayDeque;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 
 final class NodeHighlightRenderer {
     private NodeHighlightRenderer() {

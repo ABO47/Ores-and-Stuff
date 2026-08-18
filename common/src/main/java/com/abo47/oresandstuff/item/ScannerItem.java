@@ -1,9 +1,5 @@
 package com.abo47.oresandstuff.item;
 
-import com.abo47.oresandstuff.OresAndStuffConfig;
-import com.abo47.oresandstuff.client.screen.ScannerSelectScreen;
-import com.abo47.oresandstuff.data.OreNodeDataManager;
-import com.abo47.oresandstuff.network.NetworkChannels;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -13,6 +9,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+
+import com.abo47.oresandstuff.OresAndStuffConfig;
+import com.abo47.oresandstuff.client.screen.ScannerSelectScreen;
+import com.abo47.oresandstuff.data.OreNodeDataManager;
+import com.abo47.oresandstuff.network.NetworkChannels;
 
 public class ScannerItem extends Item {
     public ScannerItem(Properties properties) {

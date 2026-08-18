@@ -1,23 +1,5 @@
 package com.abo47.oresandstuff.data;
 
-import com.abo47.oresandstuff.OresAndStuffConfig;
-import com.abo47.oresandstuff.OresAndStuffMod;
-import com.abo47.oresandstuff.node.OreNodeType;
-import com.abo47.oresandstuff.node.Purity;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.util.RandomSource;
-import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.level.Level;
-
-import org.slf4j.Logger;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,7 +10,26 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+
+import org.slf4j.Logger;
+
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.Level;
+
+import com.abo47.oresandstuff.OresAndStuffConfig;
+import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.node.OreNodeType;
+import com.abo47.oresandstuff.node.Purity;
+
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 
 public class OreNodeDataManager extends SimpleJsonResourceReloadListener {
     public static final OreNodeDataManager INSTANCE = new OreNodeDataManager();

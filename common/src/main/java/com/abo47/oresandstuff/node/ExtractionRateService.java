@@ -1,10 +1,10 @@
 package com.abo47.oresandstuff.node;
 
-import com.abo47.oresandstuff.data.OreNodeDataManager;
-
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+
+import com.abo47.oresandstuff.data.OreNodeDataManager;
 
 public final class ExtractionRateService {
     private ExtractionRateService() {
