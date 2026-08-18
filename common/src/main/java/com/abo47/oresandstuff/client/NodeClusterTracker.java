@@ -70,7 +70,7 @@ final class NodeClusterTracker {
                     var sc = OresAndStuffConfig.scanner();
                     if (sc.scanSoundEnabled && minecraft.player != null && minecraft.level != null) {
                         minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(),
-                                SoundEvents.BLOCK_AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, (float) sc.scanSoundVolume, (float) sc.scanSoundPitch, false);
+                                SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, (float) sc.scanSoundVolume, (float) sc.scanSoundPitch, false);
                     }
                 }
             }
