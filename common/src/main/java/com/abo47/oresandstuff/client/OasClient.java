@@ -54,7 +54,7 @@ public final class OasClient {
     private static long targetExpireMs = 0;
     private static ActiveBioScan activeBioScan;
     private static boolean bioUseWasDown = false;
-    private static final long COMPLETED_LINGER_MS = 1500L;
+    private static final long BIO_SCAN_REPLY_TIMEOUT_MS = 1500L;
 
     public static void init(Minecraft mc) {
         minecraft = mc;
@@ -87,8 +87,8 @@ public final class OasClient {
 
     public static void onBioScanInfo(BioScanInfoPacket packet) {
         if (minecraft == null || activeBioScan == null) return;
+        if (!activeBioScan.requestSent || activeBioScan.completed) return;
         activeBioScan.completed = true;
-        activeBioScan.completedAtMs = System.currentTimeMillis();
         activeBioScan.progress01 = 1f;
     }
 
@@ -161,9 +161,10 @@ public final class OasClient {
         bioUseWasDown = bioUseDown;
         if (activeBioScan != null) {
             if (activeBioScan.completed) {
-                if (System.currentTimeMillis() - activeBioScan.completedAtMs > COMPLETED_LINGER_MS) {
-                    activeBioScan = null;
-                }
+                activeBioScan = null;
+            } else if (activeBioScan.requestSent && now - activeBioScan.requestSentMs > BIO_SCAN_REPLY_TIMEOUT_MS) {
+                activeBioScan.completed = true;
+                activeBioScan.progress01 = 1f;
             }
             if (activeBioScan != null && !activeBioScan.completed) {
             Entity target = null;
@@ -186,6 +187,7 @@ public final class OasClient {
             double dot = dist > 0.0001 ? look.normalize().dot(to.normalize()) : 0;
             boolean stableLock = holdingBioScanner() && minecraft.options.keyUse.isDown() && dist <= 24.0 && dot > 0.94;
             activeBioScan.locked = stableLock;
+            activeBioScan.ratePerMs = (stableLock ? 1f : -(float) OresAndStuffConfig.bioScan().drainMultiplier) / activeBioScan.durationMs;
             float rate = dtMs / (float) activeBioScan.durationMs;
             if (stableLock) {
                 activeBioScan.progress01 = Mth.clamp(activeBioScan.progress01 + rate, 0f, 1f);
@@ -198,6 +200,7 @@ public final class OasClient {
             }
             if (activeBioScan.progress01 >= 1f && !activeBioScan.requestSent) {
                 activeBioScan.requestSent = true;
+                activeBioScan.requestSentMs = now;
                 NetworkChannels.bioScanRequest(activeBioScan.entityId);
                 int cooldown = OresAndStuffConfig.bioScan().cooldownTicks;
                 if (cooldown > 0) {
@@ -311,12 +314,12 @@ public final class OasClient {
         }
 
         if (activeBioScan != null) {
-            float p = Mth.clamp(activeBioScan.progress01, 0f, 1f);
+            float p = renderProgress01(activeBioScan);
             int bw = 140;
             int bx = (w - bw) / 2;
             int by = scaledHeight - 44;
             g.fill(bx, by, bx + bw, by + 8, OasColors.withAlpha(OasColors.BG_0, 0xAA));
-            g.fill(bx + 1, by + 1, bx + 1 + (int) ((bw - 2) * p), by + 7, OasColors.ACCENT_PRIMARY);
+            g.fill(bx + 1, by + 1, bx + 1 + (int) ((bw - 2) * p), by + 7, OasColors.withAlpha(OasColors.ACCENT_PRIMARY, 255));
             String label = activeBioScan.completed ? net.minecraft.network.chat.Component.translatable("Completed").getString()
                     : (activeBioScan.progress01 >= 0.5f ? net.minecraft.network.chat.Component.translatable("Decoding...").getString() : net.minecraft.network.chat.Component.translatable("Scanning...").getString());
             g.drawCenteredString(minecraft.font, label, w / 2, by - 10, OasColors.ACCENT_SOFT);
@@ -332,17 +335,26 @@ public final class OasClient {
 
     }
 
+    private static float renderProgress01(ActiveBioScan scan) {
+        if (scan.completed || scan.progress01 >= 1f) {
+            return 1f;
+        }
+        float p = scan.progress01 + (System.currentTimeMillis() - scan.lastUpdateMs) * scan.ratePerMs;
+        return Mth.clamp(p, 0f, 1f);
+    }
+
     private static final class ActiveBioScan {
         final UUID entityUuid;
         final int entityId;
         final long durationMs;
         float progress01;
+        float ratePerMs;
         long lastUpdateMs;
         long startedMs;
+        long requestSentMs;
         boolean requestSent;
         boolean locked;
         boolean completed;
-        long completedAtMs;
 
         ActiveBioScan(UUID entityUuid, int entityId, int durationMs) {
             this.entityUuid = entityUuid;

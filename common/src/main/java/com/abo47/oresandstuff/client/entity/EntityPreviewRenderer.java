@@ -436,7 +436,7 @@ public final class EntityPreviewRenderer {
         dispatcher.overrideCameraOrientation(new Quaternionf());
         MultiBufferSource source = graphics.bufferSource();
         if (darkened) {
-            source = requestedType -> new DarkenedVertexConsumer(graphics.bufferSource().getBuffer(requestedType), 0.03f, 0.03f, 0.04f, 1.0f);
+            source = requestedType -> new DarkenedVertexConsumer(graphics.bufferSource().getBuffer(requestedType), 0.05f, 0.05f, 0.06f, 1.0f);
         }
         MultiBufferSource finalSource = source;
         RenderSystem.runAsFancy(() -> dispatcher.render(entity, 0.0D, 0.0D, 0.0D, 0.0F, partialTicks, graphics.pose(), finalSource, 15728880));

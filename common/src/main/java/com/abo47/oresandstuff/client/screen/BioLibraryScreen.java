@@ -80,6 +80,7 @@ public final class BioLibraryScreen {
         private final Player player;
         private final List<BioScanLibraryPacket.Entry> allEntries;
         private String selectedEntityId = "";
+        private String previewEntityId = "";
         private String selectedVariantKey = "";
         private String search = "";
 
@@ -117,6 +118,20 @@ public final class BioLibraryScreen {
             return null;
         }
 
+        private boolean hasPreview() {
+            return !selectedEntityId.isBlank() || !previewEntityId.isBlank();
+        }
+
+        private BioScanLibraryPacket.Entry previewEntry() {
+            String id = selectedEntityId.isBlank() ? previewEntityId : selectedEntityId;
+            for (BioScanLibraryPacket.Entry entry : allEntries) {
+                if (entry.entityId().equals(id)) {
+                    return entry;
+                }
+            }
+            return null;
+        }
+
         private boolean isUnlocked() {
             BioScanLibraryPacket.Entry entry = selectedEntry();
             return entry != null && entry.unlocked();
@@ -145,7 +160,7 @@ public final class BioLibraryScreen {
         }
 
         private int closeButtonX() {
-            return RIGHT_X + (ROOT_W - 174) - 18;
+            return RIGHT_X + (ROOT_W - 174) - 18 + 1;
         }
 
         private int backButtonX() {
@@ -158,6 +173,7 @@ public final class BioLibraryScreen {
             content.addWidget(ChromeFactory.iconButton(backX, 1, backSize, backSize, "back", () -> OasColors.INTERACTIVE, click -> {
                 selectedEntityId = "";
                 selectedVariantKey = "";
+                previewEntityId = "";
                 rebuild();
             }));
         }
@@ -165,28 +181,30 @@ public final class BioLibraryScreen {
         private void addPreview() {
             previewPanel = new WidgetGroup(PAD, 22, LEFT_W, ROOT_H - 48);
             previewPanel.setBackground(SurfaceFactory.bordered(OasColors.withAlpha(OasColors.SURFACE_PANEL_ALT, 120), OasColors.BORDER_BASE));
-            if (browsingEntity()) {
-                BioScanLibraryPacket.Entry entry = selectedEntry();
-                String entityId = entry.entityId();
-                boolean unlocked = entry.unlocked();
-                previewPanel.addWidget(label(8, 8, crop(EntityPreviewRenderer.entityDisplayName(entityId), 22), OasColors.TEXT_SECONDARY));
-                previewPanel.addWidget(label(8, 22, crop(variantLabel(entityId, selectedVariantKey), 22), unlocked ? OasColors.TEXT_PRIMARY : OasColors.TEXT_MUTED));
-                previewPanel.addWidget(new WidgetGroup(10, 42, LEFT_W - 20, Math.max(48, ROOT_H - 98)) {
-                    @Override
-                    public void drawInBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-                        EntityPreviewRenderer.renderEntityAsset(
-                                graphics,
-                                getPositionX(),
-                                getPositionY(),
-                                getSizeWidth(),
-                                getSizeHeight(),
-                                EntityPreviewRenderer.entityAsset(entityId, selectedVariantKey),
-                                ENTITY_FRONT_YAW,
-                                PREVIEW_SPIN_SPEED,
-                                !unlocked,
-                                partialTicks);
-                    }
-                });
+            if (hasPreview()) {
+                BioScanLibraryPacket.Entry entry = previewEntry();
+                if (entry != null) {
+                    String entityId = entry.entityId();
+                    boolean unlocked = entry.unlocked();
+                    previewPanel.addWidget(label(8, 8, crop(EntityPreviewRenderer.entityDisplayName(entityId), 22), OasColors.TEXT_SECONDARY));
+                    previewPanel.addWidget(label(8, 22, crop(variantLabel(entityId, selectedVariantKey), 22), unlocked ? OasColors.TEXT_PRIMARY : OasColors.TEXT_MUTED));
+                    previewPanel.addWidget(new WidgetGroup(10, 42, LEFT_W - 20, Math.max(48, ROOT_H - 98)) {
+                        @Override
+                        public void drawInBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+                            EntityPreviewRenderer.renderEntityAsset(
+                                    graphics,
+                                    getPositionX(),
+                                    getPositionY(),
+                                    getSizeWidth(),
+                                    getSizeHeight(),
+                                    EntityPreviewRenderer.entityAsset(entityId, selectedVariantKey),
+                                    ENTITY_FRONT_YAW,
+                                    PREVIEW_SPIN_SPEED,
+                                    !unlocked,
+                                    partialTicks);
+                        }
+                    });
+                }
             } else {
                 long scanned = 0;
                 for (BioScanLibraryPacket.Entry entry : allEntries) {
@@ -328,6 +346,10 @@ public final class BioLibraryScreen {
                 List<EntityVariantCatalog.VariantEntry> variants = EntityVariantCatalog.variantsFor(entry.entityId());
                 selectedVariantKey = variants.isEmpty() ? "" : variants.get(0).key();
                 rebuild();
+            } else {
+                selectedVariantKey = "";
+                previewEntityId = entry.entityId();
+                rebuildPreview();
             }
         }
 
