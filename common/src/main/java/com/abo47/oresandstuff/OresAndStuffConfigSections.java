@@ -13,8 +13,6 @@ public final class OresAndStuffConfigSections {
 
     public static final class Scanner {
         public int radiusCap = 512;
-        public int updateTicks = 12;
-        public boolean scannerAutoRefresh = false;
         public int maxResults = 6;
         public int cooldownTicks = 40;
         public int pulseDurationMs = 4200;
@@ -25,7 +23,6 @@ public final class OresAndStuffConfigSections {
         public int experimentalVisualMode = 1;
         public int holographicWidthBlocks = 100;
         public double holographicScanlineStrength = 0.0;
-        public boolean holographicStatusHud = false;
         public boolean scanSoundEnabled = true;
         public double scanSoundVolume = 0.85;
         public double scanSoundPitch = 1.08;
@@ -34,8 +31,6 @@ public final class OresAndStuffConfigSections {
         public double pingSoundPitch = 1.32;
 
         void read(JsonObject root) {
-            updateTicks = clampInt(intValue(root, "scannerUpdateTicks", updateTicks), 0, 100);
-            scannerAutoRefresh = bool(root, "scannerAutoRefresh", scannerAutoRefresh);
             maxResults = clampInt(intValue(root, "scannerMaxResults", maxResults), 1, 24);
             cooldownTicks = clampInt(intValue(root, "scannerCooldownTicks", cooldownTicks), 0, 1200);
             pulseDurationMs = clampInt(intValue(root, "scannerPulseDurationMs", pulseDurationMs), 800, 20000);
@@ -46,7 +41,6 @@ public final class OresAndStuffConfigSections {
             experimentalVisualMode = clampInt(intValue(root, "experimentalScannerVisualMode", experimentalVisualMode), 0, 1);
             holographicWidthBlocks = clampInt(intValue(root, "scannerHolographicWidthBlocks", holographicWidthBlocks), 1, 256);
             holographicScanlineStrength = clampDouble(doubleValue(root, "scannerHolographicScanlineStrength", holographicScanlineStrength), 0.0, 2.0);
-            holographicStatusHud = bool(root, "scannerHolographicStatusHud", holographicStatusHud);
             scanSoundEnabled = bool(root, "scannerScanSoundEnabled", scanSoundEnabled);
             scanSoundVolume = clampDouble(doubleValue(root, "scannerScanSoundVolume", scanSoundVolume), 0.0, 2.0);
             scanSoundPitch = clampDouble(doubleValue(root, "scannerScanSoundPitch", scanSoundPitch), 0.1, 2.0);
@@ -58,10 +52,8 @@ public final class OresAndStuffConfigSections {
         JsonObject write() {
             JsonObject root = new JsonObject();
             root.addProperty("scannerRadiusCap", radiusCap);
-            root.addProperty("scannerUpdateTicks", updateTicks);
             root.addProperty("scannerMaxResults", maxResults);
             root.addProperty("scannerCooldownTicks", cooldownTicks);
-            root.addProperty("scannerAutoRefresh", scannerAutoRefresh);
             root.addProperty("scannerPulseRangeBlocks", pulseRangeBlocks);
             root.addProperty("scannerPulseSpeedBlocksPerSec", pulseSpeedBlocksPerSec);
             root.addProperty("scannerPulseWidthBlocks", pulseWidthBlocks);
@@ -69,7 +61,6 @@ public final class OresAndStuffConfigSections {
             root.addProperty("experimentalScannerVisualMode", experimentalVisualMode);
             root.addProperty("scannerHolographicWidthBlocks", holographicWidthBlocks);
             root.addProperty("scannerHolographicScanlineStrength", holographicScanlineStrength);
-            root.addProperty("scannerHolographicStatusHud", holographicStatusHud);
             root.addProperty("scannerScanSoundEnabled", scanSoundEnabled);
             root.addProperty("scannerScanSoundVolume", scanSoundVolume);
             root.addProperty("scannerScanSoundPitch", scanSoundPitch);
@@ -114,17 +105,21 @@ public final class OresAndStuffConfigSections {
     }
 
     public static final class Worldgen {
-        public boolean removeVanillaOres = true;
+        public boolean vanillaOresEnabled = false;
         public List<String> disabledNodeTypes = new ArrayList<>();
 
         void read(JsonObject root) {
-            removeVanillaOres = bool(root, "removeVanillaOres", removeVanillaOres);
+            if (root != null && root.has("removeVanillaOres")) {
+                vanillaOresEnabled = !bool(root, "removeVanillaOres", !vanillaOresEnabled);
+            } else {
+                vanillaOresEnabled = bool(root, "vanillaOresEnabled", vanillaOresEnabled);
+            }
             disabledNodeTypes = stringList(root, "disabledNodeTypes", disabledNodeTypes);
         }
 
         JsonObject write() {
             JsonObject root = new JsonObject();
-            root.addProperty("removeVanillaOres", removeVanillaOres);
+            root.addProperty("vanillaOresEnabled", vanillaOresEnabled);
             JsonArray arr = new JsonArray();
             for (String s : disabledNodeTypes) {
                 arr.add(s);

@@ -53,6 +53,30 @@ public final class ConfigAssets {
         OresAndStuffMod.LOGGER.info("Generated {} default config file(s) in {}", defaults.size(), folder);
     }
 
+    /**
+     * Writes only the default files that do not exist yet. Existing (possibly
+     * player-edited) files are left untouched, unlike {@link #generateDefaults}.
+     */
+    public static void generateMissingDefaults(String sub, Map<String, String> defaults) {
+        Path folder = createFolder(sub);
+        int written = 0;
+        for (Map.Entry<String, String> entry : defaults.entrySet()) {
+            Path file = folder.resolve(entry.getKey());
+            if (Files.isRegularFile(file)) {
+                continue;
+            }
+            try {
+                Files.writeString(file, entry.getValue(), StandardCharsets.UTF_8);
+                written++;
+            } catch (IOException e) {
+                OresAndStuffMod.LOGGER.error("Failed to write default config file {} in {}", entry.getKey(), folder, e);
+            }
+        }
+        if (written > 0) {
+            OresAndStuffMod.LOGGER.info("Generated {} missing default config file(s) in {}", written, folder);
+        }
+    }
+
     public static List<Path> listJson(String sub) {
         Path folder = createFolder(sub);
         List<Path> out = new ArrayList<>();

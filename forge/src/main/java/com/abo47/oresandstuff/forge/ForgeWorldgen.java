@@ -12,6 +12,7 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.OresAndStuffMod;
@@ -48,10 +49,18 @@ public final class ForgeWorldgen {
 
         @Override
         public void modify(Holder<Biome> biome, Phase phase, ModifiableBiomeInfo.BiomeInfo.Builder builder) {
-            if (phase != Phase.REMOVE || !OresAndStuffConfig.worldgen().removeVanillaOres) {
+            if (phase != Phase.REMOVE || OresAndStuffConfig.worldgen().vanillaOresEnabled) {
                 return;
             }
-            builder.getGenerationSettings().getFeatures(GenerationStep.Decoration.UNDERGROUND_ORES).removeIf(feature -> feature.value().getFeatures().anyMatch(this::isVanillaOre));
+            for (GenerationStep.Decoration step : GenerationStep.Decoration.values()) {
+                builder.getGenerationSettings().getFeatures(step)
+                        .removeIf(feature -> isVanillaOrePlaced(feature) || feature.value().getFeatures().anyMatch(this::isVanillaOre));
+            }
+        }
+
+        private boolean isVanillaOrePlaced(Holder<PlacedFeature> feature) {
+            return feature.unwrapKey().map(key -> key.location().getNamespace().equals("minecraft")
+                    && ModFeatures.VANILLA_ORE_PLACED_PATHS.contains(key.location().getPath())).orElse(false);
         }
 
         private boolean isVanillaOre(ConfiguredFeature<?, ?> feature) {

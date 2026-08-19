@@ -12,6 +12,10 @@ public final class ExtractionRateService {
     }
 
     public static ItemStack buildDrop(OreNodeBlockEntity node, int baseCount) {
+        return buildDrop(node, baseCount, node.getPurity().manualMultiplier());
+    }
+
+    public static ItemStack buildDrop(OreNodeBlockEntity node, int baseCount, double multiplier) {
         Item item = null;
         var type = OreNodeDataManager.INSTANCE.getNodeType(node.getNodeTypeId()).orElse(null);
         if (type != null) {
@@ -20,7 +24,7 @@ public final class ExtractionRateService {
         if (item == null || item == Items.AIR) {
             return ItemStack.EMPTY;
         }
-        int count = Math.max(1, (int) Math.round(baseCount * node.getPurity().manualMultiplier()));
+        int count = Math.max(1, (int) Math.round(baseCount * multiplier));
         return new ItemStack(item, count);
     }
 

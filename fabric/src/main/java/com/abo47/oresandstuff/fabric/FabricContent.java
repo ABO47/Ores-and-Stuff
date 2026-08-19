@@ -35,7 +35,6 @@ public final class FabricContent {
         register(BuiltInRegistries.ITEM, "infinite_battery", ModItems.INFINITE_BATTERY);
         register(BuiltInRegistries.ITEM, "scanner", ModItems.SCANNER);
         register(BuiltInRegistries.ITEM, "bio_scanner", ModItems.BIO_SCANNER);
-        register(BuiltInRegistries.ITEM, "node_extractor_pickaxe", ModItems.NODE_EXTRACTOR_PICKAXE);
 
         Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, id("main"), ModCreativeTabs.MAIN);
     }

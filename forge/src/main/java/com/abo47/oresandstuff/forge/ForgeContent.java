@@ -41,7 +41,6 @@ public final class ForgeContent {
         ITEMS.register("infinite_battery", () -> ModItems.INFINITE_BATTERY);
         ITEMS.register("scanner", () -> ModItems.SCANNER);
         ITEMS.register("bio_scanner", () -> ModItems.BIO_SCANNER);
-        ITEMS.register("node_extractor_pickaxe", () -> ModItems.NODE_EXTRACTOR_PICKAXE);
 
         TABS.register("main", () -> ModCreativeTabs.MAIN);
 

@@ -10,7 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 
 import net.minecraft.resources.ResourceLocation;
@@ -43,7 +42,7 @@ public final class OreNodeDataManager {
             return;
         }
         loaded = true;
-        ConfigAssets.generateDefaults(FOLDER, defaultFiles());
+        ConfigAssets.generateMissingDefaults(FOLDER, defaultFiles());
 
         Map<ResourceLocation, OreNodeType> parsed = new HashMap<>();
         for (Path file : ConfigAssets.listJson(FOLDER)) {
@@ -264,70 +263,117 @@ public final class OreNodeDataManager {
 
     private static Map<String, String> defaultFiles() {
         Map<String, String> files = new LinkedHashMap<>();
-        files.put("iron.json", defaultJson("oresandstuff:iron", "minecraft:raw_iron", 0.6, "#D8D8D8", "minecraft:iron_ore",
-                "minecraft:plains:30,mountain:45,swamp:15,desert:30", 1, 2, 25, 50, 25));
-        files.put("copper.json", defaultJson("oresandstuff:copper", "minecraft:raw_copper", 0.7, "#C97142", "minecraft:copper_ore",
-                "minecraft:plains:30,mountain:20,swamp:20,desert:35", 1, 2, 25, 50, 25));
-        files.put("coal.json", defaultJson("oresandstuff:coal", "minecraft:coal", 0.9, "#2E2E2E", "minecraft:coal_ore",
-                "minecraft:plains:25,mountain:20,swamp:55,desert:25", 1, 2, 35, 45, 20));
-        files.put("redstone.json", defaultJson("oresandstuff:redstone", "minecraft:redstone", 0.4, "#D12222", "minecraft:redstone_ore",
-                "minecraft:plains:15,mountain:15,swamp:10,desert:10", 0, 1, 45, 40, 15));
+        for (DefaultNode node : DEFAULT_NODES) {
+            files.put(node.fileName(), nodeJson(node));
+        }
         return files;
     }
 
-    private static String defaultJson(String id, String output, double rate, String color, String visual,
-                                      String biomesCsv, int minNodes, int maxNodes, int impure, int normal, int pure) {
+    private static final List<DefaultNode> DEFAULT_NODES = List.of(
+            new DefaultNode("oresandstuff:coal", "minecraft:coal", 0.9, "#2E2E2E", "minecraft:coal_ore", "minecraft:deepslate_coal_ore",
+                    "minecraft:overworld",
+                    "swamp:55,forest:45,plains:40,jungle:30,savanna:20,snowy:25,windswept:20,meadow:25,desert:10,ice:25,grove:30,mushroom:25,beach:10,river:15",
+                    2, 3, 35, 45, 20, 200, 1, 192, 2, 8, true, 0, 63, 60.0, "coal.json"),
+            new DefaultNode("oresandstuff:iron", "minecraft:raw_iron", 0.6, "#D8D8D8", "minecraft:iron_ore", "minecraft:deepslate_iron_ore",
+                    "minecraft:overworld",
+                    "windswept:50,snowy_slopes:45,peak:40,meadow:30,plains:30,forest:25,desert:20,savanna:15,swamp:10,jungle:10,ice:35,grove:20,mushroom:15,beach:35,shore:30,river:20",
+                    2, 3, 25, 50, 25, 220, 1, 192, 2, 8, true, 0, 63, 80.0, "iron.json"),
+            new DefaultNode("oresandstuff:copper", "minecraft:raw_copper", 0.7, "#C97142", "minecraft:copper_ore", "minecraft:deepslate_copper_ore",
+                    "minecraft:overworld",
+                    "desert:50,badlands:55,windswept:35,peak:30,savanna:20,plains:15,forest:15,swamp:5,grove:15,mushroom:15,beach:20,shore:25",
+                    1, 2, 30, 45, 25, 240, 1, 192, 2, 8, true, 0, 63, 70.0, "copper.json"),
+            new DefaultNode("oresandstuff:gold", "minecraft:raw_gold", 0.5, "#F2C94C", "minecraft:gold_ore", "minecraft:deepslate_gold_ore",
+                    "minecraft:overworld",
+                    "windswept:45,desert:40,badlands:45,peak:35,snowy_slopes:30,savanna:15,plains:15,jungle:10,grove:10,mushroom:10,beach:15,shore:10",
+                    1, 2, 25, 50, 25, 260, 1, 192, 2, 8, true, 0, 63, 50.0, "gold.json"),
+            new DefaultNode("oresandstuff:redstone", "minecraft:redstone", 0.4, "#D12222", "minecraft:redstone_ore", "minecraft:deepslate_redstone_ore",
+                    "minecraft:overworld",
+                    "badlands:45,desert:20,peak:20,windswept:15,plains:10,ocean:15,cave:35,deep_dark:45,river:10",
+                    0, 1, 45, 40, 15, 300, 1, 192, 2, 6, false, -60, -10, 90.0, "redstone.json"),
+            new DefaultNode("oresandstuff:diamond", "minecraft:diamond", 0.3, "#4DE1E1", "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore",
+                    "minecraft:overworld",
+                    "plains:30,forest:25,taiga:25,snowy:20,windswept:20,desert:10,swamp:5,river:25,ocean:20,cave:30,deep_dark:20",
+                    0, 1, 30, 45, 25, 320, 1, 192, 2, 6, false, -60, -20, 200.0, "diamond.json"),
+            new DefaultNode("oresandstuff:emerald", "minecraft:emerald", 0.25, "#3ECF6E", "minecraft:emerald_ore", "minecraft:deepslate_emerald_ore",
+                    "minecraft:overworld",
+                    "peak:70,windswept:55,snowy_slopes:45,meadow:25,desert:10,jungle:10,cave:15",
+                    0, 1, 30, 45, 25, 320, 1, 192, 2, 6, false, -60, -15, 180.0, "emerald.json"),
+            new DefaultNode("oresandstuff:lapis", "minecraft:lapis_lazuli", 0.35, "#2E6BD8", "minecraft:lapis_ore", "minecraft:deepslate_lapis_ore",
+                    "minecraft:overworld",
+                    "desert:45,badlands:30,savanna:30,plains:20,jungle:10,ocean:25,cave:30,river:10",
+                    0, 1, 40, 40, 20, 280, 1, 192, 2, 6, false, -60, -10, 100.0, "lapis.json"),
+            new DefaultNode("oresandstuff:nether_quartz", "minecraft:quartz", 0.7, "#E8DFD6", "minecraft:nether_quartz_ore", "minecraft:quartz_block",
+                    "minecraft:the_nether",
+                    "nether_wastes:50,basalt_deltas:45,crimson_forest:25,warped_forest:25,soul_sand_valley:20",
+                    1, 2, 30, 45, 25, 200, 1, 192, 2, 8, true, 0, 63, 80.0, "nether_quartz.json"),
+            new DefaultNode("oresandstuff:nether_gold", "minecraft:gold_nugget", 0.5, "#E8B01C", "minecraft:nether_gold_ore", "minecraft:gold_block",
+                    "minecraft:the_nether",
+                    "nether_wastes:55,basalt_deltas:45,soul_sand_valley:15,crimson_forest:10,warped_forest:10",
+                    1, 2, 25, 50, 25, 220, 1, 192, 2, 8, true, 0, 63, 60.0, "nether_gold.json"),
+            new DefaultNode("oresandstuff:end_diamond", "minecraft:diamond", 0.3, "#4DE1E1", "minecraft:diamond_ore", "minecraft:diamond_block",
+                    "minecraft:the_end",
+                    "end_highlands:30,end_midlands:25,the_end:20,small_end_islands:15,end_barrens:15",
+                    0, 1, 30, 45, 25, 240, 1, 192, 2, 6, true, 0, 63, 200.0, "end_diamond.json"),
+            new DefaultNode("oresandstuff:end_emerald", "minecraft:emerald", 0.25, "#3ECF6E", "minecraft:emerald_ore", "minecraft:emerald_block",
+                    "minecraft:the_end",
+                    "end_highlands:25,end_midlands:30,the_end:20,small_end_islands:15,end_barrens:15",
+                    0, 1, 30, 45, 25, 280, 1, 192, 2, 6, true, 0, 63, 180.0, "end_emerald.json")
+    );
+
+    private record DefaultNode(String id, String output, double rate, String color, String visual, String visualPure,
+                               String dimensionsCsv, String biomesCsv, int minNodes, int maxNodes,
+                               int impure, int normal, int pure, int spacing, int attempts,
+                               int scannerRadius, int clusterRadius, int scatterCount,
+                               boolean surfaceSpawn, int minY, int maxY, double hardness, String fileName) {
+    }
+
+    private static String nodeJson(DefaultNode node) {
         JsonObject root = new JsonObject();
-        root.addProperty("id", id);
-        root.addProperty("output_item", output);
+        root.addProperty("id", node.id());
+        root.addProperty("output_item", node.output());
         JsonObject drops = new JsonObject();
-        drops.addProperty(output, 100);
+        drops.addProperty(node.output(), 100);
         root.add("drops", drops);
-        root.addProperty("base_rate_per_second", rate);
-        root.addProperty("scanner_color", color);
-        root.addProperty("hardness", 100.0);
+        root.addProperty("base_rate_per_second", node.rate());
+        root.addProperty("scanner_color", node.color());
+        root.addProperty("hardness", node.hardness());
         root.addProperty("enabled", true);
-        root.addProperty("visual_block", visual);
-        root.addProperty("visual_block_pure", "minecraft:deepslate_" + visual.substring(visual.lastIndexOf('/') + 1).replace("minecraft:", ""));
+        root.addProperty("visual_block", node.visual());
+        root.addProperty("visual_block_pure", node.visualPure());
         JsonArray dimensions = new JsonArray();
-        dimensions.add(Level.OVERWORLD.location().toString());
+        for (String part : node.dimensionsCsv().split(",")) {
+            dimensions.add(part.trim());
+        }
         root.add("dimensions", dimensions);
         JsonObject biomes = new JsonObject();
-        for (String part : biomesCsv.split(",")) {
+        for (String part : node.biomesCsv().split(",")) {
             int lastColon = part.lastIndexOf(':');
             biomes.addProperty(part.substring(0, lastColon), Integer.parseInt(part.substring(lastColon + 1)));
         }
         root.add("biomes", biomes);
         root.add("biome_overrides", new JsonObject());
-        root.addProperty("min_nodes_per_chunk", minNodes);
-        root.addProperty("max_nodes_per_chunk", maxNodes);
+        root.addProperty("min_nodes_per_chunk", node.minNodes());
+        root.addProperty("max_nodes_per_chunk", node.maxNodes());
         JsonObject purity = new JsonObject();
-        purity.addProperty("impure", impure);
-        purity.addProperty("normal", normal);
-        purity.addProperty("pure", pure);
+        purity.addProperty("impure", node.impure());
+        purity.addProperty("normal", node.normal());
+        purity.addProperty("pure", node.pure());
         root.add("purity_weights", purity);
-        root.addProperty("min_spacing_blocks", 220);
-        root.addProperty("placement_attempts", 1);
-        root.addProperty("scanner_radius", 192);
-        root.addProperty("cluster_radius", 2);
-        root.addProperty("scatter_count", 8);
-        root.addProperty("surface_spawn", true);
-        root.addProperty("min_y", 0);
-        root.addProperty("max_y", 63);
+        root.addProperty("min_spacing_blocks", node.spacing());
+        root.addProperty("placement_attempts", node.attempts());
+        root.addProperty("scanner_radius", node.scannerRadius());
+        root.addProperty("cluster_radius", node.clusterRadius());
+        root.addProperty("scatter_count", node.scatterCount());
+        root.addProperty("surface_spawn", node.surfaceSpawn());
+        root.addProperty("min_y", node.minY());
+        root.addProperty("max_y", node.maxY());
         return ConfigAssets.pretty(root);
     }
 
     private static Map<ResourceLocation, OreNodeType> fallbackDefaults() {
         Map<ResourceLocation, OreNodeType> out = new HashMap<>();
-        for (OreNodeType type : List.of(
-                parseNodeType(JsonParser.parseString(defaultJson("oresandstuff:iron", "minecraft:raw_iron", 0.6, "#D8D8D8", "minecraft:iron_ore",
-                        "minecraft:plains:30,mountain:45,swamp:15,desert:30", 1, 2, 25, 50, 25)).getAsJsonObject()),
-                parseNodeType(JsonParser.parseString(defaultJson("oresandstuff:copper", "minecraft:raw_copper", 0.7, "#C97142", "minecraft:copper_ore",
-                        "minecraft:plains:30,mountain:20,swamp:20,desert:35", 1, 2, 25, 50, 25)).getAsJsonObject()),
-                parseNodeType(JsonParser.parseString(defaultJson("oresandstuff:coal", "minecraft:coal", 0.9, "#2E2E2E", "minecraft:coal_ore",
-                        "minecraft:plains:25,mountain:20,swamp:55,desert:25", 1, 2, 35, 45, 20)).getAsJsonObject()),
-                parseNodeType(JsonParser.parseString(defaultJson("oresandstuff:redstone", "minecraft:redstone", 0.4, "#D12222", "minecraft:redstone_ore",
-                        "minecraft:plains:15,mountain:15,swamp:10,desert:10", 0, 1, 45, 40, 15)).getAsJsonObject()))) {
+        for (DefaultNode node : DEFAULT_NODES) {
+            OreNodeType type = parseNodeType(JsonParser.parseString(nodeJson(node)).getAsJsonObject());
             if (type != null) {
                 out.put(type.id(), type);
             }

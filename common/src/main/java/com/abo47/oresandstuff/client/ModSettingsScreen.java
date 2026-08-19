@@ -52,8 +52,7 @@ public final class ModSettingsScreen {
     private static final int SEARCH_INSET = GRID_9;
     private static final int HEADER_H = 14;
     private static final int HEADER_LIST_GAP = GRID_5;
-    private static final int BOTTOM_GUTTER = GRID_6;
-    private static final int LIST_INNER_PAD = GRID_6;
+    private static final int BOTTOM_GUTTER = GRID_5;
     private static final int LIST_V_PAD = GRID_4;
     private static final int ROW_H = ROW_H_26;
     private static final int ROW_INSET = GRID_4;
@@ -232,20 +231,17 @@ public final class ModSettingsScreen {
                 optionsPanel.addWidget(label(8, LIST_V_PAD, tr("No matching options"), OasColors.TEXT_MUTED));
                 return;
             }
-            int x = LIST_INNER_PAD;
-            int y = LIST_V_PAD;
-            int w = optionsPanel.getSizeWidth() - LIST_INNER_PAD * 2;
-            int h = optionsPanel.getSizeHeight() - LIST_V_PAD * 2;
-            buildList(optionsPanel, x, y, w, h, ROW_H, entries);
+            buildList(optionsPanel, optionsPanel.getSizeWidth(), optionsPanel.getSizeHeight(), entries);
         }
 
-        private void buildList(WidgetGroup panel, int x, int y, int w, int h, int rowH, List<RowSpec> entries) {
-            int rows = ScrollMath.listRows(h - LIST_V_PAD * 2, rowH, GRID_4);
+        private void buildList(WidgetGroup panel, int w, int h, List<RowSpec> entries) {
+            int rows = ScrollMath.listRows(h - LIST_V_PAD * 2, ROW_H, GRID_4);
             int maxStart = Math.max(0, entries.size() - rows);
             scrollValue = ScrollMath.clamp(scrollValue, maxStart);
             boolean showScroll = maxStart > 0;
             int rowW = showScroll ? w - DragScrollBarWidget.RESERVED_WIDTH - GRID_8 : w;
-            WidgetGroup list = new WidgetGroup(x, y, w, h) {
+
+            WidgetGroup list = new WidgetGroup(0, 0, w, h) {
                 @Override
                 public boolean mouseWheelMove(double mouseX, double mouseY, double wheelDelta) {
                     if (!showScroll) {
@@ -254,7 +250,7 @@ public final class ModSettingsScreen {
                     int max = Math.max(0, entries.size() - rows);
                     int next = Math.max(0, Math.min(max, scroll.value() + (wheelDelta > 0 ? -1 : 1)));
                     if (next == scroll.value()) {
-                        return super.mouseWheelMove(mouseX, mouseY, wheelDelta);
+                        return true;
                     }
                     scroll.setValue(next);
                     refresh.run();
@@ -267,16 +263,15 @@ public final class ModSettingsScreen {
             int rowY = LIST_V_PAD;
             for (int i = scroll.value(); i < end; i++) {
                 renderRow(list, entries.get(i), rowY, rowW);
-                rowY += rowH;
+                rowY += ROW_H;
             }
             if (showScroll) {
-                int barH = Math.max(1, rows * rowH);
+                int barH = Math.max(1, rows * ROW_H);
                 int knobH = Math.max(12, Math.round((float) rows / (float) entries.size() * barH));
-                int barX = x + w - DragScrollBarWidget.RESERVED_WIDTH;
-                int barY = y + LIST_V_PAD;
+                int barX = w - DragScrollBarWidget.RESERVED_WIDTH;
                 panel.addWidget(new DragScrollBarWidget(
                         barX + 1,
-                        barY,
+                        LIST_V_PAD,
                         DragScrollBarWidget.RESERVED_WIDTH,
                         barH,
                         scroll::value,
@@ -430,12 +425,9 @@ public final class ModSettingsScreen {
         private List<RowSpec> scannerRows() {
             var s = OresAndStuffConfig.scanner();
             return List.of(
-                    toggle("scanner.hud", "Holographic status HUD", () -> s.holographicStatusHud, v -> s.holographicStatusHud = v),
                     toggle("scanner.scanSound", "Scan sound", () -> s.scanSoundEnabled, v -> s.scanSoundEnabled = v),
                     toggle("scanner.pingSound", "Ping sound", () -> s.pingSoundEnabled, v -> s.pingSoundEnabled = v),
-                    toggle("scanner.autoRefresh", "Auto-refresh while held", () -> s.scannerAutoRefresh, v -> s.scannerAutoRefresh = v),
                     number("scanner.radiusCap", "Radius cap", () -> s.radiusCap, v -> s.radiusCap = (int) v, 32, 4096, 4, true),
-                    number("scanner.updateTicks", "Update ticks (0 = off)", () -> s.updateTicks, v -> s.updateTicks = (int) v, 0, 100, 3, true),
                     number("scanner.maxResults", "Max results", () -> s.maxResults, v -> s.maxResults = (int) v, 1, 24, 2, true),
                     number("scanner.cooldownTicks", "Cooldown ticks", () -> s.cooldownTicks, v -> s.cooldownTicks = (int) v, 0, 1200, 4, true),
                     number("scanner.pulseDurationMs", "Pulse duration (ms)", () -> s.pulseDurationMs, v -> s.pulseDurationMs = (int) v, 800, 20000, 6, true),
@@ -467,7 +459,7 @@ number("bio.durationMs", "Duration (ms)", () -> s.durationMs, v -> s.durationMs 
         private List<RowSpec> worldgenRows() {
             var s = OresAndStuffConfig.worldgen();
             return List.of(
-                    toggle("world.removeVanilla", "Remove vanilla ores", () -> s.removeVanillaOres, v -> s.removeVanillaOres = v)
+                    toggle("world.vanillaOres", "Vanilla ores", () -> s.vanillaOresEnabled, v -> s.vanillaOresEnabled = v)
             );
         }
 

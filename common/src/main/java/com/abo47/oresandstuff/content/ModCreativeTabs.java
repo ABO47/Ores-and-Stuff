@@ -20,7 +20,6 @@ public final class ModCreativeTabs {
                 output.accept(ModItems.INFINITE_BATTERY);
                 output.accept(ModItems.SCANNER);
                 output.accept(ModItems.BIO_SCANNER);
-                output.accept(ModItems.NODE_EXTRACTOR_PICKAXE);
             })
             .build();
 

@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -59,7 +60,7 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
             int z = origin.getZ() + random.nextInt(16);
             BlockPos pos;
             if (type.surfaceSpawn()) {
-                int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                int y = surfaceY(level, x, z);
                 pos = new BlockPos(x, y, z);
                 if (random.nextInt(Math.max(1, 4 - maxNodes)) != 0 || !level.getBlockState(pos).isSolidRender(level, pos)) {
                     continue;
@@ -70,7 +71,7 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
                 }
             } else {
                 int yMin = Math.max(level.getMinBuildHeight() + 1, type.minY());
-                int yMax = Math.min(level.getMaxBuildHeight() - 1, Math.max(yMin, type.maxY()));
+                int yMax = Math.min(logicalTop(level), Math.max(yMin, type.maxY()));
                 int y = yMin + random.nextInt(Math.max(1, yMax - yMin + 1));
                 pos = new BlockPos(x, y, z);
                 if (random.nextInt(Math.max(1, 4 - maxNodes)) != 0 || !isUndergroundHost(level, pos)) {
@@ -90,6 +91,62 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
     private static String biomeName(WorldGenLevel level, BlockPos origin) {
         Holder<Biome> biome = level.getBiome(origin);
         return biome.unwrapKey().map(key -> key.location().toString()).orElse("minecraft:plains");
+    }
+
+    /**
+     * Surface height for a node spawn. In the nether the regular heightmaps
+     * return the bedrock ceiling (y ~127), so nodes would spawn unreachable;
+     * instead the largest air gap in the column is located and the node is
+     * placed on the solid block at the bottom of that gap - the actual nether
+     * floor.
+     *
+     * <p>The scan is limited to the dimension's logical height (y0-y128 in the
+     * nether) because the nether's build height is 256 - the empty roof void
+     * above the bedrock ceiling (y128-y255) would otherwise be picked as the
+     * largest air gap.
+     */
+    private static int surfaceY(WorldGenLevel level, int x, int z) {
+        if (!level.getLevel().dimension().location().equals(Level.NETHER.location())) {
+            return level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+        }
+        int maxY = logicalTop(level);
+        int minY = level.getMinBuildHeight();
+        int bestAirStart = -1;
+        int bestAirLen = 0;
+        int runStart = -1;
+        int runLen = 0;
+        for (int y = maxY; y > minY; y--) {
+            if (level.getBlockState(new BlockPos(x, y, z)).isAir()) {
+                if (runStart == -1) {
+                    runStart = y;
+                }
+                runLen++;
+                if (runLen > bestAirLen) {
+                    bestAirLen = runLen;
+                    bestAirStart = runStart;
+                }
+            } else {
+                runStart = -1;
+                runLen = 0;
+            }
+        }
+        if (bestAirStart > minY) {
+            int floor = bestAirStart - bestAirLen;
+            if (floor > minY) {
+                return floor;
+            }
+        }
+        return level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+    }
+
+    /**
+     * Highest block y usable for placement. Uses the dimension's logical height
+     * (the nether is 256 tall on paper but only 0-128 is real terrain - above
+     * the bedrock ceiling is an empty roof void) so nodes never spawn in the
+     * inaccessible area past the nether roof.
+     */
+    private static int logicalTop(WorldGenLevel level) {
+        return level.getLevel().getLogicalHeight() - 1;
     }
 
     private void placeCluster(WorldGenLevel level, BlockPos center, OreNodeType type, Purity purity, RandomSource random, int scatterCount, int radius, boolean surfaceSpawn) {

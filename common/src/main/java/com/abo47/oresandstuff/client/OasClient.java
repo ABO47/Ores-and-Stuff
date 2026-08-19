@@ -23,7 +23,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -47,7 +46,6 @@ public final class OasClient {
     }
 
     static Minecraft minecraft;
-    private static int scannerAutoUpdateCounter = 0;
     static ResourceLocation currentOreType;
     static final List<ScannerFxTypes.TargetMarker> markers = new ArrayList<>();
     private static final List<ScannerFxTypes.ScanPulse> pulses = new ArrayList<>();
@@ -137,22 +135,6 @@ public final class OasClient {
                 }
                 float smoothing = marker.distance < 14.0f ? 0.10f : 0.16f;
                 marker.smoothOffset = Mth.clamp(marker.smoothOffset + (desiredOffset - marker.smoothOffset) * smoothing, -102f, 102f);
-            }
-
-            if (OresAndStuffConfig.scanner().scannerAutoRefresh) {
-                int updateTicks = OresAndStuffConfig.scanner().updateTicks;
-                if (updateTicks > 0) {
-                    scannerAutoUpdateCounter++;
-                    if (scannerAutoUpdateCounter >= updateTicks) {
-                        scannerAutoUpdateCounter = 0;
-                        ItemStack held = minecraft.player.getMainHandItem();
-                        if (held.getItem() instanceof ScannerItem si && !minecraft.player.getCooldowns().isOnCooldown(si)) {
-                            NetworkChannels.sendScannerRequest(ScannerItem.getSelectedType(held));
-                        }
-                    }
-                }
-            } else {
-                scannerAutoUpdateCounter = 0;
             }
         }
 
@@ -291,7 +273,9 @@ public final class OasClient {
             }
         }
 
+        RenderSystem.disableDepthTest();
         NodeHighlightRenderer.draw(pose, minecraft, NodeClusterTracker.activeFlashes(), NodeClusterTracker.hitBursts(), now);
+        RenderSystem.enableDepthTest();
 
         RenderSystem.disablePolygonOffset();
         RenderSystem.polygonOffset(0f, 0f);

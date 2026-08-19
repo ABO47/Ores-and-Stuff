@@ -3,9 +3,11 @@ package com.abo47.oresandstuff;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.data.config.BioLibraryConfig;
 import com.abo47.oresandstuff.data.config.MinerTierConfig;
+import com.abo47.oresandstuff.data.config.PickaxeToolConfig;
 import com.abo47.oresandstuff.platform.Services;
 
 public final class OresAndStuffMod {
@@ -21,11 +23,14 @@ public final class OresAndStuffMod {
         Services.hooks().onCommonInit();
         BioLibraryConfig.ensureGenerated();
         MinerTierConfig.ensureLoaded();
+        PickaxeToolConfig.ensureLoaded();
         OreNodeDataManager.INSTANCE.ensureLoaded();
         Services.hooks().registerBlockEntities();
         Services.hooks().registerGameplayEvents();
         Services.hooks().registerNetwork();
         Services.hooks().registerEnergy();
         OresAndStuffConfig.load();
+        OasColors.ensureGenerated();
+        OasColors.reload();
     }
 }
