@@ -1,7 +1,0 @@
-{
-  "output_item": "minecraft:raw_iron",
-  "base_rate_per_second": 0.6,
-  "scanner_color": "#D8D8D8",
-  "hardness": 100.0,
-  "visual_block": "minecraft:iron_ore"
-}

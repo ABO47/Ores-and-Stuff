@@ -8,7 +8,7 @@ import com.abo47.oresandstuff.node.OreNodeBlockEntity;
 
 public final class ModBlockEntities {
     public static BlockEntityType<OreNodeBlockEntity> ORE_NODE;
-    public static BlockEntityType<MinerBlockEntity> MINER_MK1;
+    public static BlockEntityType<MinerBlockEntity> MINER;
     public static BlockEntityType<InfiniteBatteryBlockEntity> INFINITE_BATTERY;
 
     private ModBlockEntities() {

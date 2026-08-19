@@ -17,8 +17,10 @@ import com.lowdragmc.lowdraglib.side.item.ItemTransferHelper;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.client.miner.MinerScreen;
 import com.abo47.oresandstuff.content.ModBlockEntities;
+import com.abo47.oresandstuff.data.config.MinerTierConfig;
 import com.abo47.oresandstuff.energy.EnergyStorage;
 import com.abo47.oresandstuff.energy.SimpleEnergyStorage;
 import com.abo47.oresandstuff.node.ExtractionRateService;
@@ -27,10 +29,9 @@ import com.abo47.oresandstuff.node.Purity;
 import com.abo47.oresandstuff.platform.Services;
 
 public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEntityUI {
-    private final EnergyStorage energy = new SimpleEnergyStorage(
-            OresAndStuffConfig.miner().bufferFe,
-            OresAndStuffConfig.miner().maxReceiveFe,
-            OresAndStuffConfig.miner().fePerTick);
+    private final EnergyStorage energy;
+    private final int fePerTick;
+    private final int maxReceiveFe;
     private final CommonItemTransfer output = new CommonItemTransfer();
 
     private double progress;
@@ -40,7 +41,12 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
     private boolean enabled = true;
 
     public MinerBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.MINER_MK1, pos, state);
+        super(ModBlockEntities.MINER, pos, state);
+        MinerTierConfig.MinerTier tier = MinerTierConfig.get(MinerBlock.tierId(state)).orElse(null);
+        this.fePerTick = tier != null ? tier.fePerTick() : OresAndStuffConfig.miner().fePerTick;
+        this.maxReceiveFe = tier != null ? tier.maxReceiveFe() : OresAndStuffConfig.miner().maxReceiveFe;
+        int buffer = tier != null ? tier.bufferFe() : OresAndStuffConfig.miner().bufferFe;
+        this.energy = new SimpleEnergyStorage(buffer, this.maxReceiveFe, this.fePerTick);
     }
 
     @Override
@@ -72,7 +78,6 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         nodeTypeId = node.getNodeTypeId();
         nodePurity = node.getPurity();
 
-        int fePerTick = OresAndStuffConfig.miner().fePerTick;
         if (energy.getEnergyStored() < fePerTick) {
             status = MinerStatus.NO_POWER;
             setChanged();
@@ -133,13 +138,12 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         if (level == null) {
             return;
         }
-        int maxPull = OresAndStuffConfig.miner().maxReceiveFe;
         int needed = energy.getMaxEnergyStored() - energy.getEnergyStored();
         if (needed <= 0) {
             return;
         }
         for (Direction direction : Direction.values()) {
-            int pulled = Services.hooks().pullEnergyFrom(level, worldPosition.relative(direction), direction.getOpposite(), Math.min(needed, maxPull));
+            int pulled = Services.hooks().pullEnergyFrom(level, worldPosition.relative(direction), direction.getOpposite(), Math.min(needed, maxReceiveFe));
             if (pulled > 0) {
                 energy.receiveEnergy(pulled, false);
                 needed -= pulled;

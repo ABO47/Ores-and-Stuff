@@ -2,7 +2,6 @@ package com.abo47.oresandstuff.client.miner;
 
 import java.util.Locale;
 
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -23,7 +22,9 @@ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.gui.widget.layout.Align;
 import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
 
+import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
+import com.abo47.oresandstuff.data.config.MinerTierConfig;
 import com.abo47.oresandstuff.client.ui.render.GradientRectTexture;
 import com.abo47.oresandstuff.client.ui.render.StripeOverlayTexture;
 import com.abo47.oresandstuff.client.ui.widget.PlayerInventoryWidget;
@@ -160,7 +161,7 @@ public final class MinerScreen {
         titleLane.addWidget(title);
         root.addWidget(titleLane);
 
-        LabelWidget nodeLabel = new LabelWidget(INFO_LABEL_X, INFO_ROW_1_Y, "Node");
+        LabelWidget nodeLabel = new LabelWidget(INFO_LABEL_X, INFO_ROW_1_Y, tr("Node"));
         nodeLabel.setColor(OasColors.TEXT_SECONDARY);
         nodeLabel.setDropShadow(true);
         root.addWidget(nodeLabel);
@@ -170,7 +171,7 @@ public final class MinerScreen {
         nodeValue.setDropShadow(true);
         root.addWidget(nodeValue);
 
-        LabelWidget purityLabel = new LabelWidget(INFO_LABEL_X, INFO_ROW_2_Y, "Purity");
+        LabelWidget purityLabel = new LabelWidget(INFO_LABEL_X, INFO_ROW_2_Y, tr("Purity"));
         purityLabel.setColor(OasColors.TEXT_SECONDARY);
         purityLabel.setDropShadow(true);
         root.addWidget(purityLabel);
@@ -180,7 +181,7 @@ public final class MinerScreen {
         purityValue.setDropShadow(true);
         root.addWidget(purityValue);
 
-        LabelWidget stateLabel = new LabelWidget(INFO_LABEL_X, INFO_ROW_3_Y, "State");
+        LabelWidget stateLabel = new LabelWidget(INFO_LABEL_X, INFO_ROW_3_Y, tr("State"));
         stateLabel.setColor(OasColors.TEXT_SECONDARY);
         stateLabel.setDropShadow(true);
         root.addWidget(stateLabel);
@@ -232,29 +233,23 @@ public final class MinerScreen {
     private String uiNodeName() {
         ResourceLocation id = be.getNodeTypeId();
         if (id == null) {
-            return "None";
+            return tr("None");
         }
         String path = id.getPath();
         if (path.equals("air") || path.equals("idle")) {
-            return "None";
+            return tr("None");
         }
         return titleCase(path);
     }
 
     private Component uiTitleComponent() {
-        return Component.translatable("Miner %s", uiTierSuffix())
-                .withStyle(style -> style.withColor(OasColors.TEXT_PRIMARY));
-    }
-
-    private String uiTierSuffix() {
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(be.getBlockState().getBlock());
-        String path = id == null ? "mk1" : id.getPath();
-        int mkIndex = path.lastIndexOf("_mk");
-        if (mkIndex >= 0 && mkIndex + 1 < path.length()) {
-            return titleCase(path.substring(mkIndex + 1));
+        String tierId = MinerBlock.tierId(be.getBlockState());
+        String displayName = MinerTierConfig.displayName(tierId);
+        if (MinerTierConfig.get(tierId).isPresent()) {
+            return Component.literal(displayName).withStyle(style -> style.withColor(OasColors.TEXT_PRIMARY));
         }
-        String[] tokens = path.split("_");
-        return tokens.length == 0 ? "Mk1" : titleCase(tokens[tokens.length - 1]);
+        return Component.translatable("Miner %s", displayName)
+                .withStyle(style -> style.withColor(OasColors.TEXT_PRIMARY));
     }
 
     private String uiPurityName() {
@@ -283,7 +278,7 @@ public final class MinerScreen {
 
     private static String clip(String value, int maxChars) {
         if (value == null || value.isEmpty()) {
-            return "None";
+            return tr("None");
         }
         if (value.length() <= maxChars) {
             return value;
@@ -294,9 +289,13 @@ public final class MinerScreen {
         return value.substring(0, maxChars - 2) + "..";
     }
 
+    private static String tr(String key, Object... args) {
+        return Component.translatable(key, args).getString();
+    }
+
     private static String titleCase(String raw) {
         if (raw == null || raw.isEmpty()) {
-            return "None";
+            return tr("None");
         }
         String[] parts = raw.replace('-', '_').split("_");
         StringBuilder out = new StringBuilder();
@@ -312,6 +311,6 @@ public final class MinerScreen {
                 out.append(part.substring(1));
             }
         }
-        return out.isEmpty() ? "None" : out.toString();
+        return out.isEmpty() ? tr("None") : out.toString();
     }
 }

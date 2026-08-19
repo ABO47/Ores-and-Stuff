@@ -476,11 +476,7 @@ public final class ModSettingsScreen {
         private List<RowSpec> worldgenRows() {
             var s = OresAndStuffConfig.worldgen();
             return List.of(
-                    toggle("world.removeVanilla", "Remove vanilla ores", () -> s.removeVanillaOres, v -> s.removeVanillaOres = v),
-                    number("world.spacing", "Min spacing (blocks)", () -> s.nodeMinSpacingBlocks, v -> s.nodeMinSpacingBlocks = (int) v, 16, 4000, 4, true),
-                    number("world.attempts", "Attempts per chunk", () -> s.nodeAttemptsPerChunk, v -> s.nodeAttemptsPerChunk = (int) v, 1, 8, 1, true),
-                    number("world.clusterRadius", "Cluster radius", () -> s.nodeClusterRadius, v -> s.nodeClusterRadius = (int) v, 1, 8, 1, true),
-                    number("world.scatter", "Scatter count", () -> s.nodeScatterCount, v -> s.nodeScatterCount = (int) v, 0, 64, 2, true)
+                    toggle("world.removeVanilla", "Remove vanilla ores", () -> s.removeVanillaOres, v -> s.removeVanillaOres = v)
             );
         }
 

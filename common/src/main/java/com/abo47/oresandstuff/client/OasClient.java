@@ -30,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.client.OasShaders;
-import com.abo47.oresandstuff.client.screen.BioScanLibraryScreen;
+import com.abo47.oresandstuff.client.screen.BioLibraryScreen;
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.content.ModItems;
@@ -93,8 +93,8 @@ public final class OasClient {
     }
 
     public static void onBioScanLibrary(BioScanLibraryPacket packet) {
-        if (minecraft == null) return;
-        minecraft.setScreen(new BioScanLibraryScreen(packet.entries()));
+        if (minecraft == null || minecraft.player == null) return;
+        BioLibraryScreen.open(minecraft.player, packet.entries());
     }
 
     static boolean holdingOreScanner() {
@@ -317,8 +317,8 @@ public final class OasClient {
             int by = scaledHeight - 44;
             g.fill(bx, by, bx + bw, by + 8, OasColors.withAlpha(OasColors.BG_0, 0xAA));
             g.fill(bx + 1, by + 1, bx + 1 + (int) ((bw - 2) * p), by + 7, OasColors.ACCENT_PRIMARY);
-            String label = activeBioScan.completed ? "Completed"
-                    : (activeBioScan.progress01 >= 0.5f ? "Decoding..." : "Scanning...");
+            String label = activeBioScan.completed ? net.minecraft.network.chat.Component.translatable("Completed").getString()
+                    : (activeBioScan.progress01 >= 0.5f ? net.minecraft.network.chat.Component.translatable("Decoding...").getString() : net.minecraft.network.chat.Component.translatable("Scanning...").getString());
             g.drawCenteredString(minecraft.font, label, w / 2, by - 10, OasColors.ACCENT_SOFT);
             if (OresAndStuffConfig.debug().debugLogging && minecraft.level != null) {
                 Entity dbgEntity = minecraft.level.getEntity(activeBioScan.entityId);

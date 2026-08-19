@@ -1,7 +1,0 @@
-{
-  "entity": "minecraft:chicken",
-  "title": "Chicken",
-  "category": "Fauna",
-  "summary": "A passive farm animal that lays eggs and avoids cliffs.",
-  "facts": ["Temperament: Passive", "Drops: Feathers, Chicken", "Lays eggs", "Breed item: Seeds"]
-}

@@ -1,7 +1,0 @@
-{
-  "entity": "minecraft:blaze",
-  "title": "Blaze",
-  "category": "Hostile",
-  "summary": "A floating nether mob that shoots fireballs and drops blaze rods.",
-  "facts": ["Temperament: Hostile", "Drops: Blaze Rod", "Floats", "Weak to snowballs"]
-}

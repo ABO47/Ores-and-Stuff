@@ -9,20 +9,29 @@ import net.minecraft.world.level.block.Block;
 
 import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.content.ModContent;
 import com.abo47.oresandstuff.content.ModCreativeTabs;
 import com.abo47.oresandstuff.content.ModItems;
+import com.abo47.oresandstuff.data.config.MinerTierConfig;
 
 public final class FabricContent {
     private FabricContent() {
     }
 
     static void register() {
+        MinerTierConfig.ensureLoaded();
+        ModContent.registerMiners();
+
         register(BuiltInRegistries.BLOCK, "ore_node", ModBlocks.ORE_NODE);
-        register(BuiltInRegistries.BLOCK, "miner_mk1", ModBlocks.MINER_MK1);
+        for (MinerTierConfig.MinerTier tier : MinerTierConfig.tiers()) {
+            register(BuiltInRegistries.BLOCK, "miner_" + tier.id(), ModContent.minerBlock(tier.id()));
+        }
         register(BuiltInRegistries.BLOCK, "infinite_battery", ModBlocks.INFINITE_BATTERY);
 
         register(BuiltInRegistries.ITEM, "ore_node", ModItems.ORE_NODE);
-        register(BuiltInRegistries.ITEM, "miner_mk1", ModItems.MINER_MK1);
+        for (MinerTierConfig.MinerTier tier : MinerTierConfig.tiers()) {
+            register(BuiltInRegistries.ITEM, "miner_" + tier.id(), ModContent.minerItem(tier.id()));
+        }
         register(BuiltInRegistries.ITEM, "infinite_battery", ModItems.INFINITE_BATTERY);
         register(BuiltInRegistries.ITEM, "scanner", ModItems.SCANNER);
         register(BuiltInRegistries.ITEM, "bio_scanner", ModItems.BIO_SCANNER);

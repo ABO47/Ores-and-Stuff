@@ -14,7 +14,9 @@ public final class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.SCANNER))
             .displayItems((parameters, output) -> {
                 output.accept(ModItems.ORE_NODE);
-                output.accept(ModItems.MINER_MK1);
+                for (net.minecraft.world.item.Item item : ModContent.minerItems()) {
+                    output.accept(item);
+                }
                 output.accept(ModItems.INFINITE_BATTERY);
                 output.accept(ModItems.SCANNER);
                 output.accept(ModItems.BIO_SCANNER);

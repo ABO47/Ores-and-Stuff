@@ -3,15 +3,17 @@ package com.abo47.oresandstuff.network;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 
 import com.lowdragmc.lowdraglib.networking.LDLNetworking;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
-import com.abo47.oresandstuff.data.EntityScanDataManager;
 import com.abo47.oresandstuff.data.EntityScanEntry;
+import com.abo47.oresandstuff.data.config.BioLibraryConfig;
 import com.abo47.oresandstuff.item.ScannerItem;
 import com.abo47.oresandstuff.world.NodeLocatorService;
 
@@ -32,19 +34,22 @@ public final class NetworkServices {
             return;
         }
         ResourceLocation id = living.getType().builtInRegistryHolder().key().location();
-        EntityScanEntry entry = EntityScanDataManager.INSTANCE.get(id).orElseGet(() -> new EntityScanEntry(id, living.getName().getString(), "Unknown", "No custom scan data found.", List.of("Health: " + (int) living.getMaxHealth(), "Width: " + living.getBbWidth(), "Height: " + living.getBbHeight())));
+        EntityScanEntry entry = BioLibraryConfig.entryFor(living.getType(), id);
         PlayerScanState.addBioScan(player, id.toString());
         LDLNetworking.NETWORK.sendToPlayer(new BioScanInfoPacket(entry), player);
     }
 
     public static void sendLibrary(ServerPlayer player) {
+        List<String> discovered = PlayerScanState.bioScans(player);
         List<BioScanLibraryPacket.Entry> entries = new ArrayList<>();
-        for (String discovered : PlayerScanState.bioScans(player)) {
-            ResourceLocation id = ResourceLocation.tryParse(discovered);
+        for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
+            ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
             if (id == null) {
                 continue;
             }
-            EntityScanDataManager.INSTANCE.get(id).ifPresent(entry -> entries.add(new BioScanLibraryPacket.Entry(entry.entityId().toString(), entry.title(), entry.category(), entry.summary())));
+            EntityScanEntry entry = BioLibraryConfig.entryFor(type, id);
+            boolean unlocked = discovered.contains(id.toString());
+            entries.add(new BioScanLibraryPacket.Entry(id.toString(), entry.title(), entry.category(), entry.summary(), unlocked));
         }
         LDLNetworking.NETWORK.sendToPlayer(new BioScanLibraryPacket(entries), player);
     }

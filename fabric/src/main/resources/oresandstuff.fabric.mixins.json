@@ -3,7 +3,8 @@
   "package": "com.abo47.oresandstuff.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "WorldRendererRenderMixin"
+    "WorldRendererRenderMixin",
+    "ModResourcePackCreatorMixin"
   ],
   "injectors": {
     "defaultRequire": 1

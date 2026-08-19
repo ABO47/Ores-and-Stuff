@@ -1,7 +1,0 @@
-{
-  "entity": "minecraft:cow",
-  "title": "Cow",
-  "category": "Fauna",
-  "summary": "A passive farm animal. Provides leather and beef.",
-  "facts": ["Temperament: Passive", "Drops: Beef, Leather", "Breed item: Wheat"]
-}

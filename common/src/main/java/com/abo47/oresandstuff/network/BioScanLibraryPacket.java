@@ -28,6 +28,7 @@ public final class BioScanLibraryPacket implements IPacket {
             buf.writeUtf(entry.title());
             buf.writeUtf(entry.category());
             buf.writeUtf(entry.summary());
+            buf.writeBoolean(entry.unlocked());
         }
     }
 
@@ -36,7 +37,7 @@ public final class BioScanLibraryPacket implements IPacket {
         int count = buf.readVarInt();
         List<Entry> decoded = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            decoded.add(new Entry(buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readUtf()));
+            decoded.add(new Entry(buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readBoolean()));
         }
         entries = decoded;
     }
@@ -50,6 +51,6 @@ public final class BioScanLibraryPacket implements IPacket {
         return entries;
     }
 
-    public record Entry(String entityId, String title, String category, String summary) {
+    public record Entry(String entityId, String title, String category, String summary, boolean unlocked) {
     }
 }

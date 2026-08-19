@@ -23,6 +23,8 @@ import com.abo47.oresandstuff.client.OasShaders;
 import com.abo47.oresandstuff.command.DevCommands;
 import com.abo47.oresandstuff.content.ModBlockEntities;
 import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.content.ModContent;
+import com.abo47.oresandstuff.data.config.MinerTierConfig;
 import com.abo47.oresandstuff.energy.EnergyStorage;
 import com.abo47.oresandstuff.miner.InfiniteBatteryBlockEntity;
 import com.abo47.oresandstuff.miner.MinerBlockEntity;
@@ -54,20 +56,22 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 public final class ForgePlatformHooks implements PlatformHooks {
-    private static final DeferredRegister<BlockEntityType<?>> BE_TYPES =
-            DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, OresAndStuffMod.MOD_ID);
-    private final RegistryObject<BlockEntityType<?>> oreNode =
-            BE_TYPES.register("ore_node", () -> BlockEntityType.Builder.of(OreNodeBlockEntity::new, ModBlocks.ORE_NODE).build(null));
-    private final RegistryObject<BlockEntityType<?>> minerMk1 =
-            BE_TYPES.register("miner_mk1", () -> BlockEntityType.Builder.of(MinerBlockEntity::new, ModBlocks.MINER_MK1).build(null));
-    private final RegistryObject<BlockEntityType<?>> infiniteBattery =
-            BE_TYPES.register("infinite_battery", () -> BlockEntityType.Builder.of(InfiniteBatteryBlockEntity::new, ModBlocks.INFINITE_BATTERY).build(null));
+    private final DeferredRegister<BlockEntityType<?>> beTypes;
+    private final RegistryObject<BlockEntityType<?>> oreNode;
+    private final RegistryObject<BlockEntityType<?>> miner;
+    private final RegistryObject<BlockEntityType<?>> infiniteBattery;
 
     private final List<SimpleJsonResourceReloadListener> reloadListeners = new ArrayList<>();
 
     public ForgePlatformHooks() {
+        MinerTierConfig.ensureLoaded();
+        ModContent.registerMiners();
+        beTypes = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, OresAndStuffMod.MOD_ID);
+        oreNode = beTypes.register("ore_node", () -> BlockEntityType.Builder.of(OreNodeBlockEntity::new, ModBlocks.ORE_NODE).build(null));
+        miner = beTypes.register("miner", () -> BlockEntityType.Builder.of(MinerBlockEntity::new, ModContent.minerBlocksArray()).build(null));
+        infiniteBattery = beTypes.register("infinite_battery", () -> BlockEntityType.Builder.of(InfiniteBatteryBlockEntity::new, ModBlocks.INFINITE_BATTERY).build(null));
         MinecraftForge.EVENT_BUS.addListener(this::onAddReloadListeners);
-        BE_TYPES.register(FMLJavaModLoadingContext.get().getModEventBus());
+        beTypes.register(FMLJavaModLoadingContext.get().getModEventBus());
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onRegisterShaders);
     }
 
@@ -139,7 +143,7 @@ public final class ForgePlatformHooks implements PlatformHooks {
     @SuppressWarnings("unchecked")
     public void registerBlockEntities() {
         ModBlockEntities.ORE_NODE = (BlockEntityType<OreNodeBlockEntity>) oreNode.get();
-        ModBlockEntities.MINER_MK1 = (BlockEntityType<MinerBlockEntity>) minerMk1.get();
+        ModBlockEntities.MINER = (BlockEntityType<MinerBlockEntity>) miner.get();
         ModBlockEntities.INFINITE_BATTERY = (BlockEntityType<InfiniteBatteryBlockEntity>) infiniteBattery.get();
     }
 

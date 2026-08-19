@@ -1,7 +1,0 @@
-{
-  "entity": "minecraft:enderman",
-  "title": "Enderman",
-  "category": "Hostile",
-  "summary": "A tall dimensional mob that teleports and is provoked by eye contact.",
-  "facts": ["Temperament: Hostile if looked at", "Drops: Ender Pearl", "Teleports", "Immune to water"]
-}

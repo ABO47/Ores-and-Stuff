@@ -124,28 +124,16 @@ public final class OresAndStuffConfigSections {
     }
 
     public static final class Worldgen {
-        public int nodeMinSpacingBlocks = 220;
-        public int nodeAttemptsPerChunk = 1;
-        public int nodeClusterRadius = 2;
-        public int nodeScatterCount = 8;
         public boolean removeVanillaOres = true;
         public List<String> disabledNodeTypes = new ArrayList<>();
 
         void read(JsonObject root) {
-            nodeMinSpacingBlocks = clampInt(intValue(root, "nodeMinSpacingBlocks", nodeMinSpacingBlocks), 16, 4000);
-            nodeAttemptsPerChunk = clampInt(intValue(root, "nodeAttemptsPerChunk", nodeAttemptsPerChunk), 1, 8);
-            nodeClusterRadius = clampInt(intValue(root, "nodeClusterRadius", nodeClusterRadius), 1, 8);
-            nodeScatterCount = clampInt(intValue(root, "nodeScatterCount", nodeScatterCount), 0, 64);
             removeVanillaOres = bool(root, "removeVanillaOres", removeVanillaOres);
             disabledNodeTypes = stringList(root, "disabledNodeTypes", disabledNodeTypes);
         }
 
         JsonObject write() {
             JsonObject root = new JsonObject();
-            root.addProperty("nodeMinSpacingBlocks", nodeMinSpacingBlocks);
-            root.addProperty("nodeAttemptsPerChunk", nodeAttemptsPerChunk);
-            root.addProperty("nodeClusterRadius", nodeClusterRadius);
-            root.addProperty("nodeScatterCount", nodeScatterCount);
             root.addProperty("removeVanillaOres", removeVanillaOres);
             JsonArray arr = new JsonArray();
             for (String s : disabledNodeTypes) {

@@ -1,7 +1,0 @@
-{
-  "entity": "minecraft:sheep",
-  "title": "Sheep",
-  "category": "Fauna",
-  "summary": "A passive farm animal that regrows and can be dyed wool.",
-  "facts": ["Temperament: Passive", "Drops: Wool, Mutton", "Shearable", "Breed item: Wheat"]
-}

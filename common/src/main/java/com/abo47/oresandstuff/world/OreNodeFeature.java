@@ -20,14 +20,13 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
-import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.block.OreNodeBlock;
 import com.abo47.oresandstuff.content.ModBlocks;
-import com.abo47.oresandstuff.data.BiomeDistributionRule;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.node.NodeVisuals;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
+import com.abo47.oresandstuff.node.OreNodeType;
 import com.abo47.oresandstuff.node.Purity;
 
 public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
@@ -40,41 +39,44 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
         WorldGenLevel level = context.level();
         RandomSource random = context.random();
         BlockPos origin = context.origin();
-        List<BiomeDistributionRule> rules = OreNodeDataManager.INSTANCE.getDistributionsForDimension(level.getLevel().dimension().location());
-        if (rules.isEmpty()) {
+        List<OreNodeType> types = OreNodeDataManager.INSTANCE.typesForDimension(level.getLevel().dimension().location());
+        if (types.isEmpty()) {
             return false;
         }
 
-        var worldgen = OresAndStuffConfig.worldgen();
-        int attempts = worldgen.nodeAttemptsPerChunk;
-        int spacing = worldgen.nodeMinSpacingBlocks;
-        int scatterCount = worldgen.nodeScatterCount;
-        boolean placed = false;
+        String biomeName = biomeName(level, origin);
+        List<OreNodeType> candidates = types.stream().filter(t -> t.biomeWeight(biomeName) > 0).toList();
+        if (candidates.isEmpty()) {
+            return false;
+        }
+        OreNodeType type = OreNodeDataManager.INSTANCE.rollNodeType(random, biomeName, candidates);
+
+        int attempts = Math.max(1, type.placementAttempts());
         for (int i = 0; i < attempts; i++) {
             int x = origin.getX() + random.nextInt(16);
             int z = origin.getZ() + random.nextInt(16);
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
             BlockPos pos = new BlockPos(x, y, z);
-            Holder<Biome> biome = level.getBiome(pos);
-            String biomeName = biome.unwrapKey().map(key -> key.location().toString()).orElse("minecraft:plains");
-            BiomeDistributionRule rule = rules.stream().filter(value -> biomeName.contains(value.biomePattern())).findFirst().orElse(rules.get(0));
-            if (random.nextInt(Math.max(1, 4 - rule.maxNodesPerChunk())) != 0 || !level.getBlockState(pos).isSolidRender(level, pos)) {
+            if (random.nextInt(Math.max(1, 4 - type.maxNodesPerChunk())) != 0 || !level.getBlockState(pos).isSolidRender(level, pos)) {
                 continue;
             }
             pos = pos.above();
-            if (!passesSpacing(level, pos, spacing) || isObstructed(level, pos, 4) || isSteep(level, pos, 4, 4)) {
+            if (!passesSpacing(level, pos, type.minSpacingBlocks()) || isObstructed(level, pos, 4) || isSteep(level, pos, 4, 4)) {
                 continue;
             }
-            var type = OreNodeDataManager.INSTANCE.rollNodeType(random, rule);
-            Purity purity = OreNodeDataManager.INSTANCE.rollPurity(random, rule);
-            placeCluster(level, pos, type.id(), purity, random, scatterCount);
-            placed = true;
+            Purity purity = OreNodeDataManager.INSTANCE.rollPurity(random, type);
+            placeCluster(level, pos, type.id(), purity, random, type.scatterCount(), type.clusterRadius());
+            return true;
         }
-        return placed;
+        return false;
     }
 
-    private void placeCluster(WorldGenLevel level, BlockPos center, ResourceLocation typeId, Purity purity, RandomSource random, int scatterCount) {
-        int radius = Math.max(2, OresAndStuffConfig.worldgen().nodeClusterRadius + random.nextInt(2));
+    private static String biomeName(WorldGenLevel level, BlockPos origin) {
+        Holder<Biome> biome = level.getBiome(origin);
+        return biome.unwrapKey().map(key -> key.location().toString()).orElse("minecraft:plains");
+    }
+
+    private void placeCluster(WorldGenLevel level, BlockPos center, ResourceLocation typeId, Purity purity, RandomSource random, int scatterCount, int radius) {
         int quality = purity == Purity.PURE ? 2 : purity == Purity.NORMAL ? 1 : 0;
         UUID nodeId = UUID.nameUUIDFromBytes((level.getLevel().dimension().location() + ":" + center).getBytes(StandardCharsets.UTF_8));
         Set<BlockPos> placed = new HashSet<>();

@@ -1,7 +1,0 @@
-{
-  "entity": "minecraft:villager",
-  "title": "Villager",
-  "category": "Civilized",
-  "summary": "A trader mob with professions that can be infected by zombies.",
-  "facts": ["Temperament: Passive", "Trades goods", "Has professions", "Curable if infected"]
-}

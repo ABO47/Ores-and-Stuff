@@ -1,7 +1,0 @@
-{
-  "entity": "minecraft:bee",
-  "title": "Bee",
-  "category": "Fauna",
-  "summary": "A pollinator that produces honey and becomes aggressive when disturbed.",
-  "facts": ["Temperament: Neutral", "Drops: Honeycomb, Honey", "Pollinates crops", "Stings when angered"]
-}

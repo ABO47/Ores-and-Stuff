@@ -25,6 +25,7 @@ import com.abo47.oresandstuff.client.OasClient;
 import com.abo47.oresandstuff.command.DevCommands;
 import com.abo47.oresandstuff.content.ModBlockEntities;
 import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.content.ModContent;
 import com.abo47.oresandstuff.miner.InfiniteBatteryBlockEntity;
 import com.abo47.oresandstuff.miner.MinerBlockEntity;
 import com.abo47.oresandstuff.network.NetworkChannels;
@@ -67,9 +68,9 @@ public final class FabricPlatformHooks implements PlatformHooks {
         ModBlockEntities.ORE_NODE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
                 new ResourceLocation(OresAndStuffMod.MOD_ID, "ore_node"),
                 BlockEntityType.Builder.of(OreNodeBlockEntity::new, ModBlocks.ORE_NODE).build(null));
-        ModBlockEntities.MINER_MK1 = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
-                new ResourceLocation(OresAndStuffMod.MOD_ID, "miner_mk1"),
-                BlockEntityType.Builder.of(MinerBlockEntity::new, ModBlocks.MINER_MK1).build(null));
+        ModBlockEntities.MINER = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+                new ResourceLocation(OresAndStuffMod.MOD_ID, "miner"),
+                BlockEntityType.Builder.of(MinerBlockEntity::new, ModContent.minerBlocksArray()).build(null));
         ModBlockEntities.INFINITE_BATTERY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
                 new ResourceLocation(OresAndStuffMod.MOD_ID, "infinite_battery"),
                 BlockEntityType.Builder.of(InfiniteBatteryBlockEntity::new, ModBlocks.INFINITE_BATTERY).build(null));
@@ -77,7 +78,7 @@ public final class FabricPlatformHooks implements PlatformHooks {
 
     @Override
     public void registerEnergy() {
-        EnergyStorage.SIDED.registerForBlockEntity(FabricPlatformHooks::minerEnergy, ModBlockEntities.MINER_MK1);
+        EnergyStorage.SIDED.registerForBlockEntity(FabricPlatformHooks::minerEnergy, ModBlockEntities.MINER);
         EnergyStorage.SIDED.registerForBlockEntity(FabricPlatformHooks::batteryEnergy, ModBlockEntities.INFINITE_BATTERY);
     }
 

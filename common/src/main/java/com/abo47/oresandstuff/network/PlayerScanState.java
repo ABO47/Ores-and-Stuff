@@ -1,6 +1,5 @@
 package com.abo47.oresandstuff.network;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,23 +8,17 @@ import java.util.UUID;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class PlayerScanState {
-    private static final Map<UUID, List<String>> BIO_SCANS = new HashMap<>();
     private static final Map<UUID, Long> MINE_COOLDOWNS = new HashMap<>();
 
     private PlayerScanState() {
     }
 
     public static synchronized boolean addBioScan(ServerPlayer player, String id) {
-        List<String> scans = BIO_SCANS.computeIfAbsent(player.getUUID(), ignored -> new ArrayList<>());
-        if (scans.contains(id)) {
-            return false;
-        }
-        scans.add(id);
-        return true;
+        return BioScanWorldData.get(player.serverLevel()).addScan(player.getUUID(), id);
     }
 
     public static synchronized List<String> bioScans(ServerPlayer player) {
-        return List.copyOf(BIO_SCANS.getOrDefault(player.getUUID(), List.of()));
+        return BioScanWorldData.get(player.serverLevel()).bioScans(player.getUUID());
     }
 
     public static synchronized long mineCooldown(ServerPlayer player) {
