@@ -15,6 +15,7 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -50,22 +51,37 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
             return false;
         }
         OreNodeType type = OreNodeDataManager.INSTANCE.rollNodeType(random, biomeName, candidates);
+        int maxNodes = type.effectiveMaxNodes(biomeName);
 
         int attempts = Math.max(1, type.placementAttempts());
         for (int i = 0; i < attempts; i++) {
             int x = origin.getX() + random.nextInt(16);
             int z = origin.getZ() + random.nextInt(16);
-            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-            BlockPos pos = new BlockPos(x, y, z);
-            if (random.nextInt(Math.max(1, 4 - type.maxNodesPerChunk())) != 0 || !level.getBlockState(pos).isSolidRender(level, pos)) {
-                continue;
+            BlockPos pos;
+            if (type.surfaceSpawn()) {
+                int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                pos = new BlockPos(x, y, z);
+                if (random.nextInt(Math.max(1, 4 - maxNodes)) != 0 || !level.getBlockState(pos).isSolidRender(level, pos)) {
+                    continue;
+                }
+                pos = pos.above();
+                if (!passesSpacing(level, pos, type.minSpacingBlocks()) || isObstructed(level, pos, 4) || isSteep(level, pos, 4, 4)) {
+                    continue;
+                }
+            } else {
+                int yMin = Math.max(level.getMinBuildHeight() + 1, type.minY());
+                int yMax = Math.min(level.getMaxBuildHeight() - 1, Math.max(yMin, type.maxY()));
+                int y = yMin + random.nextInt(Math.max(1, yMax - yMin + 1));
+                pos = new BlockPos(x, y, z);
+                if (random.nextInt(Math.max(1, 4 - maxNodes)) != 0 || !isUndergroundHost(level, pos)) {
+                    continue;
+                }
+                if (!passesSpacing(level, pos, type.minSpacingBlocks())) {
+                    continue;
+                }
             }
-            pos = pos.above();
-            if (!passesSpacing(level, pos, type.minSpacingBlocks()) || isObstructed(level, pos, 4) || isSteep(level, pos, 4, 4)) {
-                continue;
-            }
-            Purity purity = OreNodeDataManager.INSTANCE.rollPurity(random, type);
-            placeCluster(level, pos, type.id(), purity, random, type.scatterCount(), type.clusterRadius());
+            Purity purity = OreNodeDataManager.INSTANCE.rollPurity(random, type, biomeName);
+            placeCluster(level, pos, type, purity, random, type.effectiveScatterCount(biomeName), type.effectiveClusterRadius(biomeName), type.surfaceSpawn());
             return true;
         }
         return false;
@@ -76,7 +92,8 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
         return biome.unwrapKey().map(key -> key.location().toString()).orElse("minecraft:plains");
     }
 
-    private void placeCluster(WorldGenLevel level, BlockPos center, ResourceLocation typeId, Purity purity, RandomSource random, int scatterCount, int radius) {
+    private void placeCluster(WorldGenLevel level, BlockPos center, OreNodeType type, Purity purity, RandomSource random, int scatterCount, int radius, boolean surfaceSpawn) {
+        ResourceLocation typeId = type.id();
         int quality = purity == Purity.PURE ? 2 : purity == Purity.NORMAL ? 1 : 0;
         UUID nodeId = UUID.nameUUIDFromBytes((level.getLevel().dimension().location() + ":" + center).getBytes(StandardCharsets.UTF_8));
         Set<BlockPos> placed = new HashSet<>();
@@ -88,7 +105,7 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
                 int height = dx * dx + dz * dz < radius * radius * 0.38 && random.nextFloat() < 0.55F ? 2 : 1;
                 for (int dy = 0; dy < height; dy++) {
                     BlockPos pos = center.offset(dx, dy, dz);
-                    if (!canReplace(level, pos) || (dy == 0 && !level.getBlockState(pos.below()).isSolidRender(level, pos.below()))) {
+                    if (!canReplace(level, pos, surfaceSpawn) || (surfaceSpawn && dy == 0 && !level.getBlockState(pos.below()).isSolidRender(level, pos.below()))) {
                         continue;
                     }
                     if (random.nextFloat() < 0.30F) {
@@ -121,15 +138,34 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
             int sy = center.getY() + random.nextInt(3) - 1;
             int sz = center.getZ() + random.nextInt(radius * 2 + 1) - radius;
             BlockPos sp = new BlockPos(sx, sy, sz);
-            if (canReplace(level, sp) && level.getBlockState(sp.below()).isSolidRender(level, sp.below())) {
+            if (canReplace(level, sp, surfaceSpawn) && (!surfaceSpawn || level.getBlockState(sp.below()).isSolidRender(level, sp.below()))) {
                 level.setBlock(sp, scatterBlock, 2);
             }
         }
     }
 
-    private boolean canReplace(WorldGenLevel level, BlockPos pos) {
-        Block block = level.getBlockState(pos).getBlock();
-        return level.getBlockState(pos).canBeReplaced() || block == Blocks.TALL_GRASS || block == Blocks.GRASS || block == Blocks.FERN || block == Blocks.SNOW;
+    private boolean canReplace(WorldGenLevel level, BlockPos pos, boolean surfaceSpawn) {
+        BlockState state = level.getBlockState(pos);
+        Block block = state.getBlock();
+        if (state.canBeReplaced() || block == Blocks.TALL_GRASS || block == Blocks.GRASS || block == Blocks.FERN || block == Blocks.SNOW) {
+            return true;
+        }
+        if (!surfaceSpawn) {
+            return block == Blocks.STONE || block == Blocks.DEEPSLATE || block == Blocks.ANDESITE
+                    || block == Blocks.DIORITE || block == Blocks.GRANITE || block == Blocks.TUFF
+                    || block == Blocks.DRIPSTONE_BLOCK || block == Blocks.NETHERRACK || block == Blocks.BASALT;
+        }
+        return false;
+    }
+
+    private boolean isUndergroundHost(WorldGenLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        Block block = state.getBlock();
+        return !state.isAir() && block != Blocks.BEDROCK && block != Blocks.WATER && block != Blocks.LAVA
+                && (block == Blocks.STONE || block == Blocks.DEEPSLATE || block == Blocks.ANDESITE
+                || block == Blocks.DIORITE || block == Blocks.GRANITE || block == Blocks.TUFF
+                || block == Blocks.DRIPSTONE_BLOCK || block == Blocks.NETHERRACK || block == Blocks.BASALT
+                || state.canBeReplaced());
     }
 
     private boolean passesSpacing(WorldGenLevel level, BlockPos pos, int spacing) {

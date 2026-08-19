@@ -59,7 +59,7 @@ public final class ModSettingsScreen {
     private static final int ROW_INSET = GRID_4;
     private static final int SWITCH_GAP = GRID_8;
 
-    private static final String[] TABS = {"Scanner", "Bio Scan", "Miner", "Worldgen", "Debug"};
+    private static final String[] TABS = {"Scanner", "Bio Scan", "Worldgen", "Debug"};
 
     private ModSettingsScreen() {
     }
@@ -422,8 +422,7 @@ public final class ModSettingsScreen {
             return switch (tab) {
                 case 0 -> scannerRows();
                 case 1 -> bioScanRows();
-                case 2 -> minerRows();
-                case 3 -> worldgenRows();
+                case 2 -> worldgenRows();
                 default -> debugRows();
             };
         }
@@ -457,20 +456,12 @@ public final class ModSettingsScreen {
         private List<RowSpec> bioScanRows() {
             var s = OresAndStuffConfig.bioScan();
             return List.of(
-                    number("bio.durationMs", "Duration (ms)", () -> s.durationMs, v -> s.durationMs = (int) v, 300, 15000, 6, true),
+number("bio.durationMs", "Duration (ms)", () -> s.durationMs, v -> s.durationMs = (int) v, 300, 15000, 6, true),
                     number("bio.cooldownTicks", "Cooldown ticks", () -> s.cooldownTicks, v -> s.cooldownTicks = (int) v, 0, 1200, 4, true),
                     number("bio.drainMul", "Drain multiplier", () -> s.drainMultiplier, v -> s.drainMultiplier = v, 0.5, 10.0, 8, false),
-                    number("bio.rayStyle", "Ray style", () -> s.rayStyle, v -> s.rayStyle = v, 0.5, 3.0, 8, false)
-            );
-        }
-
-        private List<RowSpec> minerRows() {
-            var s = OresAndStuffConfig.miner();
-            return List.of(
-                    number("miner.fePerTick", "FE per tick", () -> s.fePerTick, v -> s.fePerTick = (int) v, 1, 10000, 6, true),
-                    number("miner.bufferFe", "Buffer FE", () -> s.bufferFe, v -> s.bufferFe = (int) v, 100, 500000, 7, true),
-                    number("miner.maxReceiveFe", "Max receive FE", () -> s.maxReceiveFe, v -> s.maxReceiveFe = (int) v, 1, 100000, 7, true)
-            );
+                    number("bio.rayStyle", "Ray style", () -> s.rayStyle, v -> s.rayStyle = v, 0.5, 3.0, 8, false),
+                    toggle("bio.hideNonMobs", "Hide non-mobs from library", () -> s.hideNonMobs, v -> s.hideNonMobs = v)
+              );
         }
 
         private List<RowSpec> worldgenRows() {

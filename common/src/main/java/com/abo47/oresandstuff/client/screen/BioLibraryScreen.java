@@ -134,7 +134,7 @@ public final class BioLibraryScreen {
         private void rebuild() {
             content.clearAllWidgets();
             content.addWidget(label(8, 6, tr("Bio Library"), OasColors.TEXT_PRIMARY));
-            content.addWidget(ChromeFactory.closeIconButton(backButtonX() + 18 + CONTROL_GAP, Math.max(0, 4 - GRID_3), 18, 18, click -> Minecraft.getInstance().setScreen(null)));
+            content.addWidget(ChromeFactory.closeIconButton(closeButtonX(), Math.max(0, 4 - GRID_3), 18, 18, click -> Minecraft.getInstance().setScreen(null)));
 
             if (browsingEntity()) {
                 addBackButton();
@@ -144,8 +144,12 @@ public final class BioLibraryScreen {
             addTiles();
         }
 
+        private int closeButtonX() {
+            return RIGHT_X + (ROOT_W - 174) - 18;
+        }
+
         private int backButtonX() {
-            return RIGHT_X + (ROOT_W - 174) - 18 - 22;
+            return closeButtonX() - CONTROL_GAP - 18;
         }
 
         private void addBackButton() {
@@ -198,9 +202,9 @@ public final class BioLibraryScreen {
 
         private void addControls() {
             int rightX = RIGHT_X;
-            int rightW = ROOT_W - 174;
             int backX = backButtonX();
-            int searchW = browsingEntity() ? Math.max(40, backX - rightX - CONTROL_GAP) : Math.max(40, rightW - 22);
+            int closeX = closeButtonX();
+            int searchW = browsingEntity() ? Math.max(40, backX - rightX - CONTROL_GAP) : Math.max(40, closeX - rightX - CONTROL_GAP);
             content.addWidget(StyledTextFields.search(
                     rightX, 2, searchW, 16,
                     () -> search, 80,

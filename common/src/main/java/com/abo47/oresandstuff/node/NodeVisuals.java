@@ -19,20 +19,26 @@ public final class NodeVisuals {
         return isVisualOre(block);
     }
 
-    public static Block visualOre(ResourceLocation typeId, boolean deep) {
+    public static Block visualOre(ResourceLocation typeId, boolean pure) {
         OreNodeType type = OreNodeDataManager.INSTANCE.getNodeType(typeId).orElse(null);
         if (type == null) {
             return Blocks.AIR;
         }
-        Block shallow = BuiltInRegistries.BLOCK.get(type.visualBlock());
-        if (shallow == Blocks.AIR) {
+        Block base = BuiltInRegistries.BLOCK.get(type.visualBlock());
+        if (base == Blocks.AIR) {
             return Blocks.AIR;
         }
-        if (!deep) {
-            return shallow;
+        if (!pure) {
+            return base;
         }
-        Block deepVariant = deepslateVariant(shallow);
-        return deepVariant != Blocks.AIR ? deepVariant : shallow;
+        if (type.visualBlockPure() != null) {
+            Block pureBlock = BuiltInRegistries.BLOCK.get(type.visualBlockPure());
+            if (pureBlock != Blocks.AIR) {
+                return pureBlock;
+            }
+        }
+        Block deepVariant = deepslateVariant(base);
+        return deepVariant != Blocks.AIR ? deepVariant : base;
     }
 
     public static boolean isVanillaOre(Block block) {
@@ -53,6 +59,12 @@ public final class NodeVisuals {
             Block visual = BuiltInRegistries.BLOCK.get(type.visualBlock());
             if (visual == block) {
                 return true;
+            }
+            if (type.visualBlockPure() != null) {
+                Block pureVisual = BuiltInRegistries.BLOCK.get(type.visualBlockPure());
+                if (pureVisual == block) {
+                    return true;
+                }
             }
             Block deep = deepslateVariant(visual);
             if (deep == block) {

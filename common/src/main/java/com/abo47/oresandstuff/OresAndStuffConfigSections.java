@@ -85,12 +85,16 @@ public final class OresAndStuffConfigSections {
         public double drainMultiplier = 2.4;
         public int cooldownTicks = 40;
         public double rayStyle = 1.15;
+        public boolean hideNonMobs = true;
+        public List<String> hiddenEntities = new ArrayList<>();
 
         void read(JsonObject root) {
             durationMs = clampInt(intValue(root, "bioScanDurationMs", durationMs), 300, 15000);
             drainMultiplier = clampDouble(doubleValue(root, "bioScanDrainMultiplier", drainMultiplier), 0.5, 10.0);
             cooldownTicks = clampInt(intValue(root, "bioScanCooldownTicks", cooldownTicks), 0, 1200);
             rayStyle = clampDouble(doubleValue(root, "bioScanRayStyle", rayStyle), 0.5, 3.0);
+            hideNonMobs = bool(root, "bioScanHideNonMobs", hideNonMobs);
+            hiddenEntities = stringList(root, "bioScanHiddenEntities", hiddenEntities);
         }
 
         JsonObject write() {
@@ -99,26 +103,12 @@ public final class OresAndStuffConfigSections {
             root.addProperty("bioScanDrainMultiplier", drainMultiplier);
             root.addProperty("bioScanCooldownTicks", cooldownTicks);
             root.addProperty("bioScanRayStyle", rayStyle);
-            return root;
-        }
-    }
-
-    public static final class Miner {
-        public int fePerTick = 24;
-        public int bufferFe = 10000;
-        public int maxReceiveFe = 256;
-
-        void read(JsonObject root) {
-            fePerTick = clampInt(intValue(root, "minerFePerTick", fePerTick), 1, 10000);
-            bufferFe = clampInt(intValue(root, "minerBufferFe", bufferFe), 100, 500000);
-            maxReceiveFe = clampInt(intValue(root, "minerMaxReceiveFe", maxReceiveFe), 1, 100000);
-        }
-
-        JsonObject write() {
-            JsonObject root = new JsonObject();
-            root.addProperty("minerFePerTick", fePerTick);
-            root.addProperty("minerBufferFe", bufferFe);
-            root.addProperty("minerMaxReceiveFe", maxReceiveFe);
+            root.addProperty("bioScanHideNonMobs", hideNonMobs);
+            JsonArray arr = new JsonArray();
+            for (String s : hiddenEntities) {
+                arr.add(s);
+            }
+            root.add("bioScanHiddenEntities", arr);
             return root;
         }
     }

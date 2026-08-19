@@ -20,7 +20,14 @@ public final class MinerTierConfig {
     private static final List<MinerTier> TIERS = new ArrayList<>();
     private static boolean loaded;
 
+    private static MinerTier defaultTier = defaultMk1();
+
     private MinerTierConfig() {
+    }
+
+    public static MinerTier defaultTier() {
+        ensureLoaded();
+        return defaultTier;
     }
 
     public static synchronized void ensureLoaded() {
@@ -36,8 +43,6 @@ public final class MinerTierConfig {
             for (Path entry : (Iterable<Path>) entries.sorted()::iterator) {
                 if (Files.isDirectory(entry)) {
                     loadTierDirectory(entry);
-                } else if (entry.getFileName().toString().endsWith(".json")) {
-                    loadTierFile(entry, entry.getFileName().toString().replace(".json", ""));
                 }
             }
         } catch (Exception e) {

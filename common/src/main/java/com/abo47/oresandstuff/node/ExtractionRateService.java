@@ -3,6 +3,7 @@ package com.abo47.oresandstuff.node;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 
@@ -14,9 +15,9 @@ public final class ExtractionRateService {
         Item item = null;
         var type = OreNodeDataManager.INSTANCE.getNodeType(node.getNodeTypeId()).orElse(null);
         if (type != null) {
-            item = BuiltInRegistries.ITEM.get(type.outputItem());
+            item = BuiltInRegistries.ITEM.get(type.rollDrop(node.getLevel() != null ? node.getLevel().random : null));
         }
-        if (item == null) {
+        if (item == null || item == Items.AIR) {
             return ItemStack.EMPTY;
         }
         int count = Math.max(1, (int) Math.round(baseCount * node.getPurity().manualMultiplier()));

@@ -42,11 +42,10 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
 
     public MinerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MINER, pos, state);
-        MinerTierConfig.MinerTier tier = MinerTierConfig.get(MinerBlock.tierId(state)).orElse(null);
-        this.fePerTick = tier != null ? tier.fePerTick() : OresAndStuffConfig.miner().fePerTick;
-        this.maxReceiveFe = tier != null ? tier.maxReceiveFe() : OresAndStuffConfig.miner().maxReceiveFe;
-        int buffer = tier != null ? tier.bufferFe() : OresAndStuffConfig.miner().bufferFe;
-        this.energy = new SimpleEnergyStorage(buffer, this.maxReceiveFe, this.fePerTick);
+        MinerTierConfig.MinerTier tier = MinerTierConfig.get(MinerBlock.tierId(state)).orElse(MinerTierConfig.defaultTier());
+        this.fePerTick = tier.fePerTick();
+        this.maxReceiveFe = tier.maxReceiveFe();
+        this.energy = new SimpleEnergyStorage(tier.bufferFe(), this.maxReceiveFe, this.fePerTick);
     }
 
     @Override

@@ -42,9 +42,16 @@ public final class NetworkServices {
     public static void sendLibrary(ServerPlayer player) {
         List<String> discovered = PlayerScanState.bioScans(player);
         List<BioScanLibraryPacket.Entry> entries = new ArrayList<>();
+        var bioCfg = OresAndStuffConfig.bioScan();
         for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
             ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
             if (id == null) {
+                continue;
+            }
+            if (bioCfg.hiddenEntities.contains(id.toString())) {
+                continue;
+            }
+            if (bioCfg.hideNonMobs && !LivingEntity.class.isAssignableFrom(type.getBaseClass())) {
                 continue;
             }
             EntityScanEntry entry = BioLibraryConfig.entryFor(type, id);

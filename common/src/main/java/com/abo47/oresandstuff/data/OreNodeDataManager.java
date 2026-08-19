@@ -24,6 +24,7 @@ import com.abo47.oresandstuff.data.config.ConfigAssets;
 import com.abo47.oresandstuff.node.OreNodeType;
 import com.abo47.oresandstuff.node.Purity;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -79,10 +80,22 @@ public final class OreNodeDataManager {
         if (visual == null) {
             visual = new ResourceLocation("minecraft", "stone");
         }
-        ResourceLocation dimension = ResourceLocation.tryParse(
-                root.has("dimension") ? root.get("dimension").getAsString() : Level.OVERWORLD.location().toString());
-        if (dimension == null) {
-            dimension = Level.OVERWORLD.location();
+        ResourceLocation visualPure = null;
+        if (root.has("visual_block_pure")) {
+            visualPure = ResourceLocation.tryParse(root.get("visual_block_pure").getAsString());
+        }
+
+        List<ResourceLocation> dimensions = new ArrayList<>();
+        if (root.has("dimensions") && root.get("dimensions").isJsonArray()) {
+            for (com.google.gson.JsonElement element : root.getAsJsonArray("dimensions")) {
+                ResourceLocation dim = ResourceLocation.tryParse(element.getAsString());
+                if (dim != null && !dimensions.contains(dim)) {
+                    dimensions.add(dim);
+                }
+            }
+        }
+        if (dimensions.isEmpty()) {
+            dimensions.add(Level.OVERWORLD.location());
         }
 
         double baseRate = doubleValue(root, "base_rate_per_second", 0.2D);
@@ -100,6 +113,25 @@ public final class OreNodeDataManager {
             biomes.put("minecraft:plains", 30);
         }
 
+        Map<String, OreNodeType.BiomeOverride> overrides = new LinkedHashMap<>();
+        if (root.has("biome_overrides") && root.get("biome_overrides").isJsonObject()) {
+            for (Map.Entry<String, com.google.gson.JsonElement> e : root.getAsJsonObject("biome_overrides").entrySet()) {
+                if (!e.getValue().isJsonObject()) {
+                    continue;
+                }
+                JsonObject o = e.getValue().getAsJsonObject();
+                overrides.put(e.getKey(), new OreNodeType.BiomeOverride(
+                        optionalInt(o, "min_nodes_per_chunk"),
+                        optionalInt(o, "max_nodes_per_chunk"),
+                        optionalInt(o, "cluster_radius"),
+                        optionalInt(o, "scatter_count"),
+                        optionalInt(o, "purity_weights.impure"),
+                        optionalInt(o, "purity_weights.normal"),
+                        optionalInt(o, "purity_weights.pure")
+                ));
+            }
+        }
+
         int minNodes = intValue(root, "min_nodes_per_chunk", 1);
         int maxNodes = intValue(root, "max_nodes_per_chunk", 2);
         int impure = intValue(root, "purity_weights.impure", 25);
@@ -112,14 +144,32 @@ public final class OreNodeDataManager {
         int clusterRadius = Math.max(1, intValue(root, "cluster_radius", 2));
         int scatter = intValue(root, "scatter_count", 8);
 
-        return new OreNodeType(id, output, baseRate, color, hardness, enabled, visual, dimension,
-                biomes, minNodes, maxNodes, impure, normal, pure, spacing, attempts, scanRadius, clusterRadius, scatter);
+        boolean surfaceSpawn = !root.has("surface_spawn") || root.get("surface_spawn").getAsBoolean();
+        int minY = intValue(root, "min_y", 0);
+        int maxY = intValue(root, "max_y", 63);
+
+        List<OreNodeType.OreNodeDrop> drops = new ArrayList<>();
+        if (root.has("drops") && root.get("drops").isJsonObject()) {
+            for (Map.Entry<String, com.google.gson.JsonElement> e : root.getAsJsonObject("drops").entrySet()) {
+                ResourceLocation item = ResourceLocation.tryParse(e.getKey());
+                if (item != null) {
+                    drops.add(new OreNodeType.OreNodeDrop(item, Math.max(1, e.getValue().getAsInt())));
+                }
+            }
+        }
+        if (drops.isEmpty()) {
+            drops.add(new OreNodeType.OreNodeDrop(output, 100));
+        }
+
+        return new OreNodeType(id, output, baseRate, color, hardness, enabled, visual, visualPure, dimensions,
+                biomes, minNodes, maxNodes, impure, normal, pure, spacing, attempts, scanRadius, clusterRadius, scatter,
+                surfaceSpawn, minY, maxY, drops, overrides);
     }
 
     public List<OreNodeType> typesForDimension(ResourceLocation dimension) {
         ensureLoaded();
         return nodeTypes.values().stream()
-                .filter(t -> t.dimension().equals(dimension))
+                .filter(t -> t.matchesDimension(dimension))
                 .filter(t -> t.enabledByDefault() && !disabledNodeIds().contains(t.id()))
                 .toList();
     }
@@ -183,16 +233,19 @@ public final class OreNodeDataManager {
         return candidates.get(0);
     }
 
-    public Purity rollPurity(RandomSource random, OreNodeType type) {
-        int total = type.impureWeight() + type.normalWeight() + type.pureWeight();
+    public Purity rollPurity(RandomSource random, OreNodeType type, String biomeName) {
+        int impure = type.effectiveImpureWeight(biomeName);
+        int normal = type.effectiveNormalWeight(biomeName);
+        int pure = type.effectivePureWeight(biomeName);
+        int total = impure + normal + pure;
         if (total <= 0) {
             return Purity.NORMAL;
         }
         int v = random.nextInt(total);
-        if (v < type.impureWeight()) {
+        if (v < impure) {
             return Purity.IMPURE;
         }
-        if (v < type.impureWeight() + type.normalWeight()) {
+        if (v < impure + normal) {
             return Purity.NORMAL;
         }
         return Purity.PURE;
@@ -227,18 +280,25 @@ public final class OreNodeDataManager {
         JsonObject root = new JsonObject();
         root.addProperty("id", id);
         root.addProperty("output_item", output);
+        JsonObject drops = new JsonObject();
+        drops.addProperty(output, 100);
+        root.add("drops", drops);
         root.addProperty("base_rate_per_second", rate);
         root.addProperty("scanner_color", color);
         root.addProperty("hardness", 100.0);
         root.addProperty("enabled", true);
         root.addProperty("visual_block", visual);
-        root.addProperty("dimension", Level.OVERWORLD.location().toString());
+        root.addProperty("visual_block_pure", "minecraft:deepslate_" + visual.substring(visual.lastIndexOf('/') + 1).replace("minecraft:", ""));
+        JsonArray dimensions = new JsonArray();
+        dimensions.add(Level.OVERWORLD.location().toString());
+        root.add("dimensions", dimensions);
         JsonObject biomes = new JsonObject();
         for (String part : biomesCsv.split(",")) {
             int lastColon = part.lastIndexOf(':');
             biomes.addProperty(part.substring(0, lastColon), Integer.parseInt(part.substring(lastColon + 1)));
         }
         root.add("biomes", biomes);
+        root.add("biome_overrides", new JsonObject());
         root.addProperty("min_nodes_per_chunk", minNodes);
         root.addProperty("max_nodes_per_chunk", maxNodes);
         JsonObject purity = new JsonObject();
@@ -251,6 +311,9 @@ public final class OreNodeDataManager {
         root.addProperty("scanner_radius", 192);
         root.addProperty("cluster_radius", 2);
         root.addProperty("scatter_count", 8);
+        root.addProperty("surface_spawn", true);
+        root.addProperty("min_y", 0);
+        root.addProperty("max_y", 63);
         return ConfigAssets.pretty(root);
     }
 
@@ -282,6 +345,18 @@ public final class OreNodeDataManager {
             current = current.getAsJsonObject(parts[i]);
         }
         return current.has(parts[parts.length - 1]) ? current.get(parts[parts.length - 1]).getAsInt() : fallback;
+    }
+
+    private static Integer optionalInt(JsonObject root, String path) {
+        String[] parts = path.split("\\.");
+        JsonObject current = root;
+        for (int i = 0; i < parts.length - 1; i++) {
+            if (!current.has(parts[i]) || !current.get(parts[i]).isJsonObject()) {
+                return null;
+            }
+            current = current.getAsJsonObject(parts[i]);
+        }
+        return current.has(parts[parts.length - 1]) ? current.get(parts[parts.length - 1]).getAsInt() : null;
     }
 
     private static double doubleValue(JsonObject root, String key, double fallback) {
