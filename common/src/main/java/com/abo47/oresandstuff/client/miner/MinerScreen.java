@@ -11,10 +11,8 @@ import com.lowdragmc.lowdraglib.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
 import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.gui.widget.layout.Align;
@@ -23,6 +21,7 @@ import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
 import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 import com.abo47.oresandstuff.client.ui.render.GradientRectTexture;
+import com.abo47.oresandstuff.client.ui.render.EnergyBarTexture;
 import com.abo47.oresandstuff.client.ui.widget.PlayerInventoryWidget;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.data.config.MinerTierConfig;
@@ -99,11 +98,8 @@ public final class MinerScreen {
         root.addWidget(state);
 
         root.addWidget(new ImageWidget(ENERGY_BAR_X - 1, ENERGY_BAR_Y - 1, ENERGY_BAR_W + 2, ENERGY_BAR_H + 2, bevelPanelTexture(OasColors.BG_0, OasColors.BORDER, OasColors.BORDER)));
-        ProgressTexture energyTexture = new ProgressTexture(
-                new ColorRectTexture(OasColors.withAlpha(0xFF4A1010, 220)),
-                new GradientRectTexture(0xFFFFB3B3, 0xFFD41212, true)
-        ).setFillDirection(ProgressTexture.FillDirection.DOWN_TO_UP);
-        ProgressWidget energyBar = new ProgressWidget(() -> uiEnergySmooth(state), ENERGY_BAR_X, ENERGY_BAR_Y, ENERGY_BAR_W, ENERGY_BAR_H, energyTexture);
+        ImageWidget energyBar = new ImageWidget(ENERGY_BAR_X, ENERGY_BAR_Y, ENERGY_BAR_W, ENERGY_BAR_H,
+                () -> new EnergyBarTexture(() -> uiEnergySmooth(state), () -> energyColor(state)));
         energyBar.setClientSideWidget();
         energyBar.setHoverTooltips(Component.literal("Energy: " + be.getEnergyStored() + " / " + be.getMaxEnergyStored() + " FE"));
         root.addWidget(energyBar);
@@ -120,13 +116,15 @@ public final class MinerScreen {
         energyLane.addWidget(energyPercent);
         root.addWidget(energyLane);
 
-        LabelWidget outputLabel = terminalLabel(ROW_X, ROW_1_Y, state, s -> "output: " + nodeName(s));
+        LabelWidget tierLabel = terminalLabel(ROW_X, ROW_1_Y, state, s -> "tier: " + s.getTierId());
+        root.addWidget(tierLabel);
+        LabelWidget outputLabel = terminalLabel(ROW_X, ROW_1_Y + ROW_GAP, state, s -> "output: " + nodeName(s));
         root.addWidget(outputLabel);
-        LabelWidget qualityLabel = terminalLabel(ROW_X, ROW_1_Y + ROW_GAP, state, s -> "quality: " + qualityText(s));
+        LabelWidget qualityLabel = terminalLabel(ROW_X, ROW_1_Y + 2 * ROW_GAP, state, s -> "quality: " + qualityText(s));
         root.addWidget(qualityLabel);
-        LabelWidget rateLabel = terminalLabel(ROW_X, ROW_1_Y + 2 * ROW_GAP, state, s -> "rate: " + rateText(s));
+        LabelWidget rateLabel = terminalLabel(ROW_X, ROW_1_Y + 3 * ROW_GAP, state, s -> "rate: " + rateText(s));
         root.addWidget(rateLabel);
-        LabelWidget progressLabel = terminalLabel(ROW_X, ROW_1_Y + 3 * ROW_GAP, state, s -> "progress: " + progressText(s));
+        LabelWidget progressLabel = terminalLabel(ROW_X, ROW_1_Y + 4 * ROW_GAP, state, s -> "progress: " + progressText(s));
         root.addWidget(progressLabel);
 
         LabelWidget promptLabel = new LabelWidget(ROW_X, CHILD_Y + CHILD_H - 12, ">");
@@ -223,7 +221,7 @@ public final class MinerScreen {
 
     private double uiEnergySmooth(MinerUIState state) {
         double target = energyRatio(state);
-        if (smoothEnergy < 0.0) {
+        if (smoothEnergy < 0.0 || !state.isSynced()) {
             smoothEnergy = target;
         } else {
             smoothEnergy += (target - smoothEnergy) * 0.25;

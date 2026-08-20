@@ -88,6 +88,22 @@ public class ToggleSwitchWidget extends SwitchWidget {
             Runnable refresh,
             Component[] tooltips
     ) {
+        this(animationKey, x, y, width, height, valueSupplier, valueConsumer, enabledSupplier, refresh, tooltips, true);
+    }
+
+    public ToggleSwitchWidget(
+            String animationKey,
+            int x,
+            int y,
+            int width,
+            int height,
+            BooleanSupplier valueSupplier,
+            Consumer<Boolean> valueConsumer,
+            BooleanSupplier enabledSupplier,
+            Runnable refresh,
+            Component[] tooltips,
+            boolean clientSide
+    ) {
         super(x, y, width, height, null);
         this.animationKey = animationKey == null ? "" : animationKey;
         this.valueSupplier = valueSupplier == null ? () -> false : valueSupplier;
@@ -96,7 +112,9 @@ public class ToggleSwitchWidget extends SwitchWidget {
         this.enabledSupplier = enabledSupplier == null ? () -> true : enabledSupplier;
         this.refresh = refresh == null ? () -> {
         } : refresh;
-        setClientSideWidget();
+        if (clientSide) {
+            setClientSideWidget();
+        }
         setSupplier(this.valueSupplier::getAsBoolean);
         setOnPressCallback(this::handleToggle);
         setPressed(this.valueSupplier.getAsBoolean());

@@ -12,8 +12,8 @@ public class MinerToggleWidget extends ToggleSwitchWidget {
     private final MinerUIState state;
 
     public MinerToggleWidget(int x, int y, MinerBlockEntity be, MinerUIState state) {
-        super(x, y, ToggleSwitchWidget.DEFAULT_WIDTH, ToggleSwitchWidget.DEFAULT_HEIGHT,
-                () -> state.isEnabled(), pressed -> be.setEnabled(pressed), () -> {}, null);
+        super("", x, y, ToggleSwitchWidget.DEFAULT_WIDTH, ToggleSwitchWidget.DEFAULT_HEIGHT,
+                () -> state.isEnabled(), pressed -> be.setEnabled(pressed), () -> true, () -> {}, null, false);
         this.state = state;
     }
 

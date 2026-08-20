@@ -21,6 +21,7 @@ public class MinerUIState extends Widget {
     private MinerStatus status;
     private ResourceLocation nodeTypeId;
     private boolean enabled;
+    private boolean synced;
 
     public MinerUIState(MinerBlockEntity be) {
         super(0, 0, 1, 1);
@@ -44,6 +45,7 @@ public class MinerUIState extends Widget {
     public void readInitialData(FriendlyByteBuf buffer) {
         super.readInitialData(buffer);
         readState(buffer);
+        synced = true;
     }
 
     @Override
@@ -56,6 +58,7 @@ public class MinerUIState extends Widget {
     public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         if (id == 1) {
             readState(buffer);
+            synced = true;
         } else {
             super.readUpdateInfo(id, buffer);
         }
@@ -123,5 +126,13 @@ public class MinerUIState extends Widget {
         return nodeQuality / 100.0 * multiplier
                 * OreNodeDataManager.INSTANCE.getNodeType(nodeTypeId)
                         .map(OreNodeType::baseRatePerSecond).orElse(0.0);
+    }
+
+    public String getTierId() {
+        return be.getTier().id();
+    }
+
+    public boolean isSynced() {
+        return synced;
     }
 }
