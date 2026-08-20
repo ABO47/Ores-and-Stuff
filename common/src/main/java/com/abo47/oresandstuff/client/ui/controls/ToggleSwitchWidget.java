@@ -21,7 +21,7 @@ import com.abo47.oresandstuff.client.ui.theme.render.SurfaceFactory;
 import static com.abo47.oresandstuff.client.ui.theme.render.SurfaceFactory.withAlpha;
 import static com.abo47.oresandstuff.client.ui.theme.tokens.UiThemeTokens.*;
 
-public final class ToggleSwitchWidget extends SwitchWidget {
+public class ToggleSwitchWidget extends SwitchWidget {
     public static final int DEFAULT_WIDTH = GRID_34;
     public static final int DEFAULT_HEIGHT = GRID_16;
     private static final long ANIMATION_MS = OasAnimationTimings.TOGGLE_SWITCH_MS;

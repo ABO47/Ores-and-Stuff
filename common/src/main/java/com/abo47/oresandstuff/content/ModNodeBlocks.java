@@ -32,7 +32,7 @@ public final class ModNodeBlocks {
     public static OreNodeBlock get(ResourceLocation typeId, int tierIndex) {
         OreNodeDataManager.INSTANCE.ensureLoaded();
         return NODE_BLOCKS.computeIfAbsent(key(typeId, tierIndex), k -> new OreNodeBlock(
-                BlockBehaviour.Properties.of().strength(-1.0F, 3_600_000.0F).sound(SoundType.STONE).noOcclusion()));
+                BlockBehaviour.Properties.of().strength(-1.0F, 1.2F).sound(SoundType.STONE).noOcclusion()));
     }
 
     /** The generic node block plus one block per configured (type, tier). */

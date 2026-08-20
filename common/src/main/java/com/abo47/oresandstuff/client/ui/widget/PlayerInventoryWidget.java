@@ -10,13 +10,13 @@ import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 
 public class PlayerInventoryWidget extends WidgetGroup {
     public PlayerInventoryWidget(int x, int y) {
-        super(x, y, 176, 94);
+        super(x, y, 176, 72);
         for (int col = 0; col < 9; col++) {
-            addWidget(templateSlot("player_inv_" + col, 8 + col * 18, 76));
+            addWidget(templateSlot("player_hotbar_" + col, 8 + col * 18, 54));
         }
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addWidget(templateSlot("player_inv_" + (col + (row + 1) * 9), 8 + col * 18, 18 + row * 18));
+                addWidget(templateSlot("player_inv_" + (col + row * 9), 8 + col * 18, row * 18));
             }
         }
     }

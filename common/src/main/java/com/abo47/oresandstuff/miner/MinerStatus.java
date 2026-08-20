@@ -24,6 +24,10 @@ public enum MinerStatus {
         return code;
     }
 
+    public String plainKey() {
+        return plainKey;
+    }
+
     public String plain() {
         return Component.translatable(plainKey).getString();
     }

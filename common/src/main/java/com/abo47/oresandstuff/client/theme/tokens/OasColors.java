@@ -53,6 +53,9 @@ public final class OasColors {
     public static int ACCENT_SOFT = 0xFF84CEDA;
     public static int ACCENT_MINT = SUCCESS;
 
+    public static int TERMINAL_BG = 0xFF0A0E12;
+    public static int TERMINAL_GREEN = 0xFF3CFF6E;
+
     public static int VANILLA_BG = 0xFFC6C6C6;
     public static int VANILLA_PANEL = 0xFF8B8B8B;
     public static int VANILLA_PANEL_DARK = 0xFF747474;
@@ -99,6 +102,8 @@ public final class OasColors {
         register("ACCENT_PRIMARY", ACCENT_PRIMARY, v -> ACCENT_PRIMARY = v);
         register("ACCENT_SOFT", ACCENT_SOFT, v -> ACCENT_SOFT = v);
         register("ACCENT_MINT", ACCENT_MINT, v -> ACCENT_MINT = v);
+        register("TERMINAL_BG", TERMINAL_BG, v -> TERMINAL_BG = v);
+        register("TERMINAL_GREEN", TERMINAL_GREEN, v -> TERMINAL_GREEN = v);
         register("VANILLA_BG", VANILLA_BG, v -> VANILLA_BG = v);
         register("VANILLA_PANEL", VANILLA_PANEL, v -> VANILLA_PANEL = v);
         register("VANILLA_PANEL_DARK", VANILLA_PANEL_DARK, v -> VANILLA_PANEL_DARK = v);
@@ -223,6 +228,14 @@ public final class OasColors {
 
     public static int withAlpha(int rgbOrArgb, int alpha) {
         return ((alpha & 0xFF) << 24) | (rgbOrArgb & 0x00FFFFFF);
+    }
+
+    public static int lighten(int argb, int percent) {
+        return mix(argb, WHITE, percent);
+    }
+
+    public static int darken(int argb, int percent) {
+        return mix(argb, BLACK, percent);
     }
 
     private static int mix(int color, int other, int otherPercent) {

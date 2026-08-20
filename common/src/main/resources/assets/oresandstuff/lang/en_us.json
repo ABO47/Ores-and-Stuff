@@ -85,5 +85,6 @@
     "miner.status.stopped.styled":  "§7STOP",
     "miner.status.max_miners":  "Miner limit reached",
     "miner.status.max_miners.styled":  "§cMINER LIMIT",
+    "miner.status.click_hint":  "Click to toggle the miner",
     "Hide non-mobs from library":  "Hide non-mobs from library"
 }
