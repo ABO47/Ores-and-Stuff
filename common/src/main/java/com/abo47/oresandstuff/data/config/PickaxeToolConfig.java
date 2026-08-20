@@ -166,12 +166,12 @@ public final class PickaxeToolConfig {
     private static String defaultJson() {
         JsonObject root = new JsonObject();
         JsonArray tools = new JsonArray();
-        tools.add(defaultTool("minecraft:wooden_pickaxe", 1, 110, 2));
-        tools.add(defaultTool("minecraft:stone_pickaxe", 1, 90, 2));
-        tools.add(defaultTool("minecraft:iron_pickaxe", 1, 70, 1));
-        tools.add(defaultTool("minecraft:golden_pickaxe", 1, 50, 3));
-        tools.add(defaultTool("minecraft:diamond_pickaxe", 1, 45, 1));
-        tools.add(defaultTool("minecraft:netherite_pickaxe", 1, 35, 1));
+        tools.add(defaultTool("minecraft:wooden_pickaxe", 1, 60, 2));
+        tools.add(defaultTool("minecraft:stone_pickaxe", 1, 50, 2));
+        tools.add(defaultTool("minecraft:iron_pickaxe", 1, 40, 1));
+        tools.add(defaultTool("minecraft:golden_pickaxe", 1, 30, 3));
+        tools.add(defaultTool("minecraft:diamond_pickaxe", 1, 20, 1));
+        tools.add(defaultTool("minecraft:netherite_pickaxe", 1, 10, 1));
         root.add("tools", tools);
         return ConfigAssets.pretty(root);
     }

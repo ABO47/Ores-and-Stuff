@@ -85,6 +85,7 @@ public final class MinerTierConfig {
                     intValue(root, "fe_per_tick", 40),
                     intValue(root, "buffer_fe", 40000),
                     intValue(root, "max_receive_fe", 512),
+                    doubleValue(root, "rate_multiplier", 1.0),
                     stringValue(root, "model", "miner"),
                     stringValue(root, "texture", "")
             ));
@@ -142,6 +143,14 @@ public final class MinerTierConfig {
         return root.has(key) ? root.get(key).getAsString() : fallback;
     }
 
+    private static double doubleValue(JsonObject root, String key, double fallback) {
+        try {
+            return root.has(key) ? root.get(key).getAsDouble() : fallback;
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
     private static String defaultMk1Json() {
         JsonObject root = new JsonObject();
         root.addProperty("id", "mk1");
@@ -149,13 +158,14 @@ public final class MinerTierConfig {
         root.addProperty("fe_per_tick", 40);
         root.addProperty("buffer_fe", 40000);
         root.addProperty("max_receive_fe", 512);
+        root.addProperty("rate_multiplier", 1.0);
         root.addProperty("model", "miner");
         root.addProperty("texture", "");
         return ConfigAssets.pretty(root);
     }
 
     private static MinerTier defaultMk1() {
-        return new MinerTier("mk1", "Miner Mk1", 40, 40000, 512, "miner", "");
+        return new MinerTier("mk1", "Miner Mk1", 40, 40000, 512, 1.0, "miner", "");
     }
 
     private static String titleCase(String raw) {
@@ -176,6 +186,6 @@ public final class MinerTierConfig {
         return out.isEmpty() ? raw : out.toString();
     }
 
-    public record MinerTier(String id, String displayName, int fePerTick, int bufferFe, int maxReceiveFe, String model, String texture) {
+    public record MinerTier(String id, String displayName, int fePerTick, int bufferFe, int maxReceiveFe, double rateMultiplier, String model, String texture) {
     }
 }

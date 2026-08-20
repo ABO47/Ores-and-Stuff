@@ -31,6 +31,7 @@ import com.abo47.oresandstuff.node.OreNodeType;
 import com.abo47.oresandstuff.platform.Services;
 
 public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEntityUI {
+    private final MinerTierConfig.MinerTier tier;
     private final EnergyStorage energy;
     private final int fePerTick;
     private final int maxReceiveFe;
@@ -45,6 +46,7 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
     public MinerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MINER, pos, state);
         MinerTierConfig.MinerTier tier = MinerTierConfig.get(MinerBlock.tierId(state)).orElse(MinerTierConfig.defaultTier());
+        this.tier = tier;
         this.fePerTick = tier.fePerTick();
         this.maxReceiveFe = tier.maxReceiveFe();
         this.energy = new SimpleEnergyStorage(tier.bufferFe(), this.maxReceiveFe, this.fePerTick);
@@ -98,7 +100,7 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
             return;
         }
 
-        double ratePerTick = ExtractionRateService.minerItemsPerSecond(node, 1.0) / 20.0;
+        double ratePerTick = ExtractionRateService.minerItemsPerSecond(node, tier.rateMultiplier()) / 20.0;
         progress += ratePerTick;
 
         if (progress >= 1.0) {
