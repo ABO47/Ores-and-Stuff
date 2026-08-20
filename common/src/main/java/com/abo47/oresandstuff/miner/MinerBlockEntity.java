@@ -152,7 +152,7 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
             return false;
         }
         var type = OreNodeDataManager.INSTANCE.getNodeType(node.getNodeTypeId()).orElse(null);
-        int max = type != null ? type.effectiveMaxMiners(biomeAt(level, node.getBlockPos())) : 1;
+        int max = type != null ? type.maxMinersPerNode() : 1;
         int scanXZ = Math.min(9, Math.max(4, 2 * (type != null ? type.clusterRadius() : 2) + 1));
         java.util.UUID nodeId = node.getNodeId();
         int attached = 0;
@@ -173,10 +173,6 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
             }
         }
         return attached >= max;
-    }
-
-    private static String biomeAt(Level level, BlockPos pos) {
-        return level.getBiome(pos).unwrapKey().map(key -> key.location().toString()).orElse("minecraft:plains");
     }
 
     private void pullPowerFromNeighbors() {

@@ -93,11 +93,6 @@ public record OreNodeType(
         return override != null && override.qualityMax() != null ? override.qualityMax() : qualityMax;
     }
 
-    public int effectiveMaxMiners(String biomeName) {
-        BiomeOverride override = overrideFor(biomeName);
-        return override != null && override.maxMinersPerNode() != null ? Math.max(1, override.maxMinersPerNode()) : maxMinersPerNode;
-    }
-
     public boolean effectiveSurfaceSpawn(String biomeName) {
         BiomeOverride override = overrideFor(biomeName);
         return override != null && override.surfaceSpawn() != null ? override.surfaceSpawn() : surfaceSpawn;
@@ -181,7 +176,7 @@ public record OreNodeType(
 
     public record BiomeOverride(Integer minNodesPerChunk, Integer maxNodesPerChunk, Integer clusterRadius,
                                 Integer scatterCount, Double qualityMin, Double qualityMax, Integer minY, Integer maxY,
-                                Integer maxMinersPerNode, Boolean surfaceSpawn, Integer placementAttempts,
+                                Boolean surfaceSpawn, Integer placementAttempts,
                                 Integer minSpacingBlocks) {
     }
 }

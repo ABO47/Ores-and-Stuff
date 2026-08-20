@@ -123,7 +123,6 @@ public final class OreNodeDataManager {
                         optionalDouble(o, "quality_max"),
                         optionalInt(o, "min_y"),
                         optionalInt(o, "max_y"),
-                        optionalInt(o, "max_miners_per_node"),
                         optionalBoolean(o, "surface_spawn"),
                         optionalInt(o, "placement_attempts"),
                         optionalInt(o, "min_spacing_blocks")
