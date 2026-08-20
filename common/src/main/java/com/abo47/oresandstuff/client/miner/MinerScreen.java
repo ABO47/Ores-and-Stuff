@@ -2,6 +2,11 @@ package com.abo47.oresandstuff.client.miner;
 
 import java.util.Locale;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -14,9 +19,10 @@ import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
+import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.gui.widget.layout.Align;
 import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
+import com.lowdragmc.lowdraglib.utils.Position;
 
 import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
@@ -37,6 +43,7 @@ public final class MinerScreen {
 
     private final MinerBlockEntity be;
     private double smoothEnergy = -1.0;
+    private boolean initialSnapDone;
 
     private MinerScreen(MinerBlockEntity be) {
         this.be = be;
@@ -104,17 +111,8 @@ public final class MinerScreen {
         energyBar.setHoverTooltips(Component.literal("Energy: " + be.getEnergyStored() + " / " + be.getMaxEnergyStored() + " FE"));
         root.addWidget(energyBar);
 
-        WidgetGroup energyLane = new WidgetGroup(LEFT_X, ENERGY_BAR_Y + ENERGY_BAR_H + 6, CHILD_W, 10);
-        LabelWidget energyPercent = new LabelWidget(0, 0, "0%%");
-        energyPercent.setClientSideWidget();
-        energyPercent.setTextProvider(() -> {
-            energyPercent.setColor(energyColor(state));
-            return energyPercentText(state);
-        });
-        energyPercent.setAlign(Align.TOP_CENTER);
-        energyPercent.setDropShadow(true);
-        energyLane.addWidget(energyPercent);
-        root.addWidget(energyLane);
+        EnergyPercentLabel energyPercent = new EnergyPercentLabel(LEFT_X, ENERGY_BAR_Y + ENERGY_BAR_H + 6, CHILD_W, state);
+        root.addWidget(energyPercent);
 
         LabelWidget tierLabel = terminalLabel(ROW_X, ROW_1_Y, state, s -> "tier: " + s.getTierId());
         root.addWidget(tierLabel);
@@ -128,7 +126,6 @@ public final class MinerScreen {
         root.addWidget(progressLabel);
 
         LabelWidget promptLabel = new LabelWidget(ROW_X, CHILD_Y + CHILD_H - 12, ">");
-        promptLabel.setClientSideWidget();
         promptLabel.setTextProvider(() -> {
             boolean blink = (be.getLevel() != null ? be.getLevel().getGameTime() : System.currentTimeMillis() / 50L) % 30 < 15;
             return blink ? ">_" : "> ";
@@ -151,7 +148,7 @@ public final class MinerScreen {
         }
 
         PlayerInventoryWidget playerInventory = new PlayerInventoryWidget(0, 0);
-        playerInventory.setSelfPosition(CONT_X + (CONT_W - 176) / 2, BOT_Y + (CONT_H - 72) / 2);
+        playerInventory.setSelfPosition(CONT_X + (CONT_W - 176) / 2 - 1, BOT_Y + (CONT_H - 72) / 2);
         root.addWidget(playerInventory);
 
         return root;
@@ -159,11 +156,39 @@ public final class MinerScreen {
 
     private static LabelWidget terminalLabel(int x, int y, MinerUIState state, java.util.function.Function<MinerUIState, String> text) {
         LabelWidget label = new LabelWidget(x, y, text.apply(state));
-        label.setClientSideWidget();
         label.setTextProvider(() -> text.apply(state));
         label.setColor(OasColors.TERMINAL_GREEN);
         label.setDropShadow(true);
         return label;
+    }
+
+    private final class EnergyPercentLabel extends Widget {
+        private final MinerUIState state;
+        private int color = OasColors.TEXT_SECONDARY;
+
+        private EnergyPercentLabel(int x, int y, int width, MinerUIState state) {
+            super(x, y, width, 10);
+            this.state = state;
+            setClientSideWidget();
+        }
+
+        @Override
+        public void updateScreen() {
+            super.updateScreen();
+            color = energyColor(state);
+        }
+
+        @Override
+        @Environment(EnvType.CLIENT)
+        public void drawInBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+            super.drawInBackground(graphics, mouseX, mouseY, partialTicks);
+            String text = (int) Math.round(uiEnergySmooth(state) * 100) + "%";
+            Font font = Minecraft.getInstance().font;
+            Position pos = getPosition();
+            int x = pos.x + (getSize().width - font.width(text)) / 2;
+            int y = pos.y + (getSize().height - font.lineHeight) / 2;
+            graphics.drawString(font, text, x, y, color, true);
+        }
     }
 
     private static IGuiTexture bevelPanelTexture(int fillColor, int outerBorder, int innerBorder) {
@@ -215,14 +240,13 @@ public final class MinerScreen {
         return (int) Math.round(Math.max(0.0, Math.min(1.0, state.getProgress())) * 100) + "%%";
     }
 
-    private String energyPercentText(MinerUIState state) {
-        return (int) Math.round(uiEnergySmooth(state) * 100) + "%%";
-    }
-
     private double uiEnergySmooth(MinerUIState state) {
         double target = energyRatio(state);
-        if (smoothEnergy < 0.0 || !state.isSynced()) {
+        if (!initialSnapDone) {
             smoothEnergy = target;
+            if (state.isSynced()) {
+                initialSnapDone = true;
+            }
         } else {
             smoothEnergy += (target - smoothEnergy) * 0.25;
         }
