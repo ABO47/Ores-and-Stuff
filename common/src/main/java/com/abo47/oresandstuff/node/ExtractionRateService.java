@@ -35,6 +35,21 @@ public final class ExtractionRateService {
         return out;
     }
 
+    /** API variant: same as {@link #buildDrops(OreNodeBlockEntity, int, double)} for a detached node snapshot. */
+    public static List<ItemStack> buildDrops(net.minecraft.resources.ResourceLocation typeId, double qualityPercent,
+                                             RandomSource random, int baseCount) {
+        List<ItemStack> out = new ArrayList<>();
+        var type = OreNodeDataManager.INSTANCE.getNodeType(typeId).orElse(null);
+        if (type == null) {
+            return out;
+        }
+        int count = Math.max(1, (int) Math.round(baseCount * NodeQuality.multiplier(qualityPercent)));
+        for (ItemStack stack : type.rollDrops(random)) {
+            out.add(stack.copyWithCount(count));
+        }
+        return out;
+    }
+
     public static double minerItemsPerSecond(OreNodeBlockEntity node, double minerTierMultiplier) {
         var type = OreNodeDataManager.INSTANCE.getNodeType(node.getNodeTypeId()).orElse(null);
         if (type == null) {

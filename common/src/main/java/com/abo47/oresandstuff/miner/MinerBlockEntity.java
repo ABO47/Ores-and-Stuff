@@ -17,6 +17,10 @@ import com.lowdragmc.lowdraglib.side.item.ItemTransferHelper;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.api.MinerExtractEvent;
+import com.abo47.oresandstuff.api.MinerHandle;
+import com.abo47.oresandstuff.api.MiningEvents;
+import com.abo47.oresandstuff.api.OreNodeHandle;
 import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.client.miner.MinerScreen;
 import com.abo47.oresandstuff.content.ModBlockEntities;
@@ -70,7 +74,7 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
 
         pullPowerFromNeighbors();
 
-        OreNodeBlockEntity node = findAttachedNode();
+        OreNodeBlockEntity node = getAttachedNode();
         if (node == null) {
             status = MinerStatus.NO_NODE;
             nodeTypeId = new ResourceLocation("minecraft", "air");
@@ -116,6 +120,13 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
             }
             progress -= units;
             energy.extractEnergy(fePerTick, false);
+            if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                MiningEvents.fire(new MinerExtractEvent(serverLevel,
+                        new MinerHandle(this),
+                        new OreNodeHandle(node.getBlockPos(), node.getNodeTypeId(), node.getQualityPercent(), node.getNodeId()),
+                        units,
+                        batch));
+            }
         }
 
         status = MinerStatus.RUNNING;
@@ -123,7 +134,7 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         setChanged();
     }
 
-    private OreNodeBlockEntity findAttachedNode() {
+    public OreNodeBlockEntity getAttachedNode() {
         if (level == null) {
             return null;
         }
@@ -166,7 +177,7 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
                     }
                     BlockEntity be = level.getBlockEntity(worldPosition.offset(dx, dy, dz));
                     if (be instanceof MinerBlockEntity other && other != this) {
-                        OreNodeBlockEntity otherNode = other.findAttachedNode();
+                        OreNodeBlockEntity otherNode = other.getAttachedNode();
                         if (otherNode != null && otherNode.getNodeId().equals(nodeId)) {
                             attached++;
                         }
@@ -244,8 +255,12 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
     }
 
     public double getRatePerSecond() {
-        OreNodeBlockEntity node = findAttachedNode();
-        return node != null ? ExtractionRateService.minerItemsPerSecond(node, 1.0) : 0.0;
+        OreNodeBlockEntity node = getAttachedNode();
+        return node != null ? ExtractionRateService.minerItemsPerSecond(node, tier.rateMultiplier()) : 0.0;
+    }
+
+    public MinerTierConfig.MinerTier getTier() {
+        return tier;
     }
 
     public MinerStatus getStatus() {
