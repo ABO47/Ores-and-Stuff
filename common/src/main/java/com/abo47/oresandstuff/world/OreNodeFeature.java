@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
@@ -23,13 +24,10 @@ import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
 import com.abo47.oresandstuff.OresAndStuffMod;
-import com.abo47.oresandstuff.block.OreNodeBlock;
 import com.abo47.oresandstuff.content.ModNodeBlocks;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
-import com.abo47.oresandstuff.node.NodeVisuals;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
 import com.abo47.oresandstuff.node.OreNodeType;
-import com.abo47.oresandstuff.node.Purity;
 
 public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
     public OreNodeFeature() {
@@ -53,25 +51,26 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
         }
         OreNodeType type = OreNodeDataManager.INSTANCE.rollNodeType(random, biomeName, candidates);
         int maxNodes = type.effectiveMaxNodes(biomeName);
+        boolean surfaceSpawn = type.effectiveSurfaceSpawn(biomeName);
 
-        int attempts = Math.max(1, type.placementAttempts());
+        int attempts = type.effectivePlacementAttempts(biomeName);
         for (int i = 0; i < attempts; i++) {
             int x = origin.getX() + random.nextInt(16);
             int z = origin.getZ() + random.nextInt(16);
             BlockPos pos;
-            if (type.surfaceSpawn()) {
+            if (surfaceSpawn) {
                 int y = surfaceY(level, x, z);
                 pos = new BlockPos(x, y, z);
                 if (random.nextInt(Math.max(1, 4 - maxNodes)) != 0 || !level.getBlockState(pos).isSolidRender(level, pos)) {
                     continue;
                 }
                 pos = pos.above();
-                if (!passesSpacing(level, pos, type.minSpacingBlocks()) || isObstructed(level, pos, 4) || isSteep(level, pos, 4, 4)) {
+                if (!passesSpacing(level, pos, type.effectiveMinSpacing(biomeName)) || isObstructed(level, pos, 4) || isSteep(level, pos, 4, 4)) {
                     continue;
                 }
             } else {
-                int yMin = Math.max(level.getMinBuildHeight() + 1, type.minY());
-                int yMax = Math.min(logicalTop(level), Math.max(yMin, type.maxY()));
+                int yMin = Math.max(level.getMinBuildHeight() + 1, type.effectiveMinY(biomeName));
+                int yMax = Math.min(logicalTop(level), Math.max(yMin, type.effectiveMaxY(biomeName)));
                 int y = yMin + random.nextInt(Math.max(1, yMax - yMin + 1));
                 pos = new BlockPos(x, y, z);
                 if (random.nextInt(Math.max(1, 4 - maxNodes)) != 0 || !isUndergroundHost(level, pos)) {
@@ -83,12 +82,12 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
                         continue;
                     }
                 }
-                if (!passesSpacing(level, pos, type.minSpacingBlocks())) {
+                if (!passesSpacing(level, pos, type.effectiveMinSpacing(biomeName))) {
                     continue;
                 }
             }
-            Purity purity = OreNodeDataManager.INSTANCE.rollPurity(random, type, biomeName);
-            placeCluster(level, pos, type, purity, random, type.effectiveScatterCount(biomeName), type.effectiveClusterRadius(biomeName), type.surfaceSpawn());
+            double quality = OreNodeDataManager.INSTANCE.rollQuality(random, type, biomeName);
+            placeCluster(level, pos, type, quality, random, type.effectiveScatterCount(biomeName), type.effectiveClusterRadius(biomeName), surfaceSpawn);
             return true;
         }
         return false;
@@ -155,10 +154,15 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
         return level.getLevel().getLogicalHeight() - 1;
     }
 
-    private void placeCluster(WorldGenLevel level, BlockPos center, OreNodeType type, Purity purity, RandomSource random, int scatterCount, int radius, boolean surfaceSpawn) {
+    private void placeCluster(WorldGenLevel level, BlockPos center, OreNodeType type, double quality, RandomSource random, int scatterCount, int radius, boolean surfaceSpawn) {
         ResourceLocation typeId = type.id();
-        Block nodeBlock = ModNodeBlocks.get(typeId);
-        int quality = purity == Purity.PURE ? 2 : purity == Purity.NORMAL ? 1 : 0;
+        int tierIndex = type.tierIndexFor(quality);
+        OreNodeType.QualityTier tier = type.qualityTiers().get(tierIndex);
+        Block nodeBlock = ModNodeBlocks.get(typeId, tierIndex);
+        Block visualBlock = BuiltInRegistries.BLOCK.get(tier.visualBlock());
+        if (visualBlock == Blocks.AIR) {
+            visualBlock = Blocks.STONE;
+        }
         UUID nodeId = UUID.nameUUIDFromBytes((level.getLevel().dimension().location() + ":" + center).getBytes(StandardCharsets.UTF_8));
         Set<BlockPos> placed = new HashSet<>();
         for (int dx = -radius; dx <= radius; dx++) {
@@ -173,12 +177,12 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
                         continue;
                     }
                     if (random.nextFloat() < 0.30F) {
-                        level.setBlock(pos, NodeVisuals.visualOre(typeId, purity == Purity.PURE).defaultBlockState(), 2);
+                        level.setBlock(pos, visualBlock.defaultBlockState(), 2);
                     } else {
-                        level.setBlock(pos, nodeBlock.defaultBlockState().setValue(OreNodeBlock.QUALITY, quality), 2);
+                        level.setBlock(pos, nodeBlock.defaultBlockState(), 2);
                         if (level.getBlockEntity(pos) instanceof OreNodeBlockEntity node) {
                             node.setNodeTypeId(typeId);
-                            node.setPurity(purity);
+                            node.setQualityPercent(quality);
                             node.setNodeId(nodeId);
                         }
                     }
@@ -187,16 +191,16 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
         if (!placed.contains(center)) {
-            level.setBlock(center, nodeBlock.defaultBlockState().setValue(OreNodeBlock.QUALITY, quality), 2);
+            level.setBlock(center, nodeBlock.defaultBlockState(), 2);
             if (level.getBlockEntity(center) instanceof OreNodeBlockEntity node) {
                 node.setNodeTypeId(typeId);
-                node.setPurity(purity);
+                node.setQualityPercent(quality);
                 node.setNodeId(nodeId);
             }
         }
 
         // Decorative scatter: extra visual ore blocks around the cluster.
-        var scatterBlock = NodeVisuals.visualOre(typeId, purity == Purity.PURE).defaultBlockState();
+        var scatterBlock = visualBlock.defaultBlockState();
         for (int s = 0; s < scatterCount; s++) {
             int sx = center.getX() + random.nextInt(radius * 2 + 1) - radius;
             int sy = center.getY() + random.nextInt(3) - 1;
@@ -217,7 +221,8 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
         if (!surfaceSpawn) {
             return block == Blocks.STONE || block == Blocks.DEEPSLATE || block == Blocks.ANDESITE
                     || block == Blocks.DIORITE || block == Blocks.GRANITE || block == Blocks.TUFF
-                    || block == Blocks.DRIPSTONE_BLOCK || block == Blocks.NETHERRACK || block == Blocks.BASALT;
+                    || block == Blocks.DRIPSTONE_BLOCK || block == Blocks.NETHERRACK || block == Blocks.BASALT
+                    || block == Blocks.END_STONE;
         }
         return false;
     }
@@ -237,6 +242,7 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
                 && (block == Blocks.STONE || block == Blocks.DEEPSLATE || block == Blocks.ANDESITE
                 || block == Blocks.DIORITE || block == Blocks.GRANITE || block == Blocks.TUFF
                 || block == Blocks.DRIPSTONE_BLOCK || block == Blocks.NETHERRACK || block == Blocks.BASALT
+                || block == Blocks.END_STONE
                 || state.canBeReplaced());
     }
 

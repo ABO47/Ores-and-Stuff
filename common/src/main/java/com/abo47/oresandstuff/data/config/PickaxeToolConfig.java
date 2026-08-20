@@ -18,7 +18,6 @@ import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.item.Tier;
 
 import com.abo47.oresandstuff.OresAndStuffMod;
-import com.abo47.oresandstuff.node.Purity;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -37,18 +36,16 @@ import com.google.gson.JsonParser;
  *       "item": "minecraft:iron_pickaxe",
  *       "extract_amount": 1,
  *       "cooldown_ticks": 70,
- *       "impure_cooldown_multiplier": 1.6,
- *       "pure_cooldown_multiplier": 0.6,
- *       "impure_amount_multiplier": 0.75,
- *       "pure_amount_multiplier": 1.5,
  *       "durability_cost": 1
  *     }
  *   ]
  * }
  * </pre>
  *
- * Any pickaxe not listed explicitly still works using tier-derived fallback
- * values, so modded pickaxes function out of the box.
+ * The node's quality percentage is the output multiplier: a 34% node yields
+ * 0.34x per extraction and cools down proportionally faster, a 200% node
+ * yields 2x. Any pickaxe not listed explicitly still works using tier-derived
+ * fallback values, so modded pickaxes function out of the box.
  */
 public final class PickaxeToolConfig {
     private static final String FOLDER = "pickaxes";
@@ -123,7 +120,7 @@ public final class PickaxeToolConfig {
         int cooldown = 120 - level * 18;
         int durability = Math.max(1, 2 - level / 2);
         return new PickaxeSpec(BuiltInRegistries.ITEM.getKey(pickaxe),
-                1, cooldown, 1.6, 0.6, 0.75, 1.5, durability);
+                1, cooldown, durability);
     }
 
     private static int tierLevel(PickaxeItem pickaxe) {
@@ -148,13 +145,8 @@ public final class PickaxeToolConfig {
         }
         int extractAmount = Math.max(1, intValue(root, "extract_amount", 1));
         int cooldownTicks = Math.max(1, intValue(root, "cooldown_ticks", 60));
-        double impureCooldown = doubleValue(root, "impure_cooldown_multiplier", 1.6);
-        double pureCooldown = doubleValue(root, "pure_cooldown_multiplier", 0.6);
-        double impureAmount = doubleValue(root, "impure_amount_multiplier", 0.75);
-        double pureAmount = doubleValue(root, "pure_amount_multiplier", 1.5);
         int durabilityCost = Math.max(0, intValue(root, "durability_cost", 1));
-        return new PickaxeSpec(itemId, extractAmount, cooldownTicks, impureCooldown, pureCooldown,
-                impureAmount, pureAmount, durabilityCost);
+        return new PickaxeSpec(itemId, extractAmount, cooldownTicks, durabilityCost);
     }
 
     private static void generateDefaults() {
@@ -189,10 +181,6 @@ public final class PickaxeToolConfig {
         tool.addProperty("item", item);
         tool.addProperty("extract_amount", extractAmount);
         tool.addProperty("cooldown_ticks", cooldownTicks);
-        tool.addProperty("impure_cooldown_multiplier", 1.6);
-        tool.addProperty("pure_cooldown_multiplier", 0.6);
-        tool.addProperty("impure_amount_multiplier", 0.75);
-        tool.addProperty("pure_amount_multiplier", 1.5);
         tool.addProperty("durability_cost", durabilityCost);
         return tool;
     }
@@ -205,38 +193,20 @@ public final class PickaxeToolConfig {
         }
     }
 
-    private static double doubleValue(JsonObject root, String key, double fallback) {
-        try {
-            return root.has(key) ? root.get(key).getAsDouble() : fallback;
-        } catch (Exception e) {
-            return fallback;
-        }
-    }
-
     public record PickaxeSpec(ResourceLocation itemId,
                               int extractAmount,
                               int cooldownTicks,
-                              double impureCooldownMultiplier,
-                              double pureCooldownMultiplier,
-                              double impureAmountMultiplier,
-                              double pureAmountMultiplier,
                               int durabilityCost) {
 
-        public int cooldownFor(Purity purity) {
-            double multiplier = switch (purity) {
-                case IMPURE -> impureCooldownMultiplier;
-                case PURE -> pureCooldownMultiplier;
-                default -> 1.0;
-            };
-            return Math.max(1, (int) Math.round(cooldownTicks * multiplier));
+        /** The quality percentage is the output multiplier: 34% = 0.34x. */
+        public double amountMultiplierFor(double qualityPercent) {
+            return Math.max(0.01, qualityPercent / 100.0);
         }
 
-        public double amountMultiplierFor(Purity purity) {
-            return switch (purity) {
-                case IMPURE -> impureAmountMultiplier;
-                case PURE -> pureAmountMultiplier;
-                default -> 1.0;
-            };
+        /** Higher quality mines faster - cooldown scales inversely with quality. */
+        public int cooldownFor(double qualityPercent) {
+            double mult = Math.max(0.1, qualityPercent / 100.0);
+            return Math.max(1, (int) Math.round(cooldownTicks / mult));
         }
     }
 

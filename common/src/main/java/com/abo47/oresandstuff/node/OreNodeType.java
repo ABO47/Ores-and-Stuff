@@ -1,10 +1,15 @@
 package com.abo47.oresandstuff.node;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public record OreNodeType(
         ResourceLocation id,
@@ -13,17 +18,14 @@ public record OreNodeType(
         int scannerColor,
         float hardness,
         boolean enabledByDefault,
-        ResourceLocation visualBlock,
-        ResourceLocation visualBlockPure,
-        ResourceLocation nodeBlockModel,
-        ResourceLocation nodeBlockPureModel,
+        List<QualityTier> qualityTiers,
         List<ResourceLocation> dimensions,
         Map<String, Integer> biomes,
         int minNodesPerChunk,
         int maxNodesPerChunk,
-        int impureWeight,
-        int normalWeight,
-        int pureWeight,
+        double qualityMin,
+        double qualityMax,
+        int maxMinersPerNode,
         int minSpacingBlocks,
         int placementAttempts,
         int scannerRadius,
@@ -81,54 +83,105 @@ public record OreNodeType(
         return override != null && override.scatterCount() != null ? override.scatterCount() : scatterCount;
     }
 
-    public int effectiveImpureWeight(String biomeName) {
+    public double effectiveQualityMin(String biomeName) {
         BiomeOverride override = overrideFor(biomeName);
-        return override != null && override.impureWeight() != null ? override.impureWeight() : impureWeight;
+        return override != null && override.qualityMin() != null ? override.qualityMin() : qualityMin;
     }
 
-    public int effectiveNormalWeight(String biomeName) {
+    public double effectiveQualityMax(String biomeName) {
         BiomeOverride override = overrideFor(biomeName);
-        return override != null && override.normalWeight() != null ? override.normalWeight() : normalWeight;
+        return override != null && override.qualityMax() != null ? override.qualityMax() : qualityMax;
     }
 
-    public int effectivePureWeight(String biomeName) {
+    public int effectiveMaxMiners(String biomeName) {
         BiomeOverride override = overrideFor(biomeName);
-        return override != null && override.pureWeight() != null ? override.pureWeight() : pureWeight;
+        return override != null && override.maxMinersPerNode() != null ? Math.max(1, override.maxMinersPerNode()) : maxMinersPerNode;
     }
 
-    public ResourceLocation visualFor(boolean pure) {
-        if (!pure) {
-            return visualBlock;
-        }
-        return visualBlockPure != null ? visualBlockPure : visualBlock;
+    public boolean effectiveSurfaceSpawn(String biomeName) {
+        BiomeOverride override = overrideFor(biomeName);
+        return override != null && override.surfaceSpawn() != null ? override.surfaceSpawn() : surfaceSpawn;
     }
 
-    public ResourceLocation rollDrop(RandomSource random) {
-        if (drops == null || drops.isEmpty()) {
-            return outputItem;
-        }
-        int total = 0;
-        for (OreNodeDrop drop : drops) {
-            total += Math.max(0, drop.weight());
-        }
-        if (total <= 0) {
-            return outputItem;
-        }
-        int v = random.nextInt(total);
-        int cursor = 0;
-        for (OreNodeDrop drop : drops) {
-            cursor += Math.max(0, drop.weight());
-            if (v < cursor) {
-                return drop.item();
+    public int effectivePlacementAttempts(String biomeName) {
+        BiomeOverride override = overrideFor(biomeName);
+        return override != null && override.placementAttempts() != null ? Math.max(1, override.placementAttempts()) : placementAttempts;
+    }
+
+    public int effectiveMinSpacing(String biomeName) {
+        BiomeOverride override = overrideFor(biomeName);
+        return override != null && override.minSpacingBlocks() != null ? Math.max(1, override.minSpacingBlocks()) : minSpacingBlocks;
+    }
+
+    public int effectiveMinY(String biomeName) {
+        BiomeOverride override = overrideFor(biomeName);
+        return override != null && override.minY() != null ? override.minY() : minY;
+    }
+
+    public int effectiveMaxY(String biomeName) {
+        BiomeOverride override = overrideFor(biomeName);
+        return override != null && override.maxY() != null ? override.maxY() : maxY;
+    }
+
+    /**
+     * Index of the visual tier covering the given quality percentage, or the
+     * last tier with a lower bound below it (first tier if none).
+     */
+    public int tierIndexFor(double quality) {
+        int best = 0;
+        for (int i = 0; i < qualityTiers.size(); i++) {
+            if (quality >= qualityTiers.get(i).min()) {
+                best = i;
             }
         }
-        return outputItem;
+        return best;
+    }
+
+    public QualityTier tierFor(double quality) {
+        return qualityTiers.get(tierIndexFor(quality));
+    }
+
+    /**
+     * Rolls the output items for one extraction: every drop entry is an
+     * independent chance (0-100%); each item that hits is produced.
+     */
+    public List<ItemStack> rollDrops(RandomSource random) {
+        List<ItemStack> out = new ArrayList<>();
+        if (random == null || drops == null || drops.isEmpty()) {
+            return out;
+        }
+        for (OreNodeDrop drop : drops) {
+            if (drop.weight() > 0 && random.nextInt(100) < Math.min(100, drop.weight())) {
+                Item item = BuiltInRegistries.ITEM.get(drop.item());
+                if (item != null && item != Items.AIR) {
+                    out.add(new ItemStack(item));
+                }
+            }
+        }
+        if (out.isEmpty()) {
+            Item item = BuiltInRegistries.ITEM.get(outputItem);
+            if (item != null && item != Items.AIR) {
+                out.add(new ItemStack(item));
+            }
+        }
+        return out;
     }
 
     public record OreNodeDrop(ResourceLocation item, int weight) {
     }
 
+    /**
+     * Visual tier: the quality range (in percent) a node must roll within to
+     * use this look. nodeBlock is the block the main node blocks mimic
+     * (rendered via its model), visualBlock is the ore block used as the
+     * decoration around the cluster.
+     */
+    public record QualityTier(double min, double max, ResourceLocation nodeBlockModel, ResourceLocation visualBlock) {
+    }
+
     public record BiomeOverride(Integer minNodesPerChunk, Integer maxNodesPerChunk, Integer clusterRadius,
-                                Integer scatterCount, Integer impureWeight, Integer normalWeight, Integer pureWeight) {
+                                Integer scatterCount, Double qualityMin, Double qualityMax, Integer minY, Integer maxY,
+                                Integer maxMinersPerNode, Boolean surfaceSpawn, Integer placementAttempts,
+                                Integer minSpacingBlocks) {
     }
 }

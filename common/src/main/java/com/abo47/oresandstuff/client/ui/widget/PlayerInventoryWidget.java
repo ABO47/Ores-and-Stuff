@@ -10,7 +10,7 @@ import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 
 public class PlayerInventoryWidget extends WidgetGroup {
     public PlayerInventoryWidget(int x, int y) {
-        super(x, y, 176, 86);
+        super(x, y, 176, 94);
         for (int col = 0; col < 9; col++) {
             addWidget(templateSlot("player_inv_" + col, 8 + col * 18, 76));
         }

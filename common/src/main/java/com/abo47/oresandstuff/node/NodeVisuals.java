@@ -19,26 +19,34 @@ public final class NodeVisuals {
         return isVisualOre(block);
     }
 
-    public static Block visualOre(ResourceLocation typeId, boolean pure) {
+    /** Whether the block is a tier visual (decorator) of the given node type. */
+    public static boolean isVisualBlock(ResourceLocation typeId, Block block) {
+        if (block == null) {
+            return false;
+        }
         OreNodeType type = OreNodeDataManager.INSTANCE.getNodeType(typeId).orElse(null);
         if (type == null) {
-            return Blocks.AIR;
+            return false;
         }
-        Block base = BuiltInRegistries.BLOCK.get(type.visualBlock());
-        if (base == Blocks.AIR) {
-            return Blocks.AIR;
-        }
-        if (!pure) {
-            return base;
-        }
-        if (type.visualBlockPure() != null) {
-            Block pureBlock = BuiltInRegistries.BLOCK.get(type.visualBlockPure());
-            if (pureBlock != Blocks.AIR) {
-                return pureBlock;
+        for (OreNodeType.QualityTier tier : type.qualityTiers()) {
+            if (BuiltInRegistries.BLOCK.get(tier.visualBlock()) == block) {
+                return true;
             }
         }
-        Block deepVariant = deepslateVariant(base);
-        return deepVariant != Blocks.AIR ? deepVariant : base;
+        return false;
+    }
+
+    /** Whether the block is a tier visual of any configured node type. */
+    public static boolean isVisualOre(Block block) {
+        if (block == null) {
+            return false;
+        }
+        for (OreNodeType type : OreNodeDataManager.INSTANCE.nodeTypes()) {
+            if (isVisualBlock(type.id(), block)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean isVanillaOre(Block block) {
@@ -52,34 +60,5 @@ public final class NodeVisuals {
                 || block == Blocks.EMERALD_ORE || block == Blocks.DEEPSLATE_EMERALD_ORE
                 || block == Blocks.NETHER_GOLD_ORE || block == Blocks.NETHER_QUARTZ_ORE
                 || block == Blocks.ANCIENT_DEBRIS;
-    }
-
-    private static boolean isVisualOre(Block block) {
-        for (OreNodeType type : OreNodeDataManager.INSTANCE.nodeTypes()) {
-            Block visual = BuiltInRegistries.BLOCK.get(type.visualBlock());
-            if (visual == block) {
-                return true;
-            }
-            if (type.visualBlockPure() != null) {
-                Block pureVisual = BuiltInRegistries.BLOCK.get(type.visualBlockPure());
-                if (pureVisual == block) {
-                    return true;
-                }
-            }
-            Block deep = deepslateVariant(visual);
-            if (deep == block) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static Block deepslateVariant(Block shallow) {
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(shallow);
-        if (id == null) {
-            return Blocks.AIR;
-        }
-        Block deep = BuiltInRegistries.BLOCK.get(new ResourceLocation(id.getNamespace(), "deepslate_" + id.getPath()));
-        return deep != null ? deep : Blocks.AIR;
     }
 }

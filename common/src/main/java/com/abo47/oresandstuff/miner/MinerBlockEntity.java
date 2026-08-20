@@ -20,12 +20,14 @@ import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.client.miner.MinerScreen;
 import com.abo47.oresandstuff.content.ModBlockEntities;
+import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.data.config.MinerTierConfig;
 import com.abo47.oresandstuff.energy.EnergyStorage;
 import com.abo47.oresandstuff.energy.SimpleEnergyStorage;
 import com.abo47.oresandstuff.node.ExtractionRateService;
+import com.abo47.oresandstuff.node.NodeQuality;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
-import com.abo47.oresandstuff.node.Purity;
+import com.abo47.oresandstuff.node.OreNodeType;
 import com.abo47.oresandstuff.platform.Services;
 
 public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEntityUI {
@@ -37,7 +39,7 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
     private double progress;
     private MinerStatus status = MinerStatus.NO_NODE;
     private ResourceLocation nodeTypeId = new ResourceLocation(OresAndStuffMod.MOD_ID, "iron");
-    private Purity nodePurity = Purity.NORMAL;
+    private double nodeQuality = 100.0;
     private boolean enabled = true;
 
     public MinerBlockEntity(BlockPos pos, BlockState state) {
@@ -75,7 +77,13 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         }
 
         nodeTypeId = node.getNodeTypeId();
-        nodePurity = node.getPurity();
+        nodeQuality = node.getQualityPercent();
+
+        if (atMinerLimit(node)) {
+            status = MinerStatus.MAX_MINERS;
+            setChanged();
+            return;
+        }
 
         if (energy.getEnergyStored() < fePerTick) {
             status = MinerStatus.NO_POWER;
@@ -83,8 +91,8 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
             return;
         }
 
-        ItemStack drop = ExtractionRateService.buildDrop(node, 1);
-        if (drop.isEmpty()) {
+        java.util.List<ItemStack> rolled = ExtractionRateService.buildDrops(node, 1, 1.0);
+        if (rolled.isEmpty()) {
             status = MinerStatus.NO_NODE;
             setChanged();
             return;
@@ -92,20 +100,20 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
 
         double ratePerTick = ExtractionRateService.minerItemsPerSecond(node, 1.0) / 20.0;
         progress += ratePerTick;
-        energy.extractEnergy(fePerTick, false);
 
         if (progress >= 1.0) {
-            int toInsert = (int) progress;
-            progress -= toInsert;
-            drop.setCount(toInsert);
-            ItemStack sim = output.insertItem(0, drop, true, false);
-            if (!sim.isEmpty()) {
+            int units = (int) progress;
+            java.util.List<ItemStack> batch = new java.util.ArrayList<>();
+            for (ItemStack stack : rolled) {
+                batch.add(stack.copyWithCount(stack.getCount() * units));
+            }
+            if (!output.insertAll(batch)) {
                 status = MinerStatus.OUTPUT_FULL;
-                progress += toInsert;
                 setChanged();
                 return;
             }
-            output.insertItem(0, drop, false, false);
+            progress -= units;
+            energy.extractEnergy(fePerTick, false);
         }
 
         status = MinerStatus.RUNNING;
@@ -133,6 +141,44 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         return null;
     }
 
+    /**
+     * Whether the connected node already has its configured maximum number of
+     * miners attached. Miners attached to opposite sides of the same cluster
+     * can be several blocks apart, so the scan radius is derived from the
+     * cluster radius (2 * radius + 1) to always cover every miner on the node.
+     */
+    private boolean atMinerLimit(OreNodeBlockEntity node) {
+        if (level == null || node == null) {
+            return false;
+        }
+        var type = OreNodeDataManager.INSTANCE.getNodeType(node.getNodeTypeId()).orElse(null);
+        int max = type != null ? type.effectiveMaxMiners(biomeAt(level, node.getBlockPos())) : 1;
+        int scanXZ = Math.min(9, Math.max(4, 2 * (type != null ? type.clusterRadius() : 2) + 1));
+        java.util.UUID nodeId = node.getNodeId();
+        int attached = 0;
+        for (int dx = -scanXZ; dx <= scanXZ; dx++) {
+            for (int dy = -4; dy <= 4; dy++) {
+                for (int dz = -scanXZ; dz <= scanXZ; dz++) {
+                    if (dx == 0 && dy == 0 && dz == 0) {
+                        continue;
+                    }
+                    BlockEntity be = level.getBlockEntity(worldPosition.offset(dx, dy, dz));
+                    if (be instanceof MinerBlockEntity other && other != this) {
+                        OreNodeBlockEntity otherNode = other.findAttachedNode();
+                        if (otherNode != null && otherNode.getNodeId().equals(nodeId)) {
+                            attached++;
+                        }
+                    }
+                }
+            }
+        }
+        return attached >= max;
+    }
+
+    private static String biomeAt(Level level, BlockPos pos) {
+        return level.getBiome(pos).unwrapKey().map(key -> key.location().toString()).orElse("minecraft:plains");
+    }
+
     private void pullPowerFromNeighbors() {
         if (level == null) {
             return;
@@ -154,21 +200,26 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
     }
 
     private void ejectOutputToNeighbors() {
-        ItemStack stack = output.getStack();
-        if (stack.isEmpty() || level == null) {
+        if (level == null) {
             return;
         }
-        for (Direction direction : Direction.values()) {
-            IItemTransfer neighbor = ItemTransferHelper.getItemTransfer(level, worldPosition.relative(direction), direction.getOpposite());
-            if (neighbor == null) {
+        for (int slot = 0; slot < output.getSlots(); slot++) {
+            ItemStack stack = output.getStack(slot);
+            if (stack.isEmpty()) {
                 continue;
             }
-            ItemStack remaining = ItemTransferHelper.insertItem(neighbor, stack.copy(), false);
-            if (remaining.getCount() != stack.getCount()) {
-                output.setStack(remaining);
-                stack = remaining;
-                if (remaining.isEmpty()) {
-                    return;
+            for (Direction direction : Direction.values()) {
+                IItemTransfer neighbor = ItemTransferHelper.getItemTransfer(level, worldPosition.relative(direction), direction.getOpposite());
+                if (neighbor == null) {
+                    continue;
+                }
+                ItemStack remaining = ItemTransferHelper.insertItem(neighbor, stack.copy(), false);
+                if (remaining.getCount() != stack.getCount()) {
+                    output.setStack(slot, remaining);
+                    stack = remaining;
+                    if (remaining.isEmpty()) {
+                        break;
+                    }
                 }
             }
         }
@@ -194,6 +245,11 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         return progress;
     }
 
+    public double getRatePerSecond() {
+        OreNodeBlockEntity node = findAttachedNode();
+        return node != null ? ExtractionRateService.minerItemsPerSecond(node, 1.0) : 0.0;
+    }
+
     public MinerStatus getStatus() {
         return status;
     }
@@ -202,8 +258,8 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         return nodeTypeId;
     }
 
-    public Purity getNodePurity() {
-        return nodePurity;
+    public double getNodeQuality() {
+        return nodeQuality;
     }
 
     public boolean isEnabled() {
@@ -228,7 +284,7 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         tag.putDouble("Progress", progress);
         tag.putString("Status", status.name());
         tag.putString("NodeType", nodeTypeId.toString());
-        tag.putString("NodePurity", nodePurity.name());
+        tag.putDouble("NodeQuality", nodeQuality);
         tag.putBoolean("Enabled", enabled);
     }
 
@@ -254,11 +310,14 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
                 nodeTypeId = parsed;
             }
         }
-        if (tag.contains("NodePurity")) {
-            try {
-                nodePurity = Purity.valueOf(tag.getString("NodePurity"));
-            } catch (Exception ignored) {
-            }
+        if (tag.contains("NodeQuality")) {
+            nodeQuality = NodeQuality.clamp(tag.getDouble("NodeQuality"));
+        } else if (tag.contains("NodePurity")) {
+            nodeQuality = NodeQuality.clamp(switch (tag.getString("NodePurity")) {
+                case "IMPURE" -> 50.0;
+                case "PURE" -> 200.0;
+                default -> 100.0;
+            });
         }
         enabled = !tag.contains("Enabled") || tag.getBoolean("Enabled");
     }

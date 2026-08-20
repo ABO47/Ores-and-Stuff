@@ -1,9 +1,10 @@
 package com.abo47.oresandstuff.node;
 
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.item.Item;
+import java.util.ArrayList;
+import java.util.List;
+
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 
@@ -11,21 +12,27 @@ public final class ExtractionRateService {
     private ExtractionRateService() {
     }
 
-    public static ItemStack buildDrop(OreNodeBlockEntity node, int baseCount) {
-        return buildDrop(node, baseCount, node.getPurity().manualMultiplier());
+    /** Drops for one extraction, count multiplied by the node's quality. */
+    public static List<ItemStack> buildDrops(OreNodeBlockEntity node, int baseCount) {
+        return buildDrops(node, baseCount, NodeQuality.multiplier(node.getQualityPercent()));
     }
 
-    public static ItemStack buildDrop(OreNodeBlockEntity node, int baseCount, double multiplier) {
-        Item item = null;
+    /**
+     * Rolls every drop entry that hits its chance and applies the multiplier
+     * to the count of each rolled item.
+     */
+    public static List<ItemStack> buildDrops(OreNodeBlockEntity node, int baseCount, double multiplier) {
+        List<ItemStack> out = new ArrayList<>();
         var type = OreNodeDataManager.INSTANCE.getNodeType(node.getNodeTypeId()).orElse(null);
-        if (type != null) {
-            item = BuiltInRegistries.ITEM.get(type.rollDrop(node.getLevel() != null ? node.getLevel().random : null));
+        if (type == null) {
+            return out;
         }
-        if (item == null || item == Items.AIR) {
-            return ItemStack.EMPTY;
-        }
+        RandomSource random = node.getLevel() != null ? node.getLevel().random : RandomSource.create();
         int count = Math.max(1, (int) Math.round(baseCount * multiplier));
-        return new ItemStack(item, count);
+        for (ItemStack stack : type.rollDrops(random)) {
+            out.add(stack.copyWithCount(count));
+        }
+        return out;
     }
 
     public static double minerItemsPerSecond(OreNodeBlockEntity node, double minerTierMultiplier) {
@@ -33,6 +40,6 @@ public final class ExtractionRateService {
         if (type == null) {
             return 0;
         }
-        return type.baseRatePerSecond() * node.getPurity().minerMultiplier() * minerTierMultiplier;
+        return type.baseRatePerSecond() * NodeQuality.multiplier(node.getQualityPercent()) * minerTierMultiplier;
     }
 }

@@ -46,24 +46,23 @@ public final class RuntimeAssetPack {
     }
 
     /**
-     * Per-type ore node blockstate/models. Each model parents the model of
-     * the block configured via node_block / node_block_pure (e.g.
+     * Per-(type, tier) ore node blockstate/model. Each model parents the model
+     * of the block configured via the tier's node_block (e.g.
      * minecraft:block/netherrack), so any game block can be used as the node
      * look and it renders exactly like that block.
      */
     private static void generateOreNodeAssets(Path packRoot, OreNodeType type) {
-        String id = "ore_node_" + type.id().getPath();
-        try {
-            write(packRoot.resolve("assets/oresandstuff/blockstates/" + id + ".json"),
-                    "{\"variants\":{\"quality=0\":{\"model\":\"oresandstuff:block/" + id + "_0\"},"
-                            + "\"quality=1\":{\"model\":\"oresandstuff:block/" + id + "_0\"},"
-                            + "\"quality=2\":{\"model\":\"oresandstuff:block/" + id + "_2\"}}}");
-            write(packRoot.resolve("assets/oresandstuff/models/block/" + id + "_0.json"),
-                    "{\"parent\":\"" + type.nodeBlockModel() + "\"}");
-            write(packRoot.resolve("assets/oresandstuff/models/block/" + id + "_2.json"),
-                    "{\"parent\":\"" + type.nodeBlockPureModel() + "\"}");
-        } catch (IOException e) {
-            OresAndStuffMod.LOGGER.error("Failed to generate runtime assets for ore node type {}", id, e);
+        for (int t = 0; t < type.qualityTiers().size(); t++) {
+            OreNodeType.QualityTier tier = type.qualityTiers().get(t);
+            String id = "ore_node_" + type.id().getPath() + "_t" + t;
+            try {
+                write(packRoot.resolve("assets/oresandstuff/blockstates/" + id + ".json"),
+                        "{\"variants\":{\"\":{\"model\":\"oresandstuff:block/" + id + "\"}}}");
+                write(packRoot.resolve("assets/oresandstuff/models/block/" + id + ".json"),
+                        "{\"parent\":\"" + tier.nodeBlockModel() + "\"}");
+            } catch (IOException e) {
+                OresAndStuffMod.LOGGER.error("Failed to generate runtime assets for ore node block {}", id, e);
+            }
         }
     }
 

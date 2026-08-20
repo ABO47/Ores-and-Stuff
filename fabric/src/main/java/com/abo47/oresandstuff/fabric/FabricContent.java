@@ -28,7 +28,9 @@ public final class FabricContent {
 
         register(BuiltInRegistries.BLOCK, "ore_node", ModBlocks.ORE_NODE);
         for (OreNodeType type : OreNodeDataManager.INSTANCE.nodeTypes()) {
-            register(BuiltInRegistries.BLOCK, "ore_node_" + type.id().getPath(), ModNodeBlocks.get(type.id()));
+            for (int t = 0; t < type.qualityTiers().size(); t++) {
+                register(BuiltInRegistries.BLOCK, "ore_node_" + type.id().getPath() + "_t" + t, ModNodeBlocks.get(type.id(), t));
+            }
         }
         for (MinerTierConfig.MinerTier tier : MinerTierConfig.tiers()) {
             register(BuiltInRegistries.BLOCK, "miner_" + tier.id(), ModContent.minerBlock(tier.id()));

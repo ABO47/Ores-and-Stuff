@@ -127,8 +127,6 @@ final class NodeClusterTracker {
         if (Math.abs(pos.getX() - center.getX()) > maxDist || Math.abs(pos.getY() - center.getY()) > 8 || Math.abs(pos.getZ() - center.getZ()) > maxDist) return false;
         Block block = minecraft.level.getBlockState(pos).getBlock();
         if (block instanceof OreNodeBlock) return true;
-        Block ore = NodeVisuals.visualOre(oreTypeId, false);
-        Block deepOre = NodeVisuals.visualOre(oreTypeId, true);
-        return (ore != null && block == ore) || (deepOre != null && block == deepOre);
+        return NodeVisuals.isVisualBlock(oreTypeId, block);
     }
 }

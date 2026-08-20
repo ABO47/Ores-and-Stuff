@@ -34,7 +34,10 @@ public final class ForgeContent {
 
         BLOCKS.register("ore_node", () -> ModBlocks.ORE_NODE);
         for (OreNodeType type : OreNodeDataManager.INSTANCE.nodeTypes()) {
-            BLOCKS.register("ore_node_" + type.id().getPath(), () -> ModNodeBlocks.get(type.id()));
+            for (int t = 0; t < type.qualityTiers().size(); t++) {
+                int tier = t;
+                BLOCKS.register("ore_node_" + type.id().getPath() + "_t" + t, () -> ModNodeBlocks.get(type.id(), tier));
+            }
         }
         for (MinerTierConfig.MinerTier tier : MinerTierConfig.tiers()) {
             BLOCKS.register("miner_" + tier.id(), () -> ModContent.minerBlock(tier.id()));

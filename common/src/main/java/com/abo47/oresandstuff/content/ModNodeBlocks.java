@@ -15,29 +15,35 @@ import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.node.OreNodeType;
 
 /**
- * One ore node block per configured node type, so each type renders with its
- * own texture (netherrack in the nether, end stone in the end, ...) through
+ * One ore node block per (node type, quality tier), so each tier renders with
+ * its own configured block look (stone, deepslate, netherrack, ...) through
  * the regular block model system - no custom renderers.
  */
 public final class ModNodeBlocks {
-    private static final Map<ResourceLocation, OreNodeBlock> NODE_BLOCKS = new LinkedHashMap<>();
+    private static final Map<String, OreNodeBlock> NODE_BLOCKS = new LinkedHashMap<>();
 
     private ModNodeBlocks() {
     }
 
-    public static OreNodeBlock get(ResourceLocation typeId) {
+    private static String key(ResourceLocation typeId, int tierIndex) {
+        return typeId + "|" + tierIndex;
+    }
+
+    public static OreNodeBlock get(ResourceLocation typeId, int tierIndex) {
         OreNodeDataManager.INSTANCE.ensureLoaded();
-        return NODE_BLOCKS.computeIfAbsent(typeId, id -> new OreNodeBlock(
+        return NODE_BLOCKS.computeIfAbsent(key(typeId, tierIndex), k -> new OreNodeBlock(
                 BlockBehaviour.Properties.of().strength(-1.0F, 3_600_000.0F).sound(SoundType.STONE).noOcclusion()));
     }
 
-    /** The generic node block plus one block per configured node type. */
+    /** The generic node block plus one block per configured (type, tier). */
     public static Block[] allArray() {
         List<Block> out = new ArrayList<>();
         out.add(ModBlocks.ORE_NODE);
         OreNodeDataManager.INSTANCE.ensureLoaded();
         for (OreNodeType type : OreNodeDataManager.INSTANCE.nodeTypes()) {
-            out.add(get(type.id()));
+            for (int t = 0; t < type.qualityTiers().size(); t++) {
+                out.add(get(type.id(), t));
+            }
         }
         return out.toArray(new Block[0]);
     }

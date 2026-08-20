@@ -38,13 +38,16 @@ public final class ManualNodeMiningHandler {
         if (spec == null) {
             return true;
         }
-        int cooldown = spec.cooldownFor(node.getPurity());
+        int cooldown = spec.cooldownFor(node.getQualityPercent());
         String key = "oresandstuff_node_mine_cd";
         if (now < PlayerScanState.mineCooldown((ServerPlayer) player)) {
             return true;
         }
-        var drop = ExtractionRateService.buildDrop(node, spec.extractAmount(), spec.amountMultiplierFor(node.getPurity()));
-        if (!drop.isEmpty()) {
+        var drops = ExtractionRateService.buildDrops(node, spec.extractAmount(), spec.amountMultiplierFor(node.getQualityPercent()));
+        for (ItemStack drop : drops) {
+            if (drop.isEmpty()) {
+                continue;
+            }
             server.addFreshEntity(new ItemEntity(server, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, drop));
         }
         if (spec.durabilityCost() > 0) {
