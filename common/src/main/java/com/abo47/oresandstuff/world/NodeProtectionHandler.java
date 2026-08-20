@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 
-import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.block.OreNodeBlock;
 import com.abo47.oresandstuff.node.NodeVisuals;
 
 public final class NodeProtectionHandler {
@@ -16,7 +16,7 @@ public final class NodeProtectionHandler {
         if (player.isCreative() || !NodeVisuals.isDecoration(block)) {
             return false;
         }
-        if (block == ModBlocks.ORE_NODE) {
+        if (block instanceof OreNodeBlock) {
             return true;
         }
         return NodeLocatorService.findAnyNodeAround(level, pos, 6) != null;

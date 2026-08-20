@@ -15,6 +15,8 @@ public record OreNodeType(
         boolean enabledByDefault,
         ResourceLocation visualBlock,
         ResourceLocation visualBlockPure,
+        ResourceLocation nodeBlockModel,
+        ResourceLocation nodeBlockPureModel,
         List<ResourceLocation> dimensions,
         Map<String, Integer> biomes,
         int minNodesPerChunk,

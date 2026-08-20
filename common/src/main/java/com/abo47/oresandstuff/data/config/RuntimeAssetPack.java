@@ -8,6 +8,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.stream.Stream;
 
 import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.data.OreNodeDataManager;
+import com.abo47.oresandstuff.node.OreNodeType;
 
 public final class RuntimeAssetPack {
     private static final String PACK_FORMAT = "15";
@@ -35,7 +37,34 @@ public final class RuntimeAssetPack {
         for (MinerTierConfig.MinerTier tier : MinerTierConfig.tiers()) {
             generateMinerAssets(packRoot, minersFolder, tier);
         }
+
+        OreNodeDataManager.INSTANCE.ensureLoaded();
+        for (OreNodeType type : OreNodeDataManager.INSTANCE.nodeTypes()) {
+            generateOreNodeAssets(packRoot, type);
+        }
         OresAndStuffMod.LOGGER.info("Regenerated runtime asset pack with {} miner tier(s)", MinerTierConfig.tiers().size());
+    }
+
+    /**
+     * Per-type ore node blockstate/models. Each model parents the model of
+     * the block configured via node_block / node_block_pure (e.g.
+     * minecraft:block/netherrack), so any game block can be used as the node
+     * look and it renders exactly like that block.
+     */
+    private static void generateOreNodeAssets(Path packRoot, OreNodeType type) {
+        String id = "ore_node_" + type.id().getPath();
+        try {
+            write(packRoot.resolve("assets/oresandstuff/blockstates/" + id + ".json"),
+                    "{\"variants\":{\"quality=0\":{\"model\":\"oresandstuff:block/" + id + "_0\"},"
+                            + "\"quality=1\":{\"model\":\"oresandstuff:block/" + id + "_0\"},"
+                            + "\"quality=2\":{\"model\":\"oresandstuff:block/" + id + "_2\"}}}");
+            write(packRoot.resolve("assets/oresandstuff/models/block/" + id + "_0.json"),
+                    "{\"parent\":\"" + type.nodeBlockModel() + "\"}");
+            write(packRoot.resolve("assets/oresandstuff/models/block/" + id + "_2.json"),
+                    "{\"parent\":\"" + type.nodeBlockPureModel() + "\"}");
+        } catch (IOException e) {
+            OresAndStuffMod.LOGGER.error("Failed to generate runtime assets for ore node type {}", id, e);
+        }
     }
 
     private static void generateMinerAssets(Path packRoot, Path minersFolder, MinerTierConfig.MinerTier tier) {

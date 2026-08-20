@@ -97,6 +97,17 @@ public final class OreNodeDataManager {
             dimensions.add(Level.OVERWORLD.location());
         }
 
+        ResourceLocation nodeBlock = blockModelPath(root.has("node_block")
+                ? root.get("node_block").getAsString() : defaultNodeBlock(dimensions, false));
+        ResourceLocation nodeBlockPure = blockModelPath(root.has("node_block_pure")
+                ? root.get("node_block_pure").getAsString() : defaultNodeBlock(dimensions, true));
+        if (nodeBlock == null) {
+            nodeBlock = new ResourceLocation("minecraft", "block/stone");
+        }
+        if (nodeBlockPure == null) {
+            nodeBlockPure = new ResourceLocation("minecraft", "block/deepslate");
+        }
+
         double baseRate = doubleValue(root, "base_rate_per_second", 0.2D);
         int color = Integer.decode(colorValue(root));
         float hardness = (float) doubleValue(root, "hardness", 100.0D);
@@ -160,7 +171,8 @@ public final class OreNodeDataManager {
             drops.add(new OreNodeType.OreNodeDrop(output, 100));
         }
 
-        return new OreNodeType(id, output, baseRate, color, hardness, enabled, visual, visualPure, dimensions,
+        return new OreNodeType(id, output, baseRate, color, hardness, enabled, visual, visualPure, nodeBlock, nodeBlockPure,
+                dimensions,
                 biomes, minNodes, maxNodes, impure, normal, pure, spacing, attempts, scanRadius, clusterRadius, scatter,
                 surfaceSpawn, minY, maxY, drops, overrides);
     }
@@ -269,58 +281,98 @@ public final class OreNodeDataManager {
         return files;
     }
 
+    /**
+     * Host rock the ore node block mimics when the config does not specify one:
+     * netherrack in the nether, end stone in the end, stone in the overworld.
+     */
+    private static String defaultNodeBlock(List<ResourceLocation> dimensions, boolean pure) {
+        if (dimensions.contains(Level.NETHER.location())) {
+            return pure ? "minecraft:basalt" : "minecraft:netherrack";
+        }
+        if (dimensions.contains(Level.END.location())) {
+            return pure ? "minecraft:end_stone_bricks" : "minecraft:end_stone";
+        }
+        return pure ? "minecraft:deepslate" : "minecraft:stone";
+    }
+
+    /**
+     * Maps a block id (e.g. {@code minecraft:netherrack}) to its block model
+     * path ({@code minecraft:block/netherrack}). The generated ore node model
+     * then parents that model, so any game block can be used as the node look.
+     */
+    private static ResourceLocation blockModelPath(String blockId) {
+        ResourceLocation id = ResourceLocation.tryParse(blockId);
+        if (id == null) {
+            return null;
+        }
+        return new ResourceLocation(id.getNamespace(), "block/" + id.getPath());
+    }
+
     private static final List<DefaultNode> DEFAULT_NODES = List.of(
             new DefaultNode("oresandstuff:coal", "minecraft:coal", 0.9, "#2E2E2E", "minecraft:coal_ore", "minecraft:deepslate_coal_ore",
+                    "minecraft:stone", "minecraft:deepslate",
                     "minecraft:overworld",
                     "swamp:55,forest:45,plains:40,jungle:30,savanna:20,snowy:25,windswept:20,meadow:25,desert:10,ice:25,grove:30,mushroom:25,beach:10,river:15",
                     2, 3, 35, 45, 20, 200, 1, 192, 2, 8, true, 0, 63, 60.0, "coal.json"),
             new DefaultNode("oresandstuff:iron", "minecraft:raw_iron", 0.6, "#D8D8D8", "minecraft:iron_ore", "minecraft:deepslate_iron_ore",
+                    "minecraft:stone", "minecraft:deepslate",
                     "minecraft:overworld",
                     "windswept:50,snowy_slopes:45,peak:40,meadow:30,plains:30,forest:25,desert:20,savanna:15,swamp:10,jungle:10,ice:35,grove:20,mushroom:15,beach:35,shore:30,river:20",
                     2, 3, 25, 50, 25, 220, 1, 192, 2, 8, true, 0, 63, 80.0, "iron.json"),
             new DefaultNode("oresandstuff:copper", "minecraft:raw_copper", 0.7, "#C97142", "minecraft:copper_ore", "minecraft:deepslate_copper_ore",
+                    "minecraft:stone", "minecraft:deepslate",
                     "minecraft:overworld",
                     "desert:50,badlands:55,windswept:35,peak:30,savanna:20,plains:15,forest:15,swamp:5,grove:15,mushroom:15,beach:20,shore:25",
                     1, 2, 30, 45, 25, 240, 1, 192, 2, 8, true, 0, 63, 70.0, "copper.json"),
             new DefaultNode("oresandstuff:gold", "minecraft:raw_gold", 0.5, "#F2C94C", "minecraft:gold_ore", "minecraft:deepslate_gold_ore",
+                    "minecraft:stone", "minecraft:deepslate",
                     "minecraft:overworld",
                     "windswept:45,desert:40,badlands:45,peak:35,snowy_slopes:30,savanna:15,plains:15,jungle:10,grove:10,mushroom:10,beach:15,shore:10",
                     1, 2, 25, 50, 25, 260, 1, 192, 2, 8, true, 0, 63, 50.0, "gold.json"),
             new DefaultNode("oresandstuff:redstone", "minecraft:redstone", 0.4, "#D12222", "minecraft:redstone_ore", "minecraft:deepslate_redstone_ore",
+                    "minecraft:stone", "minecraft:deepslate",
                     "minecraft:overworld",
                     "badlands:45,desert:20,peak:20,windswept:15,plains:10,ocean:15,cave:35,deep_dark:45,river:10",
                     0, 1, 45, 40, 15, 300, 1, 192, 2, 6, false, -60, -10, 90.0, "redstone.json"),
             new DefaultNode("oresandstuff:diamond", "minecraft:diamond", 0.3, "#4DE1E1", "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore",
+                    "minecraft:stone", "minecraft:deepslate",
                     "minecraft:overworld",
                     "plains:30,forest:25,taiga:25,snowy:20,windswept:20,desert:10,swamp:5,river:25,ocean:20,cave:30,deep_dark:20",
                     0, 1, 30, 45, 25, 320, 1, 192, 2, 6, false, -60, -20, 200.0, "diamond.json"),
             new DefaultNode("oresandstuff:emerald", "minecraft:emerald", 0.25, "#3ECF6E", "minecraft:emerald_ore", "minecraft:deepslate_emerald_ore",
+                    "minecraft:stone", "minecraft:deepslate",
                     "minecraft:overworld",
                     "peak:70,windswept:55,snowy_slopes:45,meadow:25,desert:10,jungle:10,cave:15",
                     0, 1, 30, 45, 25, 320, 1, 192, 2, 6, false, -60, -15, 180.0, "emerald.json"),
             new DefaultNode("oresandstuff:lapis", "minecraft:lapis_lazuli", 0.35, "#2E6BD8", "minecraft:lapis_ore", "minecraft:deepslate_lapis_ore",
+                    "minecraft:stone", "minecraft:deepslate",
                     "minecraft:overworld",
                     "desert:45,badlands:30,savanna:30,plains:20,jungle:10,ocean:25,cave:30,river:10",
                     0, 1, 40, 40, 20, 280, 1, 192, 2, 6, false, -60, -10, 100.0, "lapis.json"),
             new DefaultNode("oresandstuff:nether_quartz", "minecraft:quartz", 0.7, "#E8DFD6", "minecraft:nether_quartz_ore", "minecraft:quartz_block",
+                    "minecraft:netherrack", "minecraft:nether_quartz_ore",
                     "minecraft:the_nether",
                     "nether_wastes:50,basalt_deltas:45,crimson_forest:25,warped_forest:25,soul_sand_valley:20",
                     1, 2, 30, 45, 25, 200, 1, 192, 2, 8, true, 0, 63, 80.0, "nether_quartz.json"),
             new DefaultNode("oresandstuff:nether_gold", "minecraft:gold_nugget", 0.5, "#E8B01C", "minecraft:nether_gold_ore", "minecraft:gold_block",
+                    "minecraft:netherrack", "minecraft:nether_gold_ore",
                     "minecraft:the_nether",
                     "nether_wastes:55,basalt_deltas:45,soul_sand_valley:15,crimson_forest:10,warped_forest:10",
                     1, 2, 25, 50, 25, 220, 1, 192, 2, 8, true, 0, 63, 60.0, "nether_gold.json"),
             new DefaultNode("oresandstuff:end_diamond", "minecraft:diamond", 0.3, "#4DE1E1", "minecraft:diamond_ore", "minecraft:diamond_block",
+                    "minecraft:end_stone", "minecraft:diamond_block",
                     "minecraft:the_end",
                     "end_highlands:30,end_midlands:25,the_end:20,small_end_islands:15,end_barrens:15",
                     0, 1, 30, 45, 25, 240, 1, 192, 2, 6, true, 0, 63, 200.0, "end_diamond.json"),
             new DefaultNode("oresandstuff:end_emerald", "minecraft:emerald", 0.25, "#3ECF6E", "minecraft:emerald_ore", "minecraft:emerald_block",
+                    "minecraft:end_stone", "minecraft:emerald_block",
                     "minecraft:the_end",
                     "end_highlands:25,end_midlands:30,the_end:20,small_end_islands:15,end_barrens:15",
                     0, 1, 30, 45, 25, 280, 1, 192, 2, 6, true, 0, 63, 180.0, "end_emerald.json")
     );
 
     private record DefaultNode(String id, String output, double rate, String color, String visual, String visualPure,
+                               String nodeBlock, String nodeBlockPure,
                                String dimensionsCsv, String biomesCsv, int minNodes, int maxNodes,
                                int impure, int normal, int pure, int spacing, int attempts,
                                int scannerRadius, int clusterRadius, int scatterCount,
@@ -340,6 +392,8 @@ public final class OreNodeDataManager {
         root.addProperty("enabled", true);
         root.addProperty("visual_block", node.visual());
         root.addProperty("visual_block_pure", node.visualPure());
+        root.addProperty("node_block", node.nodeBlock());
+        root.addProperty("node_block_pure", node.nodeBlockPure());
         JsonArray dimensions = new JsonArray();
         for (String part : node.dimensionsCsv().split(",")) {
             dimensions.add(part.trim());

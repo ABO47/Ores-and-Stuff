@@ -24,7 +24,7 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 
 import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.block.OreNodeBlock;
-import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.content.ModNodeBlocks;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.node.NodeVisuals;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
@@ -76,6 +76,12 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
                 pos = new BlockPos(x, y, z);
                 if (random.nextInt(Math.max(1, 4 - maxNodes)) != 0 || !isUndergroundHost(level, pos)) {
                     continue;
+                }
+                if (level.getBlockState(pos).isAir()) {
+                    pos = caveFloor(level, pos);
+                    if (pos == null) {
+                        continue;
+                    }
                 }
                 if (!passesSpacing(level, pos, type.minSpacingBlocks())) {
                     continue;
@@ -151,6 +157,7 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
 
     private void placeCluster(WorldGenLevel level, BlockPos center, OreNodeType type, Purity purity, RandomSource random, int scatterCount, int radius, boolean surfaceSpawn) {
         ResourceLocation typeId = type.id();
+        Block nodeBlock = ModNodeBlocks.get(typeId);
         int quality = purity == Purity.PURE ? 2 : purity == Purity.NORMAL ? 1 : 0;
         UUID nodeId = UUID.nameUUIDFromBytes((level.getLevel().dimension().location() + ":" + center).getBytes(StandardCharsets.UTF_8));
         Set<BlockPos> placed = new HashSet<>();
@@ -168,7 +175,7 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
                     if (random.nextFloat() < 0.30F) {
                         level.setBlock(pos, NodeVisuals.visualOre(typeId, purity == Purity.PURE).defaultBlockState(), 2);
                     } else {
-                        level.setBlock(pos, ModBlocks.ORE_NODE.defaultBlockState().setValue(OreNodeBlock.QUALITY, quality), 2);
+                        level.setBlock(pos, nodeBlock.defaultBlockState().setValue(OreNodeBlock.QUALITY, quality), 2);
                         if (level.getBlockEntity(pos) instanceof OreNodeBlockEntity node) {
                             node.setNodeTypeId(typeId);
                             node.setPurity(purity);
@@ -180,7 +187,7 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
         if (!placed.contains(center)) {
-            level.setBlock(center, ModBlocks.ORE_NODE.defaultBlockState().setValue(OreNodeBlock.QUALITY, quality), 2);
+            level.setBlock(center, nodeBlock.defaultBlockState().setValue(OreNodeBlock.QUALITY, quality), 2);
             if (level.getBlockEntity(center) instanceof OreNodeBlockEntity node) {
                 node.setNodeTypeId(typeId);
                 node.setPurity(purity);
@@ -215,14 +222,47 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
         return false;
     }
 
+    /**
+     * A node can be buried in solid stone or sit inside a cave air pocket
+     * (enclosed underground: a non-fluid floor within a few blocks below and a
+     * ceiling within a few blocks above).
+     */
     private boolean isUndergroundHost(WorldGenLevel level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
+        if (state.isAir()) {
+            return caveFloor(level, pos) != null && hasCaveCeiling(level, pos);
+        }
         Block block = state.getBlock();
-        return !state.isAir() && block != Blocks.BEDROCK && block != Blocks.WATER && block != Blocks.LAVA
+        return block != Blocks.BEDROCK && block != Blocks.WATER && block != Blocks.LAVA
                 && (block == Blocks.STONE || block == Blocks.DEEPSLATE || block == Blocks.ANDESITE
                 || block == Blocks.DIORITE || block == Blocks.GRANITE || block == Blocks.TUFF
                 || block == Blocks.DRIPSTONE_BLOCK || block == Blocks.NETHERRACK || block == Blocks.BASALT
                 || state.canBeReplaced());
+    }
+
+    /**
+     * The air block directly above the cave floor, or null when there is no
+     * non-fluid floor within 8 blocks below the given position.
+     */
+    private BlockPos caveFloor(WorldGenLevel level, BlockPos pos) {
+        for (int d = 1; d <= 8; d++) {
+            BlockState below = level.getBlockState(pos.below(d));
+            Block block = below.getBlock();
+            if (!below.isAir() && block != Blocks.LAVA && block != Blocks.WATER) {
+                return pos.below(d - 1);
+            }
+        }
+        return null;
+    }
+
+    /** True when a solid block exists within 16 blocks above, i.e. not open to the surface. */
+    private boolean hasCaveCeiling(WorldGenLevel level, BlockPos pos) {
+        for (int d = 1; d <= 16; d++) {
+            if (!level.getBlockState(pos.above(d)).isAir()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean passesSpacing(WorldGenLevel level, BlockPos pos, int spacing) {

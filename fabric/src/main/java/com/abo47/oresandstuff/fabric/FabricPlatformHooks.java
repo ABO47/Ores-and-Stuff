@@ -26,6 +26,7 @@ import com.abo47.oresandstuff.command.DevCommands;
 import com.abo47.oresandstuff.content.ModBlockEntities;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.content.ModContent;
+import com.abo47.oresandstuff.content.ModNodeBlocks;
 import com.abo47.oresandstuff.miner.InfiniteBatteryBlockEntity;
 import com.abo47.oresandstuff.miner.MinerBlockEntity;
 import com.abo47.oresandstuff.network.NetworkChannels;
@@ -67,7 +68,7 @@ public final class FabricPlatformHooks implements PlatformHooks {
     public void registerBlockEntities() {
         ModBlockEntities.ORE_NODE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
                 new ResourceLocation(OresAndStuffMod.MOD_ID, "ore_node"),
-                BlockEntityType.Builder.of(OreNodeBlockEntity::new, ModBlocks.ORE_NODE).build(null));
+                BlockEntityType.Builder.of(OreNodeBlockEntity::new, ModNodeBlocks.allArray()).build(null));
         ModBlockEntities.MINER = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
                 new ResourceLocation(OresAndStuffMod.MOD_ID, "miner"),
                 BlockEntityType.Builder.of(MinerBlockEntity::new, ModContent.minerBlocksArray()).build(null));

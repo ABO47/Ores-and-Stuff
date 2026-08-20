@@ -10,7 +10,10 @@ import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.content.ModContent;
 import com.abo47.oresandstuff.content.ModCreativeTabs;
 import com.abo47.oresandstuff.content.ModItems;
+import com.abo47.oresandstuff.content.ModNodeBlocks;
+import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.data.config.MinerTierConfig;
+import com.abo47.oresandstuff.node.OreNodeType;
 
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -27,8 +30,12 @@ public final class ForgeContent {
     static void register(IEventBus modBus) {
         MinerTierConfig.ensureLoaded();
         ModContent.registerMiners();
+        OreNodeDataManager.INSTANCE.ensureLoaded();
 
         BLOCKS.register("ore_node", () -> ModBlocks.ORE_NODE);
+        for (OreNodeType type : OreNodeDataManager.INSTANCE.nodeTypes()) {
+            BLOCKS.register("ore_node_" + type.id().getPath(), () -> ModNodeBlocks.get(type.id()));
+        }
         for (MinerTierConfig.MinerTier tier : MinerTierConfig.tiers()) {
             BLOCKS.register("miner_" + tier.id(), () -> ModContent.minerBlock(tier.id()));
         }

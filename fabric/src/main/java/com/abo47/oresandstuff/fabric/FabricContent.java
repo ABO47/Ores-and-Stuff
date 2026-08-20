@@ -12,7 +12,10 @@ import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.content.ModContent;
 import com.abo47.oresandstuff.content.ModCreativeTabs;
 import com.abo47.oresandstuff.content.ModItems;
+import com.abo47.oresandstuff.content.ModNodeBlocks;
+import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.data.config.MinerTierConfig;
+import com.abo47.oresandstuff.node.OreNodeType;
 
 public final class FabricContent {
     private FabricContent() {
@@ -21,8 +24,12 @@ public final class FabricContent {
     static void register() {
         MinerTierConfig.ensureLoaded();
         ModContent.registerMiners();
+        OreNodeDataManager.INSTANCE.ensureLoaded();
 
         register(BuiltInRegistries.BLOCK, "ore_node", ModBlocks.ORE_NODE);
+        for (OreNodeType type : OreNodeDataManager.INSTANCE.nodeTypes()) {
+            register(BuiltInRegistries.BLOCK, "ore_node_" + type.id().getPath(), ModNodeBlocks.get(type.id()));
+        }
         for (MinerTierConfig.MinerTier tier : MinerTierConfig.tiers()) {
             register(BuiltInRegistries.BLOCK, "miner_" + tier.id(), ModContent.minerBlock(tier.id()));
         }

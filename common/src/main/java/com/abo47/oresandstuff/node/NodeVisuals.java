@@ -5,7 +5,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
-import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.block.OreNodeBlock;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 
 public final class NodeVisuals {
@@ -13,7 +13,7 @@ public final class NodeVisuals {
     }
 
     public static boolean isDecoration(Block block) {
-        if (block == ModBlocks.ORE_NODE || block == Blocks.STONE || block == Blocks.DEEPSLATE) {
+        if (block instanceof OreNodeBlock) {
             return true;
         }
         return isVisualOre(block);

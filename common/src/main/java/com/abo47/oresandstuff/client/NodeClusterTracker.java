@@ -15,7 +15,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.Block;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
-import com.abo47.oresandstuff.content.ModBlocks;
+import com.abo47.oresandstuff.block.OreNodeBlock;
 import com.abo47.oresandstuff.node.NodeVisuals;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
 
@@ -126,7 +126,7 @@ final class NodeClusterTracker {
         if (minecraft == null || minecraft.level == null) return false;
         if (Math.abs(pos.getX() - center.getX()) > maxDist || Math.abs(pos.getY() - center.getY()) > 8 || Math.abs(pos.getZ() - center.getZ()) > maxDist) return false;
         Block block = minecraft.level.getBlockState(pos).getBlock();
-        if (block == ModBlocks.ORE_NODE) return true;
+        if (block instanceof OreNodeBlock) return true;
         Block ore = NodeVisuals.visualOre(oreTypeId, false);
         Block deepOre = NodeVisuals.visualOre(oreTypeId, true);
         return (ore != null && block == ore) || (deepOre != null && block == deepOre);
