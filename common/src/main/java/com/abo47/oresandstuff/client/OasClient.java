@@ -128,13 +128,15 @@ public final class OasClient {
                 marker.distance += (dist - marker.distance) * 0.10f;
                 double targetYaw = Math.toDegrees(Math.atan2(-dx, dz));
                 float delta = Mth.wrapDegrees((float) targetYaw - playerYaw);
-                float desiredOffset = marker.distance < 7.0f ? 0f : (float) (Math.sin(Math.toRadians(delta)) * 100.0);
+                marker.side = delta < -90f ? -1 : delta > 90f ? 1 : 0;
+                float desiredOffset = Mth.clamp(delta * ScannerHud.PIX_PER_DEG, -ScannerHud.HALF_WIDTH, ScannerHud.HALF_WIDTH);
+                marker.up = (marker.pos.getY() + 0.5) > minecraft.player.getY() + minecraft.player.getEyeHeight();
                 if (!marker.initialized) {
                     marker.smoothOffset = desiredOffset;
                     marker.initialized = true;
                 }
                 float smoothing = marker.distance < 14.0f ? 0.10f : 0.16f;
-                marker.smoothOffset = Mth.clamp(marker.smoothOffset + (desiredOffset - marker.smoothOffset) * smoothing, -102f, 102f);
+                marker.smoothOffset = Mth.clamp(marker.smoothOffset + (desiredOffset - marker.smoothOffset) * smoothing, -ScannerHud.HALF_WIDTH, ScannerHud.HALF_WIDTH);
             }
         }
 

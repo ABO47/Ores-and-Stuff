@@ -97,6 +97,8 @@ public final class ScannerFxTypes {
         public final long revealAtMs;
         public float smoothOffset;
         public boolean initialized;
+        public int side;
+        public boolean up;
 
         public TargetMarker(BlockPos pos, float distance, long revealAtMs) {
             this.pos = pos;
