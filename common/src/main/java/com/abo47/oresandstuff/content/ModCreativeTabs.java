@@ -19,7 +19,7 @@ public final class ModCreativeTabs {
                 }
                 output.accept(ModItems.INFINITE_BATTERY);
                 output.accept(ModItems.SCANNER);
-                output.accept(ModItems.BIO_SCANNER);
+                // BIO_SCANNER is now merged into SCANNER (mode toggle via keybind), keep for save compat but hide from tab
             })
             .build();
 

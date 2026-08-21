@@ -27,6 +27,9 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+
 import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.client.OasShaders;
 import com.abo47.oresandstuff.client.screen.BioLibraryScreen;
@@ -34,7 +37,6 @@ import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.content.ModItems;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
-import com.abo47.oresandstuff.item.BioScannerItem;
 import com.abo47.oresandstuff.item.ScannerItem;
 import com.abo47.oresandstuff.network.BioScanInfoPacket;
 import com.abo47.oresandstuff.network.BioScanLibraryPacket;
@@ -96,11 +98,24 @@ public final class OasClient {
     }
 
     static boolean holdingOreScanner() {
-        return minecraft != null && minecraft.player != null && minecraft.player.getMainHandItem().getItem() instanceof ScannerItem;
+        if (minecraft == null || minecraft.player == null) return false;
+        ItemStack stack = minecraft.player.getMainHandItem();
+        return stack.getItem() instanceof ScannerItem && ScannerItem.getMode(stack) == ScannerItem.Mode.RESOURCE;
     }
 
     private static boolean holdingBioScanner() {
-        return minecraft != null && minecraft.player != null && minecraft.player.getMainHandItem().getItem() instanceof BioScannerItem;
+        if (minecraft == null || minecraft.player == null) return false;
+        ItemStack stack = minecraft.player.getMainHandItem();
+        return stack.getItem() instanceof ScannerItem && ScannerItem.getMode(stack) == ScannerItem.Mode.BIO;
+    }
+
+    private static ItemStack findHeldScanner() {
+        if (minecraft == null || minecraft.player == null) return ItemStack.EMPTY;
+        ItemStack main = minecraft.player.getMainHandItem();
+        if (main.getItem() instanceof ScannerItem) return main;
+        ItemStack off = minecraft.player.getOffhandItem();
+        if (off.getItem() instanceof ScannerItem) return off;
+        return ItemStack.EMPTY;
     }
 
     public static void clientTick() {
@@ -110,6 +125,16 @@ public final class OasClient {
                 minecraft.setScreen(null);
             } else if (minecraft.screen == null) {
                 ModSettingsScreen.open(minecraft.player);
+            }
+        }
+        if (OasKeyBindings.SWITCH_SCANNER_MODE.consumeClick() && minecraft.player != null) {
+            ItemStack held = findHeldScanner();
+            if (!held.isEmpty()) {
+                ScannerItem.Mode newMode = ScannerItem.toggleMode(held);
+                NetworkChannels.sendScannerModeToggle();
+                minecraft.gui.setOverlayMessage(Component.translatable(newMode == ScannerItem.Mode.BIO ? "item.oresandstuff.bio_scanner" : "item.oresandstuff.scanner"), false);
+                var scCfg = OresAndStuffConfig.scanner();
+                playConfigSound(SoundEvents.BEACON_POWER_SELECT, scCfg.scanSoundEnabled, scCfg.scanSoundVolume, scCfg.scanSoundPitch);
             }
         }
         boolean oreScannerHeld = holdingOreScanner();
@@ -188,14 +213,17 @@ public final class OasClient {
                 NetworkChannels.bioScanRequest(activeBioScan.entityId);
                 int cooldown = OresAndStuffConfig.bioScan().cooldownTicks;
                 if (cooldown > 0) {
-                    minecraft.player.getCooldowns().addCooldown(ModItems.BIO_SCANNER, cooldown);
+                    var cdItem = findHeldScanner().isEmpty() ? ModItems.SCANNER : findHeldScanner().getItem();
+                    minecraft.player.getCooldowns().addCooldown(cdItem, cooldown);
                 }
                 var sc = OresAndStuffConfig.scanner();
                 playConfigSound(SoundEvents.RESPAWN_ANCHOR_CHARGE, sc.pingSoundEnabled, sc.pingSoundVolume, sc.pingSoundPitch);
             }
             }
         } else if (bioUsePressed) {
-            if (minecraft.player.getCooldowns().isOnCooldown(ModItems.BIO_SCANNER)) return;
+            var cdStack = findHeldScanner();
+            var cdItem = cdStack.isEmpty() ? ModItems.SCANNER : cdStack.getItem();
+            if (minecraft.player.getCooldowns().isOnCooldown(cdItem) || minecraft.player.getCooldowns().isOnCooldown(ModItems.BIO_SCANNER) || minecraft.player.getCooldowns().isOnCooldown(ModItems.SCANNER)) return;
             var hit = findBioTarget();
             if (hit != null && hit.getEntity() instanceof LivingEntity living) {
                 activeBioScan = new ActiveBioScan(living.getUUID(), living.getId(), OresAndStuffConfig.bioScan().durationMs);

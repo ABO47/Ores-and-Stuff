@@ -18,10 +18,18 @@ public final class OasKeyBindings {
             CATEGORY
     );
 
+    public static final KeyMapping SWITCH_SCANNER_MODE = new KeyMapping(
+            "key.oresandstuff.switch_scanner_mode",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_V,
+            CATEGORY
+    );
+
     private OasKeyBindings() {
     }
 
     public static void registerKeyMappings(Consumer<KeyMapping> registrar) {
         registrar.accept(OPEN_SETTINGS);
+        registrar.accept(SWITCH_SCANNER_MODE);
     }
 }
