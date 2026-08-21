@@ -14,6 +14,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.util.Mth;
@@ -59,21 +60,36 @@ final class BioScanVisualRenderer {
         float bbW = Math.min(target.getBbWidth(), 3.0f);
         float rayStyle = (float) OresAndStuffConfig.bioScan().rayStyle;
 
-        double px = Mth.lerp(partialTick, minecraft.player.xo, minecraft.player.getX());
-        double py = Mth.lerp(partialTick, minecraft.player.yo, minecraft.player.getY());
-        double pz = Mth.lerp(partialTick, minecraft.player.zo, minecraft.player.getZ());
-        Vec3 eye = new Vec3(px, py + minecraft.player.getEyeHeight(), pz);
-        Vec3 look = minecraft.player.getLookAngle().normalize();
-        Vec3 worldUp = new Vec3(0, 1, 0);
-        Vec3 rightBase = look.cross(worldUp);
-        if (rightBase.lengthSqr() < 1.0e-6) rightBase = new Vec3(1, 0, 0);
-        Vec3 right = rightBase.normalize();
+
+        Camera cam = minecraft.gameRenderer.getMainCamera();
+        Vec3 camPos = cam.getPosition();
+        org.joml.Vector3f fwdV = cam.getLookVector();
+        org.joml.Vector3f upVf = cam.getUpVector();
+        org.joml.Vector3f leftV = cam.getLeftVector();
+        Vec3 fwd = new Vec3(fwdV.x, fwdV.y, fwdV.z).normalize();
+        Vec3 upV = new Vec3(upVf.x, upVf.y, upVf.z).normalize();
+        Vec3 rightV = new Vec3(-leftV.x, -leftV.y, -leftV.z).normalize();
         HumanoidArm arm = minecraft.player.getMainArm();
         float side = arm == HumanoidArm.RIGHT ? 1f : -1f;
-        Vec3 start = eye
-                .add(look.scale(0.36))
-                .add(right.scale(0.23 * side))
-                .add(0.0, -0.18, 0.0);
+        float distToTarget = (float) new Vec3(rx, ry, rz).subtract(camPos).length();
+
+        Vec3 start;
+        if (minecraft.options.getCameraType().isFirstPerson()) {
+            start = camPos
+                    .add(fwd.scale(0.60f))
+                    .add(rightV.scale(0.50f * side))
+                    .add(upV.scale(-0.34f));
+        } else {
+            double hx = Mth.lerp(partialTick, minecraft.player.xo, minecraft.player.getX());
+            double hy = Mth.lerp(partialTick, minecraft.player.yo, minecraft.player.getY());
+            double hz = Mth.lerp(partialTick, minecraft.player.zo, minecraft.player.getZ());
+            float yawRad = -minecraft.player.getYRot() * Mth.DEG_TO_RAD;
+            Vec3 lookH = new Vec3(-Mth.sin(yawRad), 0.0, Mth.cos(yawRad)).normalize();
+            Vec3 rightH = new Vec3(lookH.z, 0.0, -lookH.x).normalize();
+            start = new Vec3(hx, hy + 1.25, hz)
+                    .add(rightH.scale(0.45f * side))
+                    .add(lookH.scale(0.20f));
+        }
 
         float clampedW = Math.min(target.getBbWidth(), 3.0f);
         float clampedH = Math.min(target.getBbHeight(), 4.0f);
@@ -82,13 +98,16 @@ final class BioScanVisualRenderer {
                 : Mth.clamp(Math.max(clampedW * 0.24f, clampedH * 0.10f), 0.38f, 0.90f);
         Vec3 rawEnd = new Vec3(plane.x0 + (plane.x1 - plane.x0) * 0.5, plane.scanY, plane.z0 + (plane.z1 - plane.z0) * 0.5);
         Vec3 prev = STABLE_END.get(target.getId());
-        Vec3 end = prev == null ? rawEnd : prev.lerp(rawEnd, 0.20);
+
+        float settle = distToTarget > 8.0f ? 0.60f : 0.20f;
+        Vec3 end = prev == null ? rawEnd : prev.lerp(rawEnd, settle);
         STABLE_END.put(target.getId(), end);
 
         float modelRadius = Math.max(clampedW * 0.55f, clampedH * 0.26f);
         float endHalf = Math.max(0.08f, modelRadius * (0.32f + 0.52f * Mth.clamp(progress, 0f, 1f)));
         endHalf = Math.min(endHalf, 1.05f);
-        float startHalf = Math.max(0.012f, bbW * 0.03f * rayStyle);
+
+        float startHalf = Math.max(0.045f, bbW * 0.05f * rayStyle);
         Vec3 dir = end.subtract(start).normalize();
         Vec3 up = new Vec3(0, 1, 0);
         Vec3 sideVec = dir.cross(up);
@@ -115,10 +134,11 @@ final class BioScanVisualRenderer {
         float noiseB = 0.5f + 0.5f * Mth.sin(t * 9.0f + (float) target.getId() * 0.19f + 1.7f);
         float dissolve = 0.35f + 0.65f * (1.0f - Mth.clamp(progress, 0f, 1f));
         float endFade = (0.14f + 0.22f * noiseB) * dissolve;
-        float baseCore = (0.155f + 0.030f * noiseA) * pulse;
+        // Brighter core - the previous ~0.16 alpha was nearly invisible against bright skies.
+        float baseCore = (0.48f + 0.10f * noiseA) * pulse;
         float coreStartA = baseCore;
         float coreEndA = baseCore * (0.32f + 0.28f * noiseB) * endFade;
-        float edgeStartA = coreStartA * 0.22f;
+        float edgeStartA = coreStartA * 0.30f;
         float edgeEndA = coreEndA * 0.24f;
         float sr = OasColors.rf(OasColors.ACCENT_PRIMARY);
         float sg = OasColors.gf(OasColors.ACCENT_PRIMARY);
