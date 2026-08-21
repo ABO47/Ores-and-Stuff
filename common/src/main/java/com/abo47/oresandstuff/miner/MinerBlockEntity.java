@@ -54,7 +54,7 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
     private boolean enabled = true;
     private long placedTick = -1;
 
-    // ---- Caches to avoid per-tick 19³ BE scans ----
+    // Caches to avoid per-tick 19³ BE scans (I HOPE IT WORKS)
     private static final int MINER_LIMIT_CACHE_TICKS = 20;
     private static final int NODE_CACHE_TICKS = 10;
     private long lastMinerLimitCheckTick = Long.MIN_VALUE;
