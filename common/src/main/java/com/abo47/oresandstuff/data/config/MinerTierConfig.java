@@ -21,16 +21,16 @@ public final class MinerTierConfig {
     private static boolean loaded;
 
     private static final List<MinerTier> DEFAULT_TIERS = List.of(
-            new MinerTier("mk1", "Miner Mk1", 40, 40000, 512, 1.0, "miner", ""),
-            new MinerTier("mk2", "Miner Mk2", 60, 80000, 1024, 2.0, "miner", ""),
-            new MinerTier("mk3", "Miner Mk3", 120, 160000, 2048, 3.0, "miner", ""),
-            new MinerTier("mk4", "Miner Mk4", 240, 320000, 4096, 5.0, "miner", ""),
-            new MinerTier("mk5", "Miner Mk5", 480, 640000, 8192, 7.0, "miner", ""),
-            new MinerTier("mk6", "Miner Mk6", 960, 1280000, 16384, 10.0, "miner", ""),
-            new MinerTier("mk7", "Miner Mk7", 1920, 2560000, 32768, 14.0, "miner", ""),
-            new MinerTier("mk8", "Miner Mk8", 3840, 5120000, 65536, 19.0, "miner", ""),
-            new MinerTier("mk9", "Miner Mk9", 7680, 10240000, 131072, 25.0, "miner", ""),
-            new MinerTier("mk10", "Miner Mk10", 15360, 20480000, 262144, 32.0, "miner", "")
+            new MinerTier("mk1", "Miner Mk1", 40, 40000, 160, 1.0, "miner", ""),
+            new MinerTier("mk2", "Miner Mk2", 80, 80000, 320, 2.0, "miner", ""),
+            new MinerTier("mk3", "Miner Mk3", 120, 120000, 480, 3.0, "miner", ""),
+            new MinerTier("mk4", "Miner Mk4", 200, 200000, 800, 5.0, "miner", ""),
+            new MinerTier("mk5", "Miner Mk5", 280, 280000, 1120, 7.0, "miner", ""),
+            new MinerTier("mk6", "Miner Mk6", 400, 400000, 1600, 10.0, "miner", ""),
+            new MinerTier("mk7", "Miner Mk7", 560, 560000, 2240, 14.0, "miner", ""),
+            new MinerTier("mk8", "Miner Mk8", 760, 760000, 3040, 19.0, "miner", ""),
+            new MinerTier("mk9", "Miner Mk9", 1000, 1000000, 4000, 25.0, "miner", ""),
+            new MinerTier("mk10", "Miner Mk10", 1280, 1280000, 5120, 32.0, "miner", "")
     );
 
     private static MinerTier defaultTier = DEFAULT_TIERS.get(0);

@@ -33,6 +33,7 @@ import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.data.config.MinerTierConfig;
 import com.abo47.oresandstuff.miner.CommonItemTransfer;
 import com.abo47.oresandstuff.miner.MinerBlockEntity;
+import com.abo47.oresandstuff.miner.MinerStatus;
 import com.abo47.oresandstuff.node.OreNodeType;
 
 public final class MinerScreen {
@@ -106,9 +107,16 @@ public final class MinerScreen {
 
         root.addWidget(new ImageWidget(ENERGY_BAR_X - 1, ENERGY_BAR_Y - 1, ENERGY_BAR_W + 2, ENERGY_BAR_H + 2, bevelPanelTexture(OasColors.BG_0, OasColors.BORDER, OasColors.BORDER)));
         ImageWidget energyBar = new ImageWidget(ENERGY_BAR_X, ENERGY_BAR_Y, ENERGY_BAR_W, ENERGY_BAR_H,
-                () -> new EnergyBarTexture(() -> uiEnergySmooth(state), () -> energyColor(state)));
+                () -> new EnergyBarTexture(() -> uiEnergySmooth(state), () -> energyColor(state))) {
+            @Override
+            @Environment(EnvType.CLIENT)
+            public void updateScreen() {
+                super.updateScreen();
+                setHoverTooltips(Component.literal("Energy: " + state.getEnergyStored() + " / " + state.getMaxEnergy() + " FE"));
+            }
+        };
         energyBar.setClientSideWidget();
-        energyBar.setHoverTooltips(Component.literal("Energy: " + be.getEnergyStored() + " / " + be.getMaxEnergyStored() + " FE"));
+        energyBar.setHoverTooltips(Component.literal("Energy: " + state.getEnergyStored() + " / " + state.getMaxEnergy() + " FE"));
         root.addWidget(energyBar);
 
         EnergyPercentLabel energyPercent = new EnergyPercentLabel(LEFT_X, ENERGY_BAR_Y + ENERGY_BAR_H + 6, CHILD_W, state);
@@ -124,6 +132,12 @@ public final class MinerScreen {
         root.addWidget(rateLabel);
         LabelWidget progressLabel = terminalLabel(ROW_X, ROW_1_Y + 4 * ROW_GAP, state, s -> "progress: " + progressText(s));
         root.addWidget(progressLabel);
+
+        // Red blinking alert row at the end of the console: no energy / output full / miner limit hit
+        int alertY = ROW_1_Y + 5 * ROW_GAP;
+        int alertW = MID_W - 8;
+        MinerAlertWidget alertLabel = new MinerAlertWidget(ROW_X, alertY, alertW, 9, state, be);
+        root.addWidget(alertLabel);
 
         LabelWidget promptLabel = new LabelWidget(ROW_X, CHILD_Y + CHILD_H - 12, ">");
         promptLabel.setTextProvider(() -> {
@@ -191,6 +205,50 @@ public final class MinerScreen {
         }
     }
 
+    private static final class MinerAlertWidget extends Widget {
+        private final MinerUIState state;
+        private final MinerBlockEntity be;
+
+        private MinerAlertWidget(int x, int y, int w, int h, MinerUIState state, MinerBlockEntity be) {
+            super(x, y, w, h);
+            this.state = state;
+            this.be = be;
+            setClientSideWidget();
+        }
+
+        private static String alertFor(MinerStatus status) {
+            if (status == null) {
+                return null;
+            }
+            return switch (status) {
+                case NO_POWER -> "no energy";
+                case OUTPUT_FULL -> "output full";
+                case MAX_MINERS -> "miner limit hit";
+                default -> null;
+            };
+        }
+
+        @Override
+        @Environment(EnvType.CLIENT)
+        public void drawInBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+            super.drawInBackground(graphics, mouseX, mouseY, partialTicks);
+            String text = alertFor(state.getStatus());
+            if (text == null) {
+                return;
+            }
+            long t = be.getLevel() != null ? be.getLevel().getGameTime() : System.currentTimeMillis() / 50L;
+            boolean visible = (t % 20) < 10;
+            if (!visible) {
+                return;
+            }
+            Font font = Minecraft.getInstance().font;
+            Position pos = getPosition();
+            int x = pos.x;
+            int y = pos.y + (getSize().height - font.lineHeight) / 2;
+            graphics.drawString(font, text, x, y, OasColors.ERROR, true);
+        }
+    }
+
     private static IGuiTexture bevelPanelTexture(int fillColor, int outerBorder, int innerBorder) {
         return new GuiTextureGroup(
                 new ColorRectTexture(fillColor),
@@ -237,7 +295,7 @@ public final class MinerScreen {
     }
 
     private static String progressText(MinerUIState state) {
-        return (int) Math.round(Math.max(0.0, Math.min(1.0, state.getProgress())) * 100) + "%%";
+        return (int) Math.round(Math.max(0.0, Math.min(1.0, state.getDisplayProgress())) * 100) + "%%";
     }
 
     private double uiEnergySmooth(MinerUIState state) {

@@ -15,6 +15,11 @@ import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
 import com.lowdragmc.lowdraglib.side.item.ItemTransferHelper;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+
 import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.api.MinerExtractEvent;
@@ -42,10 +47,23 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
     private final CommonItemTransfer output = new CommonItemTransfer();
 
     private double progress;
+    private float displayProgress;
     private MinerStatus status = MinerStatus.NO_NODE;
     private ResourceLocation nodeTypeId = new ResourceLocation(OresAndStuffMod.MOD_ID, "iron");
     private double nodeQuality = 100.0;
     private boolean enabled = true;
+    private long placedTick = -1;
+
+    // ---- Caches to avoid per-tick 19³ BE scans ----
+    private static final int MINER_LIMIT_CACHE_TICKS = 20;
+    private static final int NODE_CACHE_TICKS = 10;
+    private long lastMinerLimitCheckTick = Long.MIN_VALUE;
+    private UUID lastLimitNodeId;
+    private boolean lastLimitResult;
+    private int lastLimitMax = -1;
+    private long cachedNodeCheckTick = Long.MIN_VALUE;
+    private BlockPos cachedNodePos;
+    private UUID cachedNodeId;
 
     public MinerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MINER, pos, state);
@@ -65,19 +83,28 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         if (level == null || level.isClientSide) {
             return;
         }
-
-        if (!enabled) {
-            status = MinerStatus.STOPPED;
+        if (placedTick == -1) {
+            placedTick = level.getGameTime();
             setChanged();
-            return;
         }
 
         pullPowerFromNeighbors();
+        ejectOutputToNeighbors();
+
+        if (!enabled) {
+            status = MinerStatus.STOPPED;
+            displayProgress = 0.0F;
+            progress = 0.0;
+            setChanged();
+            return;
+        }
 
         OreNodeBlockEntity node = getAttachedNode();
         if (node == null) {
             status = MinerStatus.NO_NODE;
             nodeTypeId = new ResourceLocation("minecraft", "air");
+            displayProgress = 0.0F;
+            progress = 0.0;
             setChanged();
             return;
         }
@@ -87,12 +114,16 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
 
         if (atMinerLimit(node)) {
             status = MinerStatus.MAX_MINERS;
+            displayProgress = 0.0F;
+            progress = 0.0;
             setChanged();
             return;
         }
 
         if (energy.getEnergyStored() < fePerTick) {
             status = MinerStatus.NO_POWER;
+            displayProgress = 0.0F;
+            progress = 0.0;
             setChanged();
             return;
         }
@@ -100,36 +131,54 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         java.util.List<ItemStack> rolled = ExtractionRateService.buildDrops(node, 1, 1.0);
         if (rolled.isEmpty()) {
             status = MinerStatus.NO_NODE;
+            displayProgress = 0.0F;
+            progress = 0.0;
             setChanged();
             return;
         }
 
         double ratePerTick = ExtractionRateService.minerItemsPerSecond(node, tier.rateMultiplier()) / 20.0;
-        progress += ratePerTick;
+        status = MinerStatus.RUNNING;
 
-        if (progress >= 1.0) {
-            int units = (int) progress;
+        int cycleTicks = (int) Math.min(60.0, Math.max(4.0, Math.round(20.0 / ratePerTick)));
+        float step = 1.0F / cycleTicks;
+        int unitsPerCycle = (int) Math.round(ratePerTick * cycleTicks);
+        if (unitsPerCycle < 1) {
+            unitsPerCycle = 1;
+        }
+        int maxUnits = (CommonItemTransfer.SLOT_COUNT * 64) / Math.max(1, rolled.size());
+        if (unitsPerCycle > maxUnits) {
+            unitsPerCycle = maxUnits;
+        }
+
+        displayProgress += step;
+        boolean produced = false;
+        if (displayProgress >= 1.0F) {
+            displayProgress -= 1.0F;
             java.util.List<ItemStack> batch = new java.util.ArrayList<>();
             for (ItemStack stack : rolled) {
-                batch.add(stack.copyWithCount(stack.getCount() * units));
+                batch.add(stack.copyWithCount(stack.getCount() * unitsPerCycle));
             }
-            if (!output.insertAll(batch)) {
+            if (output.canFitAll(batch)) {
+                output.insertAll(batch);
+                produced = true;
+                if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                    MiningEvents.fire(new MinerExtractEvent(serverLevel,
+                            new MinerHandle(this),
+                            new OreNodeHandle(node.getBlockPos(), node.getNodeTypeId(), node.getQualityPercent(), node.getNodeId()),
+                            unitsPerCycle,
+                            batch));
+                }
+            } else {
                 status = MinerStatus.OUTPUT_FULL;
-                setChanged();
-                return;
-            }
-            progress -= units;
-            energy.extractEnergy(fePerTick, false);
-            if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-                MiningEvents.fire(new MinerExtractEvent(serverLevel,
-                        new MinerHandle(this),
-                        new OreNodeHandle(node.getBlockPos(), node.getNodeTypeId(), node.getQualityPercent(), node.getNodeId()),
-                        units,
-                        batch));
+                displayProgress = 1.0F;
             }
         }
 
-        status = MinerStatus.RUNNING;
+        if (status != MinerStatus.OUTPUT_FULL) {
+            energy.extractEnergy(fePerTick, false);
+        }
+        progress = displayProgress;
         ejectOutputToNeighbors();
         setChanged();
     }
@@ -138,37 +187,102 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         if (level == null) {
             return null;
         }
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dz = -1; dz <= 1; dz++) {
-                    if (dx == 0 && dy == 0 && dz == 0) {
-                        continue;
-                    }
-                    BlockEntity be = level.getBlockEntity(worldPosition.offset(dx, dy, dz));
-                    if (be instanceof OreNodeBlockEntity node) {
-                        return node;
+        long now = level.getGameTime();
+        // fast-path: positive cache still valid
+        if (cachedNodePos != null && now - cachedNodeCheckTick < NODE_CACHE_TICKS) {
+            BlockEntity be = level.getBlockEntity(cachedNodePos);
+            if (be instanceof OreNodeBlockEntity node && node.getNodeId().equals(cachedNodeId)) {
+                return node;
+            }
+        }
+        // fast-path: negative cache (recently found no node)
+        if (cachedNodePos == null && cachedNodeId == null && cachedNodeCheckTick != Long.MIN_VALUE
+                && now - cachedNodeCheckTick < NODE_CACHE_TICKS) {
+            return null;
+        }
+        for (Direction dir : Direction.values()) {
+            BlockPos p = worldPosition.relative(dir);
+            BlockEntity be = level.getBlockEntity(p);
+            if (be instanceof OreNodeBlockEntity node) {
+                cachedNodePos = p.immutable();
+                cachedNodeId = node.getNodeId();
+                cachedNodeCheckTick = now;
+                return node;
+            }
+        }
+        cachedNodePos = null;
+        cachedNodeId = null;
+        cachedNodeCheckTick = now;
+        return null;
+    }
+
+    public void invalidateNodeCache() {
+        cachedNodeCheckTick = Long.MIN_VALUE;
+        cachedNodePos = null;
+        cachedNodeId = null;
+    }
+
+    public void invalidateMinerLimitCache() {
+        lastMinerLimitCheckTick = Long.MIN_VALUE;
+        lastLimitNodeId = null;
+    }
+
+    public void invalidateMinerCaches() {
+        invalidateNodeCache();
+        invalidateMinerLimitCache();
+    }
+
+    /**
+     * Invalidate cached limit/node lookups for miners near {@code pos}.
+     * Called from {@link com.abo47.oresandstuff.block.MinerBlock} on placement/removal
+     * so a newly placed miner is visible to neighbours without waiting for the TTL to expire.
+     */
+    public static void invalidateNearbyCaches(Level lvl, BlockPos pos) {
+        if (lvl == null) {
+            return;
+        }
+        int rXZ = 10;
+        int rY = 5;
+        for (int dx = -rXZ; dx <= rXZ; dx++) {
+            for (int dy = -rY; dy <= rY; dy++) {
+                for (int dz = -rXZ; dz <= rXZ; dz++) {
+                    BlockEntity be = lvl.getBlockEntity(pos.offset(dx, dy, dz));
+                    if (be instanceof MinerBlockEntity miner) {
+                        miner.invalidateMinerCaches();
                     }
                 }
             }
         }
-        return null;
     }
 
     /**
      * Whether the connected node already has its configured maximum number of
-     * miners attached. Miners attached to opposite sides of the same cluster
-     * can be several blocks apart, so the scan radius is derived from the
-     * cluster radius (2 * radius + 1) to always cover every miner on the node.
+     * miners attached. Earlier-placed miners keep working; only the newest
+     * miners beyond {@code maxMinersPerNode} are blocked. Miners attached to
+     * opposite sides of the same cluster can be several blocks apart, so the
+     * scan radius is derived from the cluster radius (2 * radius + 1) to always
+     * cover every miner on the node.
+     * <p>
+     * The result is cached for {@value #MINER_LIMIT_CACHE_TICKS} ticks and is
+     * eagerly invalidated when nearby miners are placed/removed via
+     * {@link #invalidateNearbyCaches(Level, BlockPos)}.
      */
     private boolean atMinerLimit(OreNodeBlockEntity node) {
         if (level == null || node == null) {
             return false;
         }
+        long gameTime = level.getGameTime();
+        UUID nodeId = node.getNodeId();
         var type = OreNodeDataManager.INSTANCE.getNodeType(node.getNodeTypeId()).orElse(null);
         int max = type != null ? type.maxMinersPerNode() : 1;
+        if (lastLimitNodeId != null && lastLimitNodeId.equals(nodeId)
+                && gameTime - lastMinerLimitCheckTick < MINER_LIMIT_CACHE_TICKS
+                && lastLimitMax == max) {
+            return lastLimitResult;
+        }
         int scanXZ = Math.min(9, Math.max(4, 2 * (type != null ? type.clusterRadius() : 2) + 1));
-        java.util.UUID nodeId = node.getNodeId();
-        int attached = 0;
+        List<MinerBlockEntity> attachedMiners = new ArrayList<>();
+        attachedMiners.add(this);
         for (int dx = -scanXZ; dx <= scanXZ; dx++) {
             for (int dy = -4; dy <= 4; dy++) {
                 for (int dz = -scanXZ; dz <= scanXZ; dz++) {
@@ -179,13 +293,32 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
                     if (be instanceof MinerBlockEntity other && other != this) {
                         OreNodeBlockEntity otherNode = other.getAttachedNode();
                         if (otherNode != null && otherNode.getNodeId().equals(nodeId)) {
-                            attached++;
+                            attachedMiners.add(other);
                         }
                     }
                 }
             }
         }
-        return attached >= max;
+        if (attachedMiners.size() <= max) {
+            lastLimitNodeId = nodeId;
+            lastMinerLimitCheckTick = gameTime;
+            lastLimitResult = false;
+            lastLimitMax = max;
+            return false;
+        }
+        // Sort by placement time so earliest miners keep working; excess newest miners are blocked.
+        attachedMiners.sort(Comparator
+                .comparingLong((MinerBlockEntity m) -> m.placedTick == -1 ? gameTime : m.placedTick)
+                .thenComparingInt(m -> m.worldPosition.getX())
+                .thenComparingInt(m -> m.worldPosition.getY())
+                .thenComparingInt(m -> m.worldPosition.getZ()));
+        int myIndex = attachedMiners.indexOf(this);
+        boolean result = myIndex >= max;
+        lastLimitNodeId = nodeId;
+        lastMinerLimitCheckTick = gameTime;
+        lastLimitResult = result;
+        lastLimitMax = max;
+        return result;
     }
 
     private void pullPowerFromNeighbors() {
@@ -254,9 +387,18 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         return progress;
     }
 
+    public float getDisplayProgress() {
+        return displayProgress;
+    }
+
     public double getRatePerSecond() {
         OreNodeBlockEntity node = getAttachedNode();
-        return node != null ? ExtractionRateService.minerItemsPerSecond(node, tier.rateMultiplier()) : 0.0;
+        if (node == null) {
+            return 0.0;
+        }
+        double rate = ExtractionRateService.minerItemsPerSecond(node, tier.rateMultiplier());
+        int entries = OreNodeDataManager.INSTANCE.getNodeType(node.getNodeTypeId()).map(t -> t.drops().size()).orElse(0);
+        return entries > 0 ? rate * entries : rate;
     }
 
     public MinerTierConfig.MinerTier getTier() {
@@ -289,6 +431,15 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         setChanged();
     }
 
+    public long getPlacedTick() {
+        return placedTick;
+    }
+
+    public void setPlacedTick(long tick) {
+        this.placedTick = tick;
+        setChanged();
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
@@ -299,6 +450,7 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         tag.putString("NodeType", nodeTypeId.toString());
         tag.putDouble("NodeQuality", nodeQuality);
         tag.putBoolean("Enabled", enabled);
+        tag.putLong("PlacedTick", placedTick);
     }
 
     @Override
@@ -333,5 +485,10 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
             });
         }
         enabled = !tag.contains("Enabled") || tag.getBoolean("Enabled");
+        if (tag.contains("PlacedTick")) {
+            placedTick = tag.getLong("PlacedTick");
+        } else {
+            placedTick = -1;
+        }
     }
 }

@@ -65,6 +65,24 @@ public class MinerBlock extends BaseEntityBlock {
     }
 
     @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof MinerBlockEntity miner && miner.getPlacedTick() == -1) {
+            miner.setPlacedTick(level.getGameTime());
+        }
+        MinerBlockEntity.invalidateNearbyCaches(level, pos);
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) {
+            MinerBlockEntity.invalidateNearbyCaches(level, pos);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide) {
             if (level.getBlockEntity(pos) instanceof MinerBlockEntity miner) {

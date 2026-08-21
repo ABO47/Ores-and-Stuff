@@ -17,6 +17,7 @@ public class MinerUIState extends Widget {
     private int energyStored;
     private int maxEnergy;
     private double progress;
+    private float displayProgress;
     private double nodeQuality;
     private MinerStatus status;
     private ResourceLocation nodeTypeId;
@@ -29,6 +30,7 @@ public class MinerUIState extends Widget {
         this.energyStored = be.getEnergyStored();
         this.maxEnergy = be.getMaxEnergyStored();
         this.progress = be.getProgress();
+        this.displayProgress = be.getDisplayProgress();
         this.nodeQuality = be.getNodeQuality();
         this.status = be.getStatus();
         this.nodeTypeId = be.getNodeTypeId();
@@ -68,6 +70,7 @@ public class MinerUIState extends Widget {
         buf.writeInt(be.getEnergyStored());
         buf.writeInt(be.getMaxEnergyStored());
         buf.writeDouble(be.getProgress());
+        buf.writeFloat(be.getDisplayProgress());
         buf.writeDouble(be.getNodeQuality());
         buf.writeUtf(be.getStatus().name());
         buf.writeUtf(be.getNodeTypeId().toString());
@@ -78,6 +81,7 @@ public class MinerUIState extends Widget {
         energyStored = buf.readInt();
         maxEnergy = buf.readInt();
         progress = buf.readDouble();
+        displayProgress = buf.readFloat();
         nodeQuality = buf.readDouble();
         status = MinerStatus.valueOf(buf.readUtf());
         nodeTypeId = new ResourceLocation(buf.readUtf());
@@ -99,6 +103,10 @@ public class MinerUIState extends Widget {
 
     public double getProgress() {
         return live() ? be.getProgress() : progress;
+    }
+
+    public float getDisplayProgress() {
+        return live() ? be.getDisplayProgress() : displayProgress;
     }
 
     public double getNodeQuality() {
@@ -123,9 +131,11 @@ public class MinerUIState extends Widget {
 
     public double getRatePerSecond() {
         double multiplier = be.getTier().rateMultiplier();
-        return nodeQuality / 100.0 * multiplier
-                * OreNodeDataManager.INSTANCE.getNodeType(nodeTypeId)
-                        .map(OreNodeType::baseRatePerSecond).orElse(0.0);
+        var type = OreNodeDataManager.INSTANCE.getNodeType(nodeTypeId);
+        double base = type.map(OreNodeType::baseRatePerSecond).orElse(0.0);
+        int entries = type.map(t -> t.drops().size()).orElse(0);
+        double rate = entries > 0 ? base * entries : base;
+        return rate * (nodeQuality / 100.0) * multiplier;
     }
 
     public String getTierId() {
