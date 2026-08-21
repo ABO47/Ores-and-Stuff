@@ -20,7 +20,20 @@ public final class MinerTierConfig {
     private static final List<MinerTier> TIERS = new ArrayList<>();
     private static boolean loaded;
 
-    private static MinerTier defaultTier = defaultMk1();
+    private static final List<MinerTier> DEFAULT_TIERS = List.of(
+            new MinerTier("mk1", "Miner Mk1", 40, 40000, 512, 1.0, "miner", ""),
+            new MinerTier("mk2", "Miner Mk2", 60, 80000, 1024, 2.0, "miner", ""),
+            new MinerTier("mk3", "Miner Mk3", 120, 160000, 2048, 3.0, "miner", ""),
+            new MinerTier("mk4", "Miner Mk4", 240, 320000, 4096, 5.0, "miner", ""),
+            new MinerTier("mk5", "Miner Mk5", 480, 640000, 8192, 7.0, "miner", ""),
+            new MinerTier("mk6", "Miner Mk6", 960, 1280000, 16384, 10.0, "miner", ""),
+            new MinerTier("mk7", "Miner Mk7", 1920, 2560000, 32768, 14.0, "miner", ""),
+            new MinerTier("mk8", "Miner Mk8", 3840, 5120000, 65536, 19.0, "miner", ""),
+            new MinerTier("mk9", "Miner Mk9", 7680, 10240000, 131072, 25.0, "miner", ""),
+            new MinerTier("mk10", "Miner Mk10", 15360, 20480000, 262144, 32.0, "miner", "")
+    );
+
+    private static MinerTier defaultTier = DEFAULT_TIERS.get(0);
 
     private MinerTierConfig() {
     }
@@ -49,7 +62,7 @@ public final class MinerTierConfig {
             OresAndStuffMod.LOGGER.error("Failed to scan miner config folder {}", minersFolder, e);
         }
         if (TIERS.isEmpty()) {
-            TIERS.add(defaultMk1());
+            TIERS.addAll(DEFAULT_TIERS);
         }
         Map<String, MinerTier> byId = new LinkedHashMap<>();
         for (MinerTier tier : TIERS) {
@@ -96,19 +109,21 @@ public final class MinerTierConfig {
 
     private static void generateDefaults() {
         Path minersFolder = ConfigAssets.createFolder(FOLDER);
-        if (Files.isDirectory(minersFolder.resolve("mk1"))) {
-            return;
-        }
-        try {
-            Path tierDir = minersFolder.resolve("mk1");
-            Files.createDirectories(tierDir.resolve("models"));
-            Files.createDirectories(tierDir.resolve("textures"));
-            Files.writeString(tierDir.resolve("mk1.json"), defaultMk1Json(), StandardCharsets.UTF_8);
-            Files.writeString(tierDir.resolve("models").resolve("miner.json"),
-                    "{\"parent\":\"oresandstuff:block/miner_mk1\"}", StandardCharsets.UTF_8);
-            OresAndStuffMod.LOGGER.info("Generated default miner tier folder {}", tierDir);
-        } catch (Exception e) {
-            OresAndStuffMod.LOGGER.error("Failed to generate default miner tier folder", e);
+        for (MinerTier tier : DEFAULT_TIERS) {
+            Path tierDir = minersFolder.resolve(tier.id());
+            if (Files.isDirectory(tierDir)) {
+                continue;
+            }
+            try {
+                Files.createDirectories(tierDir.resolve("models"));
+                Files.createDirectories(tierDir.resolve("textures"));
+                Files.writeString(tierDir.resolve(tier.id() + ".json"), tierJson(tier), StandardCharsets.UTF_8);
+                Files.writeString(tierDir.resolve("models").resolve("miner.json"),
+                        "{\"parent\":\"oresandstuff:block/miner_mk1\"}", StandardCharsets.UTF_8);
+                OresAndStuffMod.LOGGER.info("Generated default miner tier folder {}", tierDir);
+            } catch (Exception e) {
+                OresAndStuffMod.LOGGER.error("Failed to generate default miner tier folder {}", tierDir, e);
+            }
         }
     }
 
@@ -152,20 +167,28 @@ public final class MinerTierConfig {
     }
 
     private static String defaultMk1Json() {
-        JsonObject root = new JsonObject();
-        root.addProperty("id", "mk1");
-        root.addProperty("display_name", "Miner Mk1");
-        root.addProperty("fe_per_tick", 40);
-        root.addProperty("buffer_fe", 40000);
-        root.addProperty("max_receive_fe", 512);
-        root.addProperty("rate_multiplier", 1.0);
-        root.addProperty("model", "miner");
-        root.addProperty("texture", "");
-        return ConfigAssets.pretty(root);
+        return tierJson(DEFAULT_TIERS.get(0));
     }
 
     private static MinerTier defaultMk1() {
-        return new MinerTier("mk1", "Miner Mk1", 40, 40000, 512, 1.0, "miner", "");
+        return DEFAULT_TIERS.get(0);
+    }
+
+    private static String tierJson(MinerTier tier) {
+        JsonObject root = new JsonObject();
+        root.addProperty("id", tier.id());
+        root.addProperty("display_name", tier.displayName());
+        root.addProperty("fe_per_tick", tier.fePerTick());
+        root.addProperty("buffer_fe", tier.bufferFe());
+        root.addProperty("max_receive_fe", tier.maxReceiveFe());
+        root.addProperty("rate_multiplier", tier.rateMultiplier());
+        root.addProperty("model", tier.model());
+        root.addProperty("texture", tier.texture());
+        return ConfigAssets.pretty(root);
+    }
+
+    public static List<MinerTier> defaultTiers() {
+        return DEFAULT_TIERS;
     }
 
     private static String titleCase(String raw) {
