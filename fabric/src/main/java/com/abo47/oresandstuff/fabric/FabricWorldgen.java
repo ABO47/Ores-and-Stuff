@@ -1,12 +1,5 @@
 package com.abo47.oresandstuff.fabric;
 
-import com.abo47.oresandstuff.OresAndStuffConfig;
-import com.abo47.oresandstuff.OresAndStuffMod;
-import com.abo47.oresandstuff.content.ModFeatures;
-
-import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
-import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
-import net.fabricmc.fabric.api.biome.v1.ModificationPhase;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -15,28 +8,40 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-import java.util.List;
+import com.abo47.oresandstuff.OresAndStuffConfig;
+import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.content.ModFeatures;
+import com.abo47.oresandstuff.world.OreNodeFeature;
+
+import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.biome.v1.ModificationPhase;
 
 public final class FabricWorldgen {
     public static final ResourceKey<PlacedFeature> ORE_NODE_PLACED = ResourceKey.create(Registries.PLACED_FEATURE, id("ore_node"));
-    private static final List<ResourceKey<PlacedFeature>> VANILLA_ORES = List.of(
-            placed("ore_coal"), placed("ore_iron"), placed("ore_gold"), placed("ore_redstone"),
-            placed("ore_diamond"), placed("ore_lapis"), placed("ore_copper"), placed("ore_emerald"),
-            placed("ore_nether_gold"), placed("ore_nether_quartz"), placed("ore_ancient_debris"));
 
     private FabricWorldgen() {
     }
 
     public static void registerFeature() {
-        ModFeatures.ORE_NODE = Registry.register(BuiltInRegistries.FEATURE, id("ore_node"), new com.abo47.oresandstuff.world.OreNodeFeature());
+        ModFeatures.ORE_NODE = Registry.register(BuiltInRegistries.FEATURE, id("ore_node"), new OreNodeFeature());
     }
 
     public static void register() {
         BiomeModifications.create(id("features")).add(ModificationPhase.ADDITIONS, BiomeSelectors.all(), (selection, modification) -> modification.getGenerationSettings().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, ORE_NODE_PLACED));
-        if (OresAndStuffConfig.worldgen().removeVanillaOres) {
-            for (ResourceKey<PlacedFeature> key : VANILLA_ORES) {
-                BiomeModifications.create(id("remove_" + key.location().getPath())).add(ModificationPhase.REMOVALS, BiomeSelectors.all(), (selection, modification) -> modification.getGenerationSettings().removeFeature(GenerationStep.Decoration.UNDERGROUND_ORES, key));
-            }
+        for (String path : ModFeatures.VANILLA_ORE_PLACED_PATHS) {
+            ResourceKey<PlacedFeature> key = placed(path);
+            BiomeModifications.create(id("remove_" + path)).add(ModificationPhase.REMOVALS, BiomeSelectors.all(), (selection, modification) -> {
+                if (OresAndStuffConfig.worldgen().vanillaOresEnabled) {
+                    return;
+                }
+                for (GenerationStep.Decoration step : GenerationStep.Decoration.values()) {
+                    try {
+                        modification.getGenerationSettings().removeFeature(step, key);
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                }
+            });
         }
     }
 

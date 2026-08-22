@@ -1,31 +1,38 @@
 package com.abo47.oresandstuff.miner;
 
+import net.minecraft.network.chat.Component;
+
 public enum MinerStatus {
-    NO_NODE(0, "No node", "§cNO NODE"),
-    NO_POWER(1, "No power", "§cNO POWER"),
-    OUTPUT_FULL(2, "Output full", "§6FULL"),
-    RUNNING(3, "Running", "§bRUN"),
-    STOPPED(4, "Stopped", "§7STOP");
+    NO_NODE(0, "miner.status.no_node", "miner.status.no_node.styled"),
+    NO_POWER(1, "miner.status.no_power", "miner.status.no_power.styled"),
+    OUTPUT_FULL(2, "miner.status.output_full", "miner.status.output_full.styled"),
+    RUNNING(3, "miner.status.running", "miner.status.running.styled"),
+    STOPPED(4, "miner.status.stopped", "miner.status.stopped.styled"),
+    MAX_MINERS(5, "miner.status.max_miners", "miner.status.max_miners.styled");
 
     private final int code;
-    private final String plain;
-    private final String styled;
+    private final String plainKey;
+    private final String styledKey;
 
-    MinerStatus(int code, String plain, String styled) {
+    MinerStatus(int code, String plainKey, String styledKey) {
         this.code = code;
-        this.plain = plain;
-        this.styled = styled;
+        this.plainKey = plainKey;
+        this.styledKey = styledKey;
     }
 
     public int code() {
         return code;
     }
 
+    public String plainKey() {
+        return plainKey;
+    }
+
     public String plain() {
-        return plain;
+        return Component.translatable(plainKey).getString();
     }
 
     public String styled() {
-        return styled;
+        return Component.translatable(styledKey).getString();
     }
 }

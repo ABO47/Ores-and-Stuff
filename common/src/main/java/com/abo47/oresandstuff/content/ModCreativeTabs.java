@@ -1,10 +1,6 @@
 package com.abo47.oresandstuff.content;
 
-import com.abo47.oresandstuff.OresAndStuffMod;
-
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 
@@ -14,11 +10,12 @@ public final class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.SCANNER))
             .displayItems((parameters, output) -> {
                 output.accept(ModItems.ORE_NODE);
-                output.accept(ModItems.MINER_MK1);
+                for (net.minecraft.world.item.Item item : ModContent.minerItems()) {
+                    output.accept(item);
+                }
                 output.accept(ModItems.INFINITE_BATTERY);
                 output.accept(ModItems.SCANNER);
-                output.accept(ModItems.BIO_SCANNER);
-                output.accept(ModItems.NODE_EXTRACTOR_PICKAXE);
+                // BIO_SCANNER is now merged into SCANNER (mode toggle via keybind), keep for save compat but hide from tab
             })
             .build();
 

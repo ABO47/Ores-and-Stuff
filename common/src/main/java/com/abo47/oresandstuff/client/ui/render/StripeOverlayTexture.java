@@ -1,17 +1,24 @@
 package com.abo47.oresandstuff.client.ui.render;
 
-import com.lowdragmc.lowdraglib.gui.texture.TransformTexture;
-import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
+import java.util.function.Supplier;
+
 import net.minecraft.client.gui.GuiGraphics;
 
+import com.lowdragmc.lowdraglib.gui.texture.TransformTexture;
+import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
+
 public class StripeOverlayTexture extends TransformTexture {
-    private final int color;
+    private final Supplier<Integer> colorSupplier;
     private final int stripeWidth;
     private final int stripeGap;
     private final boolean vertical;
 
     public StripeOverlayTexture(int color, int stripeWidth, int stripeGap, boolean vertical) {
-        this.color = color;
+        this(() -> color, stripeWidth, stripeGap, vertical);
+    }
+
+    public StripeOverlayTexture(Supplier<Integer> colorSupplier, int stripeWidth, int stripeGap, boolean vertical) {
+        this.colorSupplier = colorSupplier;
         this.stripeWidth = Math.max(1, stripeWidth);
         this.stripeGap = Math.max(1, stripeGap);
         this.vertical = vertical;
@@ -31,6 +38,7 @@ public class StripeOverlayTexture extends TransformTexture {
         }
 
         int step = stripeWidth + stripeGap;
+        int color = colorSupplier.get();
         if (vertical) {
             int startX = innerLeft + (step - Math.floorMod(innerLeft, step)) % step;
             for (int sx = startX; sx < innerRight; sx += step) {

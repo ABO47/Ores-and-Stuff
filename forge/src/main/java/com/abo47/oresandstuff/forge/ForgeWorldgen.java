@@ -1,18 +1,23 @@
 package com.abo47.oresandstuff.forge;
 
+import com.mojang.serialization.Codec;
+
+import net.minecraft.core.Holder;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+
 import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.content.ModFeatures;
 import com.abo47.oresandstuff.world.OreNodeFeature;
 
-import com.mojang.serialization.Codec;
-import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.levelgen.GenerationStep;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraftforge.common.world.BiomeModifier;
 import net.minecraftforge.common.world.ModifiableBiomeInfo;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -43,18 +48,26 @@ public final class ForgeWorldgen {
 
         @Override
         public void modify(Holder<Biome> biome, Phase phase, ModifiableBiomeInfo.BiomeInfo.Builder builder) {
-            if (phase != Phase.REMOVE || !OresAndStuffConfig.worldgen().removeVanillaOres) {
+            if (phase != Phase.REMOVE || OresAndStuffConfig.worldgen().vanillaOresEnabled) {
                 return;
             }
-            builder.getGenerationSettings().getFeatures(GenerationStep.Decoration.UNDERGROUND_ORES).removeIf(feature -> feature.value().getFeatures().anyMatch(this::isVanillaOre));
+            for (GenerationStep.Decoration step : GenerationStep.Decoration.values()) {
+                builder.getGenerationSettings().getFeatures(step)
+                        .removeIf(feature -> isVanillaOrePlaced(feature) || feature.value().getFeatures().anyMatch(this::isVanillaOre));
+            }
+        }
+
+        private boolean isVanillaOrePlaced(Holder<PlacedFeature> feature) {
+            return feature.unwrapKey().map(key -> key.location().getNamespace().equals("minecraft")
+                    && ModFeatures.VANILLA_ORE_PLACED_PATHS.contains(key.location().getPath())).orElse(false);
         }
 
         private boolean isVanillaOre(ConfiguredFeature<?, ?> feature) {
-            return feature.feature() == Feature.ORE && feature.config() instanceof net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration ore && ore.targetStates.stream().anyMatch(target -> isVanillaOre(target.state.getBlock()));
+            return feature.feature() == Feature.ORE && feature.config() instanceof OreConfiguration ore && ore.targetStates.stream().anyMatch(target -> isVanillaOre(target.state.getBlock()));
         }
 
-        private boolean isVanillaOre(net.minecraft.world.level.block.Block block) {
-            return block == net.minecraft.world.level.block.Blocks.COAL_ORE || block == net.minecraft.world.level.block.Blocks.IRON_ORE || block == net.minecraft.world.level.block.Blocks.COPPER_ORE || block == net.minecraft.world.level.block.Blocks.GOLD_ORE || block == net.minecraft.world.level.block.Blocks.REDSTONE_ORE || block == net.minecraft.world.level.block.Blocks.LAPIS_ORE || block == net.minecraft.world.level.block.Blocks.DIAMOND_ORE || block == net.minecraft.world.level.block.Blocks.EMERALD_ORE || block == net.minecraft.world.level.block.Blocks.NETHER_GOLD_ORE || block == net.minecraft.world.level.block.Blocks.NETHER_QUARTZ_ORE || block == net.minecraft.world.level.block.Blocks.ANCIENT_DEBRIS;
+        private boolean isVanillaOre(Block block) {
+            return block == Blocks.COAL_ORE || block == Blocks.IRON_ORE || block == Blocks.COPPER_ORE || block == Blocks.GOLD_ORE || block == Blocks.REDSTONE_ORE || block == Blocks.LAPIS_ORE || block == Blocks.DIAMOND_ORE || block == Blocks.EMERALD_ORE || block == Blocks.NETHER_GOLD_ORE || block == Blocks.NETHER_QUARTZ_ORE || block == Blocks.ANCIENT_DEBRIS;
         }
 
         @Override

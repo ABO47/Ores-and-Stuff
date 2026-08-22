@@ -1,6 +1,7 @@
 package com.abo47.oresandstuff.forge;
 
 import com.abo47.oresandstuff.energy.EnergyStorage;
+
 import net.minecraftforge.energy.IEnergyStorage;
 
 public class ForgeEnergyCap implements IEnergyStorage {

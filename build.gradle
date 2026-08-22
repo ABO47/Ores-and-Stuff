@@ -124,8 +124,6 @@ def sanitizedUiIconSvgDir = layout.buildDirectory.dir('generated/sanitized-ui-ic
 def uiTextureSvgDir = layout.projectDirectory.dir('art/source-textures')
 def uiTextureDir = commonResources.dir('assets/oresandstuff/textures/gui')
 def sanitizedUiTextureSvgDir = layout.buildDirectory.dir('generated/sanitized-ui-texture-svgs')
-def modLogoSvgFile = layout.projectDirectory.file('art/source-logo/oresandstuff.svg')
-def modLogoPngDir = commonResources
 
 tasks.register('generateUiIconPngs') {
     group = 'assets'
@@ -207,36 +205,13 @@ tasks.register('generateUiTexturePngs') {
     }
 }
 
-tasks.register('generateModLogoPng') {
-    group = 'assets'
-    description = 'Rasterizes the mod logo SVG into the shared logo PNG.'
-    dependsOn(tasks.named('assetToolsClasses'))
-
-    inputs.file(modLogoSvgFile).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.property('modLogoSize', providers.gradleProperty('modLogoSize').orElse('512'))
-    outputs.file(modLogoPngDir.file('oresandstuff.png'))
-
-    doLast {
-        def logoSize = providers.gradleProperty('modLogoSize').orElse('512').get()
-        def outputDir = modLogoPngDir.asFile
-        outputDir.mkdirs()
-        javaexec {
-            classpath = sourceSets.assetTools.runtimeClasspath
-            mainClass = 'com.abo47.oresandstuff.tools.SvgIconRasterizer'
-            args logoSize, outputDir.absolutePath, modLogoSvgFile.asFile.absolutePath
-        }
-    }
-}
-
 project(':oresandstuff-common') {
     tasks.named('processResources').configure {
         dependsOn rootProject.tasks.named('generateUiIconPngs')
         dependsOn rootProject.tasks.named('generateUiTexturePngs')
-        dependsOn rootProject.tasks.named('generateModLogoPng')
     }
     tasks.named('sourcesJar').configure {
         dependsOn rootProject.tasks.named('generateUiIconPngs')
         dependsOn rootProject.tasks.named('generateUiTexturePngs')
-        dependsOn rootProject.tasks.named('generateModLogoPng')
     }
 }

@@ -1,226 +1,337 @@
 package com.abo47.oresandstuff.data;
 
-import com.abo47.oresandstuff.OresAndStuffConfig;
-import com.abo47.oresandstuff.OresAndStuffMod;
-import com.abo47.oresandstuff.node.OreNodeType;
-import com.abo47.oresandstuff.node.Purity;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.util.RandomSource;
-import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.level.Level;
-
-import org.slf4j.Logger;
-
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 
-public class OreNodeDataManager extends SimpleJsonResourceReloadListener {
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
+
+import com.abo47.oresandstuff.OresAndStuffConfig;
+import com.abo47.oresandstuff.OresAndStuffMod;
+import com.abo47.oresandstuff.data.config.ConfigAssets;
+import com.abo47.oresandstuff.node.NodeQuality;
+import com.abo47.oresandstuff.node.OreNodeType;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+public final class OreNodeDataManager {
     public static final OreNodeDataManager INSTANCE = new OreNodeDataManager();
 
-    private static final Logger LOGGER = OresAndStuffMod.LOGGER;
-    private static final String TYPES_DIR = "ore_node_types";
-    private static final String DISTRIBUTION_DIR = "ore_node_distribution";
-    private static final String GENERATION_DIR = "ore_node_generation";
-
+    private static final String FOLDER = "orenodes";
     private final Map<ResourceLocation, OreNodeType> nodeTypes = new HashMap<>();
-    private final Map<ResourceLocation, BiomeDistributionRule> distributions = new HashMap<>();
-    private NodeGenerationConfig generationConfig = NodeGenerationConfig.defaults();
+    private boolean loaded;
 
     private OreNodeDataManager() {
-        super(new com.google.gson.GsonBuilder().create(), "");
     }
 
-    @Override
-    protected void apply(Map<ResourceLocation, JsonElement> objects, ResourceManager resourceManager, ProfilerFiller profiler) {
-        nodeTypes.clear();
-        distributions.clear();
-        generationConfig = NodeGenerationConfig.defaults();
+    public synchronized void ensureLoaded() {
+        if (loaded) {
+            return;
+        }
+        loaded = true;
+        ConfigAssets.generateMissingDefaults(FOLDER, defaultFiles());
 
-        for (Map.Entry<ResourceLocation, JsonElement> entry : objects.entrySet()) {
-            ResourceLocation id = entry.getKey();
-            String path = id.getPath();
-            JsonObject root = entry.getValue().getAsJsonObject();
-
+        Map<ResourceLocation, OreNodeType> parsed = new HashMap<>();
+        for (Path file : ConfigAssets.listJson(FOLDER)) {
             try {
-                if (path.startsWith(TYPES_DIR + "/")) {
-                    ResourceLocation typeId = new ResourceLocation(id.getNamespace(), path.substring((TYPES_DIR + "/").length()));
-                    nodeTypes.put(typeId, parseNodeType(typeId, root));
-                } else if (path.startsWith(DISTRIBUTION_DIR + "/")) {
-                    ResourceLocation ruleId = new ResourceLocation(id.getNamespace(), path.substring((DISTRIBUTION_DIR + "/").length()));
-                    distributions.put(ruleId, parseDistribution(root));
-                } else if (path.startsWith(GENERATION_DIR + "/")) {
-                    generationConfig = parseGeneration(root);
+                JsonObject root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
+                OreNodeType type = parseNodeType(root);
+                if (type != null) {
+                    parsed.put(type.id(), type);
                 }
-            } catch (Exception ex) {
-                LOGGER.error("Failed to parse node data file {}", id, ex);
+            } catch (Exception e) {
+                OresAndStuffMod.LOGGER.error("Failed to parse ore node config file {}", file, e);
+            }
+        }
+        if (parsed.isEmpty()) {
+            parsed.putAll(fallbackDefaults());
+        }
+        nodeTypes.clear();
+        nodeTypes.putAll(parsed);
+        OresAndStuffMod.LOGGER.info("Loaded {} ore node type(s)", nodeTypes.size());
+    }
+
+    private static OreNodeType parseNodeType(JsonObject root) {
+        ResourceLocation id = root.has("id") ? ResourceLocation.tryParse(root.get("id").getAsString()) : null;
+        if (id == null) {
+            return null;
+        }
+        String outputRaw = root.has("output_item") ? root.get("output_item").getAsString() : "minecraft:" + id.getPath() + "_ore";
+        ResourceLocation output = ResourceLocation.tryParse(outputRaw);
+        if (output == null) {
+            return null;
+        }
+        List<ResourceLocation> dimensions = new ArrayList<>();
+        if (root.has("dimensions") && root.get("dimensions").isJsonArray()) {
+            for (com.google.gson.JsonElement element : root.getAsJsonArray("dimensions")) {
+                ResourceLocation dim = ResourceLocation.tryParse(element.getAsString());
+                if (dim != null && !dimensions.contains(dim)) {
+                    dimensions.add(dim);
+                }
+            }
+        }
+        if (dimensions.isEmpty()) {
+            dimensions.add(Level.OVERWORLD.location());
+        }
+
+        int minNodes = intValue(root, "min_nodes_per_chunk", 1);
+        int maxNodes = intValue(root, "max_nodes_per_chunk", 2);
+        double qualityMin = doubleValue(root, "quality_min", 75.0);
+        double qualityMax = doubleValue(root, "quality_max", 125.0);
+        if (qualityMax < qualityMin) {
+            double tmp = qualityMin;
+            qualityMin = qualityMax;
+            qualityMax = tmp;
+        }
+
+        Map<String, Integer> biomes = new LinkedHashMap<>();
+        if (root.has("biomes") && root.get("biomes").isJsonObject()) {
+            for (Map.Entry<String, com.google.gson.JsonElement> e : root.getAsJsonObject("biomes").entrySet()) {
+                biomes.put(e.getKey(), e.getValue().getAsInt());
+            }
+        }
+        if (biomes.isEmpty()) {
+            biomes.put("minecraft:plains", 30);
+        }
+
+        Map<String, OreNodeType.BiomeOverride> overrides = new LinkedHashMap<>();
+        if (root.has("biome_overrides") && root.get("biome_overrides").isJsonObject()) {
+            for (Map.Entry<String, com.google.gson.JsonElement> e : root.getAsJsonObject("biome_overrides").entrySet()) {
+                if (!e.getValue().isJsonObject()) {
+                    continue;
+                }
+                JsonObject o = e.getValue().getAsJsonObject();
+                overrides.put(e.getKey(), new OreNodeType.BiomeOverride(
+                        optionalInt(o, "min_nodes_per_chunk"),
+                        optionalInt(o, "max_nodes_per_chunk"),
+                        optionalInt(o, "cluster_radius"),
+                        optionalInt(o, "scatter_count"),
+                        optionalDouble(o, "quality_min"),
+                        optionalDouble(o, "quality_max"),
+                        optionalInt(o, "min_y"),
+                        optionalInt(o, "max_y"),
+                        optionalBoolean(o, "surface_spawn"),
+                        optionalInt(o, "placement_attempts"),
+                        optionalInt(o, "min_spacing_blocks")
+                ));
             }
         }
 
-        if (nodeTypes.isEmpty()) {
-            loadFallbackDefaults();
+        List<OreNodeType.QualityTier> tiers = parseQualityTiers(root, id, dimensions, qualityMin, qualityMax);
+        if (tiers == null) {
+            return null;
         }
 
-        LOGGER.info("Loaded {} ore node types, {} biome rules", nodeTypes.size(), distributions.size());
-    }
+        double baseRate = doubleValue(root, "base_rate_per_second", 0.2D);
+        int color = Integer.decode(colorValue(root));
+        float hardness = (float) doubleValue(root, "hardness", 100.0D);
+        boolean enabled = !root.has("enabled") || root.get("enabled").getAsBoolean();
 
-    private OreNodeType parseNodeType(ResourceLocation id, JsonObject root) {
-        ResourceLocation output = new ResourceLocation(GsonHelper.getAsString(root, "output_item"));
-        double baseRate = GsonHelper.getAsDouble(root, "base_rate_per_second", 0.2D);
-        int color = Integer.decode(GsonHelper.getAsString(root, "scanner_color", "#FFFFFF").replace("#", "0x"));
-        float hardness = GsonHelper.getAsFloat(root, "hardness", 100.0F);
-        boolean enabled = GsonHelper.getAsBoolean(root, "enabled", true);
-        ResourceLocation visual = new ResourceLocation(GsonHelper.getAsString(root, "visual_block", "minecraft:" + id.getPath() + "_ore"));
-        return new OreNodeType(id, output, baseRate, color, hardness, enabled, visual);
-    }
+        int maxMiners = Math.max(1, intValue(root, "max_miners_per_node", 1));
+        int spacing = intValue(root, "min_spacing_blocks", 220);
+        int attempts = intValue(root, "placement_attempts", 1);
+        int scanRadius = intValue(root, "scanner_radius", 192);
+        int clusterRadius = Math.max(1, intValue(root, "cluster_radius", 2));
+        int scatter = intValue(root, "scatter_count", 8);
 
-    private BiomeDistributionRule parseDistribution(JsonObject root) {
-        String biomePattern = GsonHelper.getAsString(root, "biome_pattern", "minecraft:plains");
-        String dimension = GsonHelper.getAsString(root, "dimension", "minecraft:overworld");
-        int minNodes = GsonHelper.getAsInt(root, "min_nodes_per_chunk", 0);
-        int maxNodes = GsonHelper.getAsInt(root, "max_nodes_per_chunk", 1);
+        boolean surfaceSpawn = !root.has("surface_spawn") || root.get("surface_spawn").getAsBoolean();
+        int minY = intValue(root, "min_y", 0);
+        int maxY = intValue(root, "max_y", 63);
 
-        Map<ResourceLocation, Integer> weights = new HashMap<>();
-        JsonObject weightsObj = GsonHelper.getAsJsonObject(root, "ore_weights");
-        for (Map.Entry<String, JsonElement> e : weightsObj.entrySet()) {
-            weights.put(new ResourceLocation(e.getKey()), e.getValue().getAsInt());
+        List<OreNodeType.OreNodeDrop> drops = new ArrayList<>();
+        if (root.has("drops") && root.get("drops").isJsonObject()) {
+            for (Map.Entry<String, com.google.gson.JsonElement> e : root.getAsJsonObject("drops").entrySet()) {
+                ResourceLocation item = ResourceLocation.tryParse(e.getKey());
+                if (item != null) {
+                    drops.add(new OreNodeType.OreNodeDrop(item, Math.max(0, Math.min(100, e.getValue().getAsInt()))));
+                }
+            }
+        }
+        if (drops.isEmpty()) {
+            drops = defaultDrops(output, tiers);
         }
 
-        JsonObject purityObj = GsonHelper.getAsJsonObject(root, "purity_weights");
-        int impure = GsonHelper.getAsInt(purityObj, "impure", 40);
-        int normal = GsonHelper.getAsInt(purityObj, "normal", 45);
-        int pure = GsonHelper.getAsInt(purityObj, "pure", 15);
-
-        return new BiomeDistributionRule(biomePattern, dimension, minNodes, maxNodes, weights, impure, normal, pure);
+        return new OreNodeType(id, output, baseRate, color, hardness, enabled, tiers, dimensions,
+                biomes, minNodes, maxNodes, qualityMin, qualityMax, maxMiners, spacing, attempts, scanRadius, clusterRadius, scatter,
+                surfaceSpawn, minY, maxY, drops, overrides);
     }
 
-    private NodeGenerationConfig parseGeneration(JsonObject root) {
-        int minSpacing = GsonHelper.getAsInt(root, "min_spacing_blocks", NodeGenerationConfig.defaults().minSpacingBlocks());
-        int attempts = GsonHelper.getAsInt(root, "placement_attempts", NodeGenerationConfig.defaults().placementAttempts());
-        int scanRadius = GsonHelper.getAsInt(root, "scanner_radius", NodeGenerationConfig.defaults().scannerRadius());
-        return new NodeGenerationConfig(minSpacing, attempts, scanRadius);
+    /**
+     * Parses the {@code quality_visuals} array: quality ranges mapped to the
+     * blocks they render as, e.g.
+     * [{"min":1,"max":30,"node_block":"minecraft:stone","visual_block":"minecraft:coal_ore"}, ...].
+     * Every tier range must lie inside the node's quality_min/quality_max -
+     * invalid ranges reject the whole json (null). Falls back to the legacy
+     * single-tier fields (node_block/visual_block) when the array is missing.
+     */
+    private static List<OreNodeType.QualityTier> parseQualityTiers(JsonObject root, ResourceLocation id, List<ResourceLocation> dimensions,
+            double qualityMin, double qualityMax) {
+        List<OreNodeType.QualityTier> tiers = new ArrayList<>();
+        if (root.has("quality_visuals") && root.get("quality_visuals").isJsonArray()) {
+            for (com.google.gson.JsonElement element : root.getAsJsonArray("quality_visuals")) {
+                if (!element.isJsonObject()) {
+                    continue;
+                }
+                JsonObject o = element.getAsJsonObject();
+                double min = doubleValue(o, "min", NodeQuality.MIN);
+                double max = doubleValue(o, "max", NodeQuality.MAX);
+                if (min >= max || min < qualityMin || max > qualityMax) {
+                    OresAndStuffMod.LOGGER.warn("Ore node {} rejected: quality_visuals tier [{},{}] outside quality range [{},{}]",
+                            id, min, max, qualityMin, qualityMax);
+                    return null;
+                }
+                String nodeBlockRaw = o.has("node_block") ? o.get("node_block").getAsString() : null;
+                String visualRaw = o.has("visual_block") ? o.get("visual_block").getAsString() : null;
+                ResourceLocation nodeModel = nodeBlockRaw != null ? blockModelPath(nodeBlockRaw) : null;
+                ResourceLocation visual = visualRaw != null ? ResourceLocation.tryParse(visualRaw) : null;
+                if (nodeModel == null) {
+                    nodeModel = new ResourceLocation("minecraft", "block/stone");
+                }
+                if (visual == null) {
+                    visual = new ResourceLocation("minecraft", id.getPath() + "_ore");
+                }
+                List<ResourceLocation> tierDimensions = new ArrayList<>();
+                if (o.has("dimensions") && o.get("dimensions").isJsonArray()) {
+                    for (com.google.gson.JsonElement dimElement : o.getAsJsonArray("dimensions")) {
+                        ResourceLocation dim = ResourceLocation.tryParse(dimElement.getAsString());
+                        if (dim != null && !tierDimensions.contains(dim)) {
+                            tierDimensions.add(dim);
+                        }
+                    }
+                }
+                tiers.add(new OreNodeType.QualityTier(min, max, nodeModel, visual, tierDimensions));
+            }
+        }
+        if (tiers.isEmpty()) {
+            ResourceLocation nodeModel = blockModelPath(root.has("node_block")
+                    ? root.get("node_block").getAsString() : defaultNodeBlock(dimensions, false));
+            ResourceLocation visual = ResourceLocation.tryParse(root.has("visual_block")
+                    ? root.get("visual_block").getAsString() : "minecraft:" + id.getPath() + "_ore");
+            tiers.add(new OreNodeType.QualityTier(qualityMin, qualityMax,
+                    nodeModel != null ? nodeModel : new ResourceLocation("minecraft", "block/stone"),
+                    visual != null ? visual : new ResourceLocation("minecraft", id.getPath() + "_ore"),
+                    List.of()));
+        }
+        return tiers;
     }
 
-    private void loadFallbackDefaults() {
-        registerDefault("iron", "minecraft:raw_iron", 0.6, "#D8D8D8", "minecraft:iron_ore");
-        registerDefault("copper", "minecraft:raw_copper", 0.7, "#C97142", "minecraft:copper_ore");
-        registerDefault("coal", "minecraft:coal", 0.9, "#2E2E2E", "minecraft:coal_ore");
-        registerDefault("redstone", "minecraft:redstone", 0.4, "#D12222", "minecraft:redstone_ore");
-
-        distributions.put(new ResourceLocation(OresAndStuffMod.MOD_ID, "default_plains"),
-                new BiomeDistributionRule("minecraft:plains", Level.OVERWORLD.location().toString(), 1, 2,
-                        Map.of(id("iron"), 30, id("copper"), 30, id("coal"), 25, id("redstone"), 15), 25, 50, 25));
-        distributions.put(new ResourceLocation(OresAndStuffMod.MOD_ID, "default_mountains"),
-                new BiomeDistributionRule("mountain", Level.OVERWORLD.location().toString(), 1, 3,
-                        Map.of(id("iron"), 45, id("copper"), 20, id("coal"), 20, id("redstone"), 15), 15, 40, 45));
-        distributions.put(new ResourceLocation(OresAndStuffMod.MOD_ID, "default_swamp"),
-                new BiomeDistributionRule("swamp", Level.OVERWORLD.location().toString(), 1, 2,
-                        Map.of(id("coal"), 55, id("copper"), 20, id("iron"), 15, id("redstone"), 10), 35, 45, 20));
-        distributions.put(new ResourceLocation(OresAndStuffMod.MOD_ID, "default_desert"),
-                new BiomeDistributionRule("desert", Level.OVERWORLD.location().toString(), 0, 1,
-                        Map.of(id("copper"), 35, id("iron"), 30, id("coal"), 25, id("redstone"), 10), 45, 40, 15));
+    /**
+     * Default drops when the json has no drops object: the output item plus
+     * the node block of every quality tier (stone, deepslate, ...).
+     */
+    private static List<OreNodeType.OreNodeDrop> defaultDrops(ResourceLocation output, List<OreNodeType.QualityTier> tiers) {
+        List<OreNodeType.OreNodeDrop> drops = new ArrayList<>();
+        drops.add(new OreNodeType.OreNodeDrop(output, 100));
+        for (OreNodeType.QualityTier tier : tiers) {
+            ResourceLocation item = itemIdFromModel(tier.nodeBlockModel());
+            if (item != null && !item.equals(output)) {
+                drops.add(new OreNodeType.OreNodeDrop(item, 100));
+            }
+        }
+        return drops;
     }
 
-    private void registerDefault(String name, String output, double baseRate, String color, String visual) {
-        ResourceLocation id = id(name);
-        int parsedColor = Integer.decode(color.replace("#", "0x"));
-        nodeTypes.put(id, new OreNodeType(id, new ResourceLocation(output), baseRate, parsedColor, 100f, true, new ResourceLocation(visual)));
+    private static ResourceLocation itemIdFromModel(ResourceLocation model) {
+        String path = model.getPath();
+        if (path.startsWith("block/")) {
+            return new ResourceLocation(model.getNamespace(), path.substring("block/".length()));
+        }
+        return null;
     }
 
-    private ResourceLocation id(String path) {
-        return new ResourceLocation(OresAndStuffMod.MOD_ID, path);
+    public List<OreNodeType> typesForDimension(ResourceLocation dimension) {
+        ensureLoaded();
+        return nodeTypes.values().stream()
+                .filter(t -> t.matchesDimension(dimension))
+                .filter(t -> t.enabledByDefault() && !disabledNodeIds().contains(t.id()))
+                .toList();
     }
 
     public List<OreNodeType> nodeTypes() {
+        ensureLoaded();
         return new ArrayList<>(nodeTypes.values());
     }
 
     public Optional<OreNodeType> getNodeType(ResourceLocation id) {
+        ensureLoaded();
         return Optional.ofNullable(nodeTypes.get(id));
     }
 
     public OreNodeType getAnyNodeType() {
-        return enabledNodeTypes().stream().findFirst()
-                .orElseThrow(() -> new JsonParseException("No enabled node types loaded"));
-    }
-
-    public List<BiomeDistributionRule> getDistributionsForDimension(ResourceLocation dimension) {
-        return distributions.values().stream()
-                .filter(r -> r.dimension().equals(dimension.toString()))
+        ensureLoaded();
+        List<OreNodeType> enabled = nodeTypes.values().stream()
+                .filter(t -> t.enabledByDefault() && !disabledNodeIds().contains(t.id()))
                 .toList();
-    }
-
-    public NodeGenerationConfig generationConfig() {
-        return generationConfig;
-    }
-
-    public Purity rollPurity(RandomSource random, BiomeDistributionRule rule) {
-        int total = rule.impureWeight() + rule.normalWeight() + rule.pureWeight();
-        if (total <= 0) {
-            return Purity.NORMAL;
+        if (!enabled.isEmpty()) {
+            return enabled.get(0);
         }
-        int v = random.nextInt(total);
-        if (v < rule.impureWeight()) {
-            return Purity.IMPURE;
-        }
-        if (v < rule.impureWeight() + rule.normalWeight()) {
-            return Purity.NORMAL;
-        }
-        return Purity.PURE;
-    }
-
-    public OreNodeType rollNodeType(RandomSource random, BiomeDistributionRule rule) {
-        Set<ResourceLocation> disabled = disabledNodeIds();
-        Map<ResourceLocation, Integer> weights = new LinkedHashMap<>();
-        for (Map.Entry<ResourceLocation, Integer> e : rule.oreWeights().entrySet()) {
-            OreNodeType type = nodeTypes.get(e.getKey());
-            if (type == null || !type.enabledByDefault() || disabled.contains(e.getKey())) {
-                continue;
-            }
-            weights.put(e.getKey(), e.getValue());
-        }
-
-        int total = weights.values().stream().mapToInt(Integer::intValue).sum();
-        if (total <= 0) {
-            return getAnyNodeType();
-        }
-
-        int v = random.nextInt(total);
-        int cursor = 0;
-        for (Map.Entry<ResourceLocation, Integer> entry : weights.entrySet()) {
-            cursor += entry.getValue();
-            if (v < cursor) {
-                return getNodeType(entry.getKey()).orElse(getAnyNodeType());
-            }
-        }
-        return getAnyNodeType();
+        return fallbackDefaults().values().stream().findFirst().orElseThrow();
     }
 
     public List<ResourceLocation> orderedTypeIds() {
-        ArrayList<ResourceLocation> ids = new ArrayList<>(enabledNodeTypes().stream().map(OreNodeType::id).toList());
-        ids.sort(Comparator.comparing(ResourceLocation::toString));
+        List<ResourceLocation> ids = new ArrayList<>();
+        for (OreNodeType type : nodeTypes()) {
+            if (type.enabledByDefault() && !disabledNodeIds().contains(type.id())) {
+                ids.add(type.id());
+            }
+        }
+        ids.sort((a, b) -> a.toString().compareTo(b.toString()));
         return ids;
     }
 
-    private List<OreNodeType> enabledNodeTypes() {
-        Set<ResourceLocation> disabled = disabledNodeIds();
-        return nodeTypes.values().stream()
-                .filter(t -> t.enabledByDefault() && !disabled.contains(t.id()))
-                .toList();
+    public OreNodeType rollNodeType(RandomSource random, String biomeName, List<OreNodeType> candidates) {
+        if (candidates.isEmpty()) {
+            return getAnyNodeType();
+        }
+        int total = 0;
+        Map<OreNodeType, Integer> weights = new LinkedHashMap<>();
+        for (OreNodeType type : candidates) {
+            int w = type.biomeWeight(biomeName);
+            if (w > 0) {
+                weights.put(type, w);
+                total += w;
+            }
+        }
+        if (total <= 0) {
+            return getAnyNodeType();
+        }
+        int v = random.nextInt(total);
+        int cursor = 0;
+        for (Map.Entry<OreNodeType, Integer> entry : weights.entrySet()) {
+            cursor += entry.getValue();
+            if (v < cursor) {
+                return entry.getKey();
+            }
+        }
+        return candidates.get(0);
+    }
+
+    /**
+     * Rolls a quality percentage for a node, uniformly distributed inside the
+     * type's effective quality range for the biome (e.g. 23%..35%). The value
+     * is the output multiplier: 34% quality = 0.34x yield.
+     */
+    public double rollQuality(RandomSource random, OreNodeType type, String biomeName) {
+        double min = NodeQuality.clamp(type.effectiveQualityMin(biomeName));
+        double max = NodeQuality.clamp(type.effectiveQualityMax(biomeName));
+        if (max < min) {
+            double tmp = min;
+            min = max;
+            max = tmp;
+        }
+        return Math.round((min + random.nextDouble() * (max - min)) * 10.0) / 10.0;
     }
 
     private Set<ResourceLocation> disabledNodeIds() {
@@ -232,5 +343,259 @@ public class OreNodeDataManager extends SimpleJsonResourceReloadListener {
             }
         }
         return out;
+    }
+
+    private static Map<String, String> defaultFiles() {
+        Map<String, String> files = new LinkedHashMap<>();
+        for (DefaultNode node : DEFAULT_NODES) {
+            files.put(node.fileName(), nodeJson(node));
+        }
+        return files;
+    }
+
+    /**
+     * Host rock the ore node block mimics when the config does not specify one:
+     * netherrack in the nether, end stone in the end, stone in the overworld.
+     */
+    private static String defaultNodeBlock(List<ResourceLocation> dimensions, boolean pure) {
+        if (dimensions.contains(Level.NETHER.location())) {
+            return pure ? "minecraft:basalt" : "minecraft:netherrack";
+        }
+        if (dimensions.contains(Level.END.location())) {
+            return pure ? "minecraft:end_stone_bricks" : "minecraft:end_stone";
+        }
+        return pure ? "minecraft:deepslate" : "minecraft:stone";
+    }
+
+    /**
+     * Maps a block id (e.g. {@code minecraft:netherrack}) to its block model
+     * path ({@code minecraft:block/netherrack}). The generated ore node model
+     * then parents that model, so any game block can be used as the node look.
+     */
+    private static ResourceLocation blockModelPath(String blockId) {
+        ResourceLocation id = ResourceLocation.tryParse(blockId);
+        if (id == null) {
+            return null;
+        }
+        return new ResourceLocation(id.getNamespace(), "block/" + id.getPath());
+    }
+
+    private static final List<DefaultNode> DEFAULT_NODES = List.of(
+            new DefaultNode("oresandstuff:coal", "minecraft:coal", 0.9, "#2E2E2E", "minecraft:coal_ore", "minecraft:deepslate_coal_ore",
+                    "minecraft:stone", "minecraft:deepslate",
+                    "minecraft:overworld",
+                    "swamp:55,forest:45,plains:40,jungle:30,savanna:20,snowy:25,windswept:20,meadow:25,desert:10,ice:25,grove:30,mushroom:25,beach:10,river:15", "swamp:60:160:0:40:2:true:1:200,mushroom:30:120:-50:10:1:false:2:160,desert:20:90:0:50",
+                    3, 4, 60, 160, 1, 120, 2, 192, 3, 8, true, 0, 63, 60.0, "coal.json"),
+            new DefaultNode("oresandstuff:iron", "minecraft:raw_iron", 0.6, "#D8D8D8", "minecraft:iron_ore", "minecraft:deepslate_iron_ore",
+                    "minecraft:stone", "minecraft:deepslate",
+                    "minecraft:overworld",
+                    "windswept:50,snowy_slopes:45,peak:40,meadow:30,plains:30,forest:25,desert:20,savanna:15,swamp:10,jungle:10,ice:35,grove:20,mushroom:15,beach:35,shore:30,river:20", "snowy_slopes:70:170:0:80:2:true:1:180,beach:20:90:-30:20:1:false:2:120",
+                    3, 4, 70, 150, 1, 130, 2, 192, 3, 8, true, 0, 63, 80.0, "iron.json"),
+            new DefaultNode("oresandstuff:copper", "minecraft:raw_copper", 0.7, "#C97142", "minecraft:copper_ore", "minecraft:deepslate_copper_ore",
+                    "minecraft:stone", "minecraft:deepslate",
+                    "minecraft:overworld",
+                    "desert:50,badlands:55,windswept:35,peak:30,savanna:20,plains:15,forest:15,swamp:5,grove:15,mushroom:15,beach:20,shore:25", "badlands:50:150:0:40:3:true:1:200,peak:40:160:-40:40:1:false:3:140",
+                    2, 3, 60, 140, 1, 140, 2, 192, 3, 8, true, 0, 63, 70.0, "copper.json"),
+            new DefaultNode("oresandstuff:gold", "minecraft:raw_gold", 0.5, "#F2C94C", "minecraft:gold_ore", "minecraft:deepslate_gold_ore",
+                    "minecraft:stone", "minecraft:deepslate",
+                    "minecraft:overworld",
+                    "windswept:45,desert:40,badlands:45,peak:35,snowy_slopes:30,savanna:15,plains:15,jungle:10,grove:10,mushroom:10,beach:15,shore:10", "windswept:80:160:0:70:1:true:1:200,jungle:20:90:-40:30:1:false:2:150",
+                    2, 3, 80, 160, 1, 150, 2, 192, 2, 8, true, 0, 63, 50.0, "gold.json"),
+            new DefaultNode("oresandstuff:redstone", "minecraft:redstone", 0.4, "#D12222", "minecraft:redstone_ore", "minecraft:deepslate_redstone_ore",
+                    "minecraft:stone", "minecraft:deepslate",
+                    "minecraft:overworld",
+                    "badlands:45,desert:20,peak:20,windswept:15,plains:10,ocean:15,cave:35,deep_dark:45,river:10", "cave:50:160:-60:-5:2:false:2:240,deep_dark:80:180:-60:-10:3:false:1:200",
+                    1, 2, 50, 140, 1, 160, 2, 192, 2, 6, false, -60, -10, 90.0, "redstone.json"),
+            new DefaultNode("oresandstuff:diamond", "minecraft:diamond", 0.3, "#4DE1E1", "minecraft:diamond_ore", "minecraft:diamond_ore",
+                    "minecraft:stone", "minecraft:end_stone",
+                    "minecraft:overworld,minecraft:the_end",
+                    "plains:30,forest:25,taiga:25,snowy:20,windswept:20,desert:10,swamp:5,river:25,ocean:20,cave:30,deep_dark:20,end_highlands:30,end_midlands:25,the_end:20,small_end_islands:15,end_barrens:15",
+                    "plains:20:80,forest:20:80,taiga:20:80,snowy:20:80,windswept:20:80,desert:20:80,swamp:20:80,river:20:80,ocean:20:80,cave:20:80,deep_dark:20:80,end_highlands:130:200:0:90,end_midlands:130:200:0:90,the_end:130:200:0:90,small_end_islands:130:200:0:90,end_barrens:130:200:0:90",
+                    1, 2, 20, 200, 1, 180, 2, 192, 2, 6, true, 0, 63, 200.0, "diamond.json"),
+            new DefaultNode("oresandstuff:emerald", "minecraft:emerald", 0.25, "#3ECF6E", "minecraft:emerald_ore", "minecraft:emerald_ore",
+                    "minecraft:stone", "minecraft:end_stone",
+                    "minecraft:overworld,minecraft:the_end",
+                    "peak:70,windswept:55,snowy_slopes:45,meadow:25,desert:10,jungle:10,cave:15,end_highlands:30,end_midlands:30,the_end:20,small_end_islands:15,end_barrens:15",
+                    "peak:20:80,windswept:20:80,snowy_slopes:20:80,meadow:20:80,desert:20:80,jungle:20:80,cave:20:80,end_highlands:130:200:0:90,end_midlands:130:200:0:90,the_end:130:200:0:90,small_end_islands:130:200:0:90,end_barrens:130:200:0:90",
+                    1, 2, 20, 200, 1, 180, 2, 192, 2, 6, true, 0, 63, 180.0, "emerald.json"),
+            new DefaultNode("oresandstuff:lapis", "minecraft:lapis_lazuli", 0.35, "#2E6BD8", "minecraft:lapis_ore", "minecraft:deepslate_lapis_ore",
+                    "minecraft:stone", "minecraft:deepslate",
+                    "minecraft:overworld",
+                    "desert:45,badlands:30,savanna:30,plains:20,jungle:10,ocean:25,cave:30,river:10", "cave:50:150:-60:-10:2:false:1:220,desert:60:120:-60:-20:1:true:2:180",
+                    1, 2, 50, 140, 1, 160, 2, 192, 2, 6, false, -60, -10, 100.0, "lapis.json"),
+            new DefaultNode("oresandstuff:nether_quartz", "minecraft:quartz", 0.7, "#E8DFD6", "minecraft:nether_quartz_ore", "minecraft:quartz_block",
+                    "minecraft:netherrack", "minecraft:nether_quartz_ore",
+                    "minecraft:the_nether",
+                    "nether_wastes:50,basalt_deltas:45,crimson_forest:25,warped_forest:25,soul_sand_valley:20", "basalt_deltas:60:160:0:60:2:true:1:180,soul_sand_valley:30:120:0:40:1:false:2:150",
+                    2, 3, 60, 160, 1, 120, 2, 192, 3, 8, true, 0, 63, 80.0, "nether_quartz.json"),
+            new DefaultNode("oresandstuff:nether_gold", "minecraft:gold_nugget", 0.5, "#E8B01C", "minecraft:nether_gold_ore", "minecraft:gold_block",
+                    "minecraft:netherrack", "minecraft:nether_gold_ore",
+                    "minecraft:the_nether",
+                    "nether_wastes:55,basalt_deltas:45,soul_sand_valley:15,crimson_forest:10,warped_forest:10", "nether_wastes:60:160:0:70:2:true:1:200,crimson_forest:20:110:0:40:1:false:3:140",
+                    2, 3, 60, 160, 1, 130, 2, 192, 3, 8, true, 0, 63, 60.0, "nether_gold.json")
+    );
+
+    private record DefaultNode(String id, String output, double rate, String color, String visual, String visualPure,
+                               String nodeBlock, String nodeBlockPure,
+                               String dimensionsCsv, String biomesCsv, String biomeOverridesCsv, int minNodes, int maxNodes,
+                               double qualityMin, double qualityMax, int maxMiners, int spacing, int attempts,
+                               int scannerRadius, int clusterRadius, int scatterCount,
+                               boolean surfaceSpawn, int minY, int maxY, double hardness, String fileName) {
+    }
+
+    private static String nodeJson(DefaultNode node) {
+        JsonObject root = new JsonObject();
+        root.addProperty("id", node.id());
+        root.addProperty("output_item", node.output());
+        JsonObject drops = new JsonObject();
+        drops.addProperty(node.output(), 100);
+        drops.addProperty(node.nodeBlock(), 100);
+        drops.addProperty(node.nodeBlockPure(), 100);
+        root.add("drops", drops);
+        root.addProperty("enabled", true);
+        root.addProperty("hardness", node.hardness());
+
+        root.addProperty("base_rate_per_second", node.rate());
+        root.addProperty("scanner_color", node.color());
+        root.addProperty("scanner_radius", node.scannerRadius());
+
+        root.addProperty("quality_min", node.qualityMin());
+        root.addProperty("quality_max", node.qualityMax());
+        double mid = (node.qualityMin() + node.qualityMax()) / 2.0;
+        JsonArray visuals = new JsonArray();
+        visuals.add(tierJson(node.qualityMin(), mid, node.nodeBlock(), node.visual()));
+        visuals.add(tierJson(mid, node.qualityMax(), node.nodeBlockPure(), node.visualPure()));
+        root.add("quality_visuals", visuals);
+
+        JsonArray dimensions = new JsonArray();
+        for (String part : node.dimensionsCsv().split(",")) {
+            dimensions.add(part.trim());
+        }
+        root.add("dimensions", dimensions);
+        JsonObject biomes = new JsonObject();
+        for (String part : node.biomesCsv().split(",")) {
+            int lastColon = part.lastIndexOf(':');
+            biomes.addProperty(part.substring(0, lastColon), Integer.parseInt(part.substring(lastColon + 1)));
+        }
+        root.add("biomes", biomes);
+        JsonObject overrides = new JsonObject();
+        if (!node.biomeOverridesCsv().isEmpty()) {
+            for (String part : node.biomeOverridesCsv().split(",")) {
+                String[] seg = part.trim().split(":");
+                if (seg.length >= 3) {
+                    JsonObject o = new JsonObject();
+                    o.addProperty("quality_min", Double.parseDouble(seg[1]));
+                    o.addProperty("quality_max", Double.parseDouble(seg[2]));
+                    if (seg.length >= 5) {
+                        o.addProperty("min_y", Integer.parseInt(seg[3]));
+                        o.addProperty("max_y", Integer.parseInt(seg[4]));
+                    }
+                    if (seg.length >= 6) {
+                        o.addProperty("max_miners_per_node", Integer.parseInt(seg[5]));
+                    }
+                    if (seg.length >= 7) {
+                        o.addProperty("surface_spawn", Boolean.parseBoolean(seg[6]));
+                    }
+                    if (seg.length >= 8) {
+                        o.addProperty("placement_attempts", Integer.parseInt(seg[7]));
+                    }
+                    if (seg.length >= 9) {
+                        o.addProperty("min_spacing_blocks", Integer.parseInt(seg[8]));
+                    }
+                    overrides.add(seg[0], o);
+                }
+            }
+        }
+        root.add("biome_overrides", overrides);
+
+        root.addProperty("min_nodes_per_chunk", node.minNodes());
+        root.addProperty("max_nodes_per_chunk", node.maxNodes());
+        root.addProperty("max_miners_per_node", node.maxMiners());
+        root.addProperty("min_spacing_blocks", node.spacing());
+        root.addProperty("placement_attempts", node.attempts());
+        root.addProperty("cluster_radius", node.clusterRadius());
+        root.addProperty("scatter_count", node.scatterCount());
+        root.addProperty("surface_spawn", node.surfaceSpawn());
+        root.addProperty("min_y", node.minY());
+        root.addProperty("max_y", node.maxY());
+
+        return ConfigAssets.pretty(root);
+    }
+
+    private static JsonObject tierJson(double min, double max, String nodeBlock, String visualBlock) {
+        JsonObject o = new JsonObject();
+        o.addProperty("min", min);
+        o.addProperty("max", max);
+        o.addProperty("node_block", nodeBlock);
+        o.addProperty("visual_block", visualBlock);
+        return o;
+    }
+
+    private static Map<ResourceLocation, OreNodeType> fallbackDefaults() {
+        Map<ResourceLocation, OreNodeType> out = new HashMap<>();
+        for (DefaultNode node : DEFAULT_NODES) {
+            OreNodeType type = parseNodeType(JsonParser.parseString(nodeJson(node)).getAsJsonObject());
+            if (type != null) {
+                out.put(type.id(), type);
+            }
+        }
+        return out;
+    }
+
+    private static int intValue(JsonObject root, String path, int fallback) {
+        String[] parts = path.split("\\.");
+        JsonObject current = root;
+        for (int i = 0; i < parts.length - 1; i++) {
+            if (!current.has(parts[i]) || !current.get(parts[i]).isJsonObject()) {
+                return fallback;
+            }
+            current = current.getAsJsonObject(parts[i]);
+        }
+        return current.has(parts[parts.length - 1]) ? current.get(parts[parts.length - 1]).getAsInt() : fallback;
+    }
+
+    private static Integer optionalInt(JsonObject root, String path) {
+        String[] parts = path.split("\\.");
+        JsonObject current = root;
+        for (int i = 0; i < parts.length - 1; i++) {
+            if (!current.has(parts[i]) || !current.get(parts[i]).isJsonObject()) {
+                return null;
+            }
+            current = current.getAsJsonObject(parts[i]);
+        }
+        return current.has(parts[parts.length - 1]) ? current.get(parts[parts.length - 1]).getAsInt() : null;
+    }
+
+    private static Boolean optionalBoolean(JsonObject root, String path) {
+        String[] parts = path.split("\\.");
+        JsonObject current = root;
+        for (int i = 0; i < parts.length - 1; i++) {
+            if (!current.has(parts[i]) || !current.get(parts[i]).isJsonObject()) {
+                return null;
+            }
+            current = current.getAsJsonObject(parts[i]);
+        }
+        return current.has(parts[parts.length - 1]) ? current.get(parts[parts.length - 1]).getAsBoolean() : null;
+    }
+
+    private static Double optionalDouble(JsonObject root, String path) {
+        String[] parts = path.split("\\.");
+        JsonObject current = root;
+        for (int i = 0; i < parts.length - 1; i++) {
+            if (!current.has(parts[i]) || !current.get(parts[i]).isJsonObject()) {
+                return null;
+            }
+            current = current.getAsJsonObject(parts[i]);
+        }
+        return current.has(parts[parts.length - 1]) ? current.get(parts[parts.length - 1]).getAsDouble() : null;
+    }
+
+    private static double doubleValue(JsonObject root, String key, double fallback) {
+        return root.has(key) ? root.get(key).getAsDouble() : fallback;
+    }
+
+    private static String colorValue(JsonObject root) {
+        String raw = root.has("scanner_color") ? root.get("scanner_color").getAsString() : "#FFFFFF";
+        return raw.replace("#", "0x");
     }
 }

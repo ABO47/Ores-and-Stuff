@@ -1,6 +1,7 @@
 package com.abo47.oresandstuff.platform;
 
 import com.mojang.brigadier.CommandDispatcher;
+
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,10 +18,13 @@ public interface PlatformHooks {
     default void registerReloadListener(SimpleJsonResourceReloadListener listener) {
     }
 
-    default void registerCommands(CommandSourceStack source, CommandDispatcher<CommandSourceStack> dispatcher) {
+    default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
     }
 
-    default void registerWorldgen() {
+    default void registerGameplayEvents() {
+    }
+
+    default void registerNetwork() {
     }
 
     default void registerEnergy() {

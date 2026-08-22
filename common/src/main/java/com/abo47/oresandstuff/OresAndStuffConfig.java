@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import com.abo47.oresandstuff.platform.Services;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -17,7 +18,6 @@ public final class OresAndStuffConfig {
     private static boolean loaded;
     private static final OresAndStuffConfigSections.Scanner SCANNER = new OresAndStuffConfigSections.Scanner();
     private static final OresAndStuffConfigSections.BioScan BIO_SCAN = new OresAndStuffConfigSections.BioScan();
-    private static final OresAndStuffConfigSections.Miner MINER = new OresAndStuffConfigSections.Miner();
     private static final OresAndStuffConfigSections.Worldgen WORLDGEN = new OresAndStuffConfigSections.Worldgen();
     private static final OresAndStuffConfigSections.Debug DEBUG = new OresAndStuffConfigSections.Debug();
 
@@ -58,11 +58,6 @@ public final class OresAndStuffConfig {
         return BIO_SCAN;
     }
 
-    public static OresAndStuffConfigSections.Miner miner() {
-        load();
-        return MINER;
-    }
-
     public static OresAndStuffConfigSections.Worldgen worldgen() {
         load();
         return WORLDGEN;
@@ -77,7 +72,6 @@ public final class OresAndStuffConfig {
         JsonObject root = new JsonObject();
         root.add("scanner", SCANNER.write());
         root.add("bioScan", BIO_SCAN.write());
-        root.add("miner", MINER.write());
         root.add("worldgen", WORLDGEN.write());
         root.add("debug", DEBUG.write());
 
@@ -97,7 +91,6 @@ public final class OresAndStuffConfig {
     private static void read(JsonObject root) {
         SCANNER.read(OresAndStuffConfigSections.object(root, "scanner"));
         BIO_SCAN.read(OresAndStuffConfigSections.object(root, "bioScan"));
-        MINER.read(OresAndStuffConfigSections.object(root, "miner"));
         WORLDGEN.read(OresAndStuffConfigSections.object(root, "worldgen"));
         DEBUG.read(OresAndStuffConfigSections.object(root, "debug"));
     }

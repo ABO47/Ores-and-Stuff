@@ -13,7 +13,6 @@ public final class OresAndStuffConfigSections {
 
     public static final class Scanner {
         public int radiusCap = 512;
-        public int updateTicks = 12;
         public int maxResults = 6;
         public int cooldownTicks = 40;
         public int pulseDurationMs = 4200;
@@ -22,9 +21,8 @@ public final class OresAndStuffConfigSections {
         public int pulseWidthBlocks = 12;
         public int qualityPreset = 2;
         public int experimentalVisualMode = 1;
-        public int holographicWidthBlocks = 12;
-        public double holographicScanlineStrength = 0.40;
-        public boolean holographicStatusHud = false;
+        public int holographicWidthBlocks = 100;
+        public double holographicScanlineStrength = 0.0;
         public boolean scanSoundEnabled = true;
         public double scanSoundVolume = 0.85;
         public double scanSoundPitch = 1.08;
@@ -33,8 +31,6 @@ public final class OresAndStuffConfigSections {
         public double pingSoundPitch = 1.32;
 
         void read(JsonObject root) {
-            radiusCap = clampInt(intValue(root, "scannerRadiusCap", radiusCap), 32, 4096);
-            updateTicks = clampInt(intValue(root, "scannerUpdateTicks", updateTicks), 2, 100);
             maxResults = clampInt(intValue(root, "scannerMaxResults", maxResults), 1, 24);
             cooldownTicks = clampInt(intValue(root, "scannerCooldownTicks", cooldownTicks), 0, 1200);
             pulseDurationMs = clampInt(intValue(root, "scannerPulseDurationMs", pulseDurationMs), 800, 20000);
@@ -45,7 +41,6 @@ public final class OresAndStuffConfigSections {
             experimentalVisualMode = clampInt(intValue(root, "experimentalScannerVisualMode", experimentalVisualMode), 0, 1);
             holographicWidthBlocks = clampInt(intValue(root, "scannerHolographicWidthBlocks", holographicWidthBlocks), 1, 256);
             holographicScanlineStrength = clampDouble(doubleValue(root, "scannerHolographicScanlineStrength", holographicScanlineStrength), 0.0, 2.0);
-            holographicStatusHud = bool(root, "scannerHolographicStatusHud", holographicStatusHud);
             scanSoundEnabled = bool(root, "scannerScanSoundEnabled", scanSoundEnabled);
             scanSoundVolume = clampDouble(doubleValue(root, "scannerScanSoundVolume", scanSoundVolume), 0.0, 2.0);
             scanSoundPitch = clampDouble(doubleValue(root, "scannerScanSoundPitch", scanSoundPitch), 0.1, 2.0);
@@ -57,10 +52,8 @@ public final class OresAndStuffConfigSections {
         JsonObject write() {
             JsonObject root = new JsonObject();
             root.addProperty("scannerRadiusCap", radiusCap);
-            root.addProperty("scannerUpdateTicks", updateTicks);
             root.addProperty("scannerMaxResults", maxResults);
             root.addProperty("scannerCooldownTicks", cooldownTicks);
-            root.addProperty("scannerPulseDurationMs", pulseDurationMs);
             root.addProperty("scannerPulseRangeBlocks", pulseRangeBlocks);
             root.addProperty("scannerPulseSpeedBlocksPerSec", pulseSpeedBlocksPerSec);
             root.addProperty("scannerPulseWidthBlocks", pulseWidthBlocks);
@@ -68,7 +61,6 @@ public final class OresAndStuffConfigSections {
             root.addProperty("experimentalScannerVisualMode", experimentalVisualMode);
             root.addProperty("scannerHolographicWidthBlocks", holographicWidthBlocks);
             root.addProperty("scannerHolographicScanlineStrength", holographicScanlineStrength);
-            root.addProperty("scannerHolographicStatusHud", holographicStatusHud);
             root.addProperty("scannerScanSoundEnabled", scanSoundEnabled);
             root.addProperty("scannerScanSoundVolume", scanSoundVolume);
             root.addProperty("scannerScanSoundPitch", scanSoundPitch);
@@ -80,75 +72,54 @@ public final class OresAndStuffConfigSections {
     }
 
     public static final class BioScan {
-        public int notificationMs = 5000;
-        public int durationMs = 2600;
+        public int durationMs = 1000;
         public double drainMultiplier = 2.4;
         public int cooldownTicks = 40;
         public double rayStyle = 1.15;
+        public boolean hideNonMobs = true;
+        public List<String> hiddenEntities = new ArrayList<>();
 
         void read(JsonObject root) {
-            notificationMs = clampInt(intValue(root, "bioScanNotificationMs", notificationMs), 1000, 20000);
             durationMs = clampInt(intValue(root, "bioScanDurationMs", durationMs), 300, 15000);
             drainMultiplier = clampDouble(doubleValue(root, "bioScanDrainMultiplier", drainMultiplier), 0.5, 10.0);
             cooldownTicks = clampInt(intValue(root, "bioScanCooldownTicks", cooldownTicks), 0, 1200);
             rayStyle = clampDouble(doubleValue(root, "bioScanRayStyle", rayStyle), 0.5, 3.0);
+            hideNonMobs = bool(root, "bioScanHideNonMobs", hideNonMobs);
+            hiddenEntities = stringList(root, "bioScanHiddenEntities", hiddenEntities);
         }
 
         JsonObject write() {
             JsonObject root = new JsonObject();
-            root.addProperty("bioScanNotificationMs", notificationMs);
             root.addProperty("bioScanDurationMs", durationMs);
             root.addProperty("bioScanDrainMultiplier", drainMultiplier);
             root.addProperty("bioScanCooldownTicks", cooldownTicks);
             root.addProperty("bioScanRayStyle", rayStyle);
-            return root;
-        }
-    }
-
-    public static final class Miner {
-        public int fePerTick = 24;
-        public int bufferFe = 10000;
-        public int maxReceiveFe = 256;
-
-        void read(JsonObject root) {
-            fePerTick = clampInt(intValue(root, "minerFePerTick", fePerTick), 1, 10000);
-            bufferFe = clampInt(intValue(root, "minerBufferFe", bufferFe), 100, 500000);
-            maxReceiveFe = clampInt(intValue(root, "minerMaxReceiveFe", maxReceiveFe), 1, 100000);
-        }
-
-        JsonObject write() {
-            JsonObject root = new JsonObject();
-            root.addProperty("minerFePerTick", fePerTick);
-            root.addProperty("minerBufferFe", bufferFe);
-            root.addProperty("minerMaxReceiveFe", maxReceiveFe);
+            root.addProperty("bioScanHideNonMobs", hideNonMobs);
+            JsonArray arr = new JsonArray();
+            for (String s : hiddenEntities) {
+                arr.add(s);
+            }
+            root.add("bioScanHiddenEntities", arr);
             return root;
         }
     }
 
     public static final class Worldgen {
-        public int nodeMinSpacingBlocks = 220;
-        public int nodeAttemptsPerChunk = 1;
-        public int nodeClusterRadius = 2;
-        public int nodeScatterCount = 8;
-        public boolean removeVanillaOres = true;
+        public boolean vanillaOresEnabled = false;
         public List<String> disabledNodeTypes = new ArrayList<>();
 
         void read(JsonObject root) {
-            nodeMinSpacingBlocks = clampInt(intValue(root, "nodeMinSpacingBlocks", nodeMinSpacingBlocks), 64, 4000);
-            nodeAttemptsPerChunk = clampInt(intValue(root, "nodeAttemptsPerChunk", nodeAttemptsPerChunk), 1, 8);
-            nodeClusterRadius = clampInt(intValue(root, "nodeClusterRadius", nodeClusterRadius), 1, 8);
-            nodeScatterCount = clampInt(intValue(root, "nodeScatterCount", nodeScatterCount), 0, 64);
-            removeVanillaOres = bool(root, "removeVanillaOres", removeVanillaOres);
+            if (root != null && root.has("removeVanillaOres")) {
+                vanillaOresEnabled = !bool(root, "removeVanillaOres", !vanillaOresEnabled);
+            } else {
+                vanillaOresEnabled = bool(root, "vanillaOresEnabled", vanillaOresEnabled);
+            }
             disabledNodeTypes = stringList(root, "disabledNodeTypes", disabledNodeTypes);
         }
 
         JsonObject write() {
             JsonObject root = new JsonObject();
-            root.addProperty("nodeMinSpacingBlocks", nodeMinSpacingBlocks);
-            root.addProperty("nodeAttemptsPerChunk", nodeAttemptsPerChunk);
-            root.addProperty("nodeClusterRadius", nodeClusterRadius);
-            root.addProperty("nodeScatterCount", nodeScatterCount);
-            root.addProperty("removeVanillaOres", removeVanillaOres);
+            root.addProperty("vanillaOresEnabled", vanillaOresEnabled);
             JsonArray arr = new JsonArray();
             for (String s : disabledNodeTypes) {
                 arr.add(s);

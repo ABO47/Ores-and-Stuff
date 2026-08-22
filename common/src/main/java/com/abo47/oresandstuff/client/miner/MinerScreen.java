@@ -1,42 +1,45 @@
 package com.abo47.oresandstuff.client.miner;
 
-import com.abo47.oresandstuff.client.theme.tokens.OasColors;
-import com.abo47.oresandstuff.client.ui.render.GradientRectTexture;
-import com.abo47.oresandstuff.client.ui.render.StripeOverlayTexture;
-import com.abo47.oresandstuff.client.ui.widget.PlayerInventoryWidget;
-import com.abo47.oresandstuff.miner.MinerBlockEntity;
-import com.abo47.oresandstuff.miner.MinerStatus;
-import com.abo47.oresandstuff.node.Purity;
+import java.util.Locale;
+
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.texture.ColorBorderTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.widget.layout.Align;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
 import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
-import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
+import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
+import com.lowdragmc.lowdraglib.utils.Position;
 
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-
-import java.util.Locale;
+import com.abo47.oresandstuff.client.theme.tokens.OasColors;
+import com.abo47.oresandstuff.client.ui.render.EnergyBarTexture;
+import com.abo47.oresandstuff.client.ui.widget.PlayerInventoryWidget;
+import com.abo47.oresandstuff.miner.CommonItemTransfer;
+import com.abo47.oresandstuff.miner.MinerBlockEntity;
+import com.abo47.oresandstuff.miner.MinerStatus;
 
 public final class MinerScreen {
-    private static final int UI_W = 220;
-    private static final int UI_H = 246;
-    private static final int ENERGY_BAR_PIXELS = 68;
+    private static final int UI_W = 221;
+    private static final int UI_H = 251;
+    private static final int ROOT_GAP = 9;
+    private static final int GAP = 4;
 
     private final MinerBlockEntity be;
+    private double smoothEnergy = -1.0;
+    private boolean initialSnapDone;
 
     private MinerScreen(MinerBlockEntity be) {
         this.be = be;
@@ -47,162 +50,198 @@ public final class MinerScreen {
     }
 
     private WidgetGroup build() {
-        final int OUTER = 12;
-        final int PAD = 6;
-        final int GAP = 8;
+        final int CONT_X = 6;
+        final int CONT_W = 208;
+        final int CONT_H = 112;
+        final int TOP_Y = ROOT_GAP;
+        final int BOT_Y = TOP_Y + CONT_H + ROOT_GAP;
 
-        final int TITLE_Y = 8;
-        final int TITLE_H = 14;
+        final int CHILD_W = 44;
+        final int MID_W = 104;
+        final int LEFT_X = CONT_X + GAP;
+        final int MID_X = LEFT_X + CHILD_W + GAP;
+        final int RIGHT_X = MID_X + MID_W + GAP;
+        final int CHILD_Y = TOP_Y + GAP;
+        final int CHILD_H = CONT_H - 2 * GAP;
 
-        final int MACHINE_X = OUTER;
-        final int MACHINE_Y = 26;
-        final int MACHINE_W = 196;
-        final int MACHINE_H = 114;
+        final int ENERGY_BAR_X = LEFT_X + (CHILD_W - 16) / 2;
+        final int ENERGY_BAR_Y = CHILD_Y + 11;
+        final int ENERGY_BAR_W = 16;
+        final int ENERGY_BAR_H = 70;
 
-        final int ENERGY_W = 18;
-        final int ENERGY_H = 72;
-        final int CLUSTER_W = ENERGY_W + PAD + 118 + PAD + 24;
-        final int CLUSTER_X = MACHINE_X + (MACHINE_W - CLUSTER_W) / 2;
-        final int ENERGY_X = CLUSTER_X;
-        final int ENERGY_Y = MACHINE_Y + PAD + 2;
-        final int ENERGY_BAR_X = ENERGY_X + 2;
-        final int ENERGY_BAR_Y = ENERGY_Y + 2;
-        final int ENERGY_BAR_W = ENERGY_W - 4;
-        final int ENERGY_BAR_H = ENERGY_H - 4;
+        final int ROW_X = MID_X + 4;
+        final int ROW_1_Y = CHILD_Y + 4;
+        final int ROW_GAP = 13;
 
-        final int TOGGLE_W = ENERGY_W;
-        final int TOGGLE_H = 24;
-        final int TOGGLE_X = ENERGY_X;
-        final int TOGGLE_Y = ENERGY_Y + ENERGY_H + 6;
-
-        final int CENTER_X = ENERGY_X + ENERGY_W + PAD;
-        final int INFO_W = 118;
-        final int INFO_H = 38;
-        final int INFO_X = CENTER_X;
-        final int INFO_Y = ENERGY_Y;
-        final int INFO_LABEL_X = INFO_X + PAD;
-        final int INFO_VALUE_X = INFO_X + 62;
-        final int INFO_ROW_1_Y = INFO_Y + 2;
-        final int INFO_ROW_2_Y = INFO_Y + 13;
-        final int INFO_ROW_3_Y = INFO_Y + 24;
-
-        final int PROGRESS_W = 118;
-        final int PROGRESS_H = 28;
-        final int PROGRESS_X = CENTER_X;
-        final int PROGRESS_Y = INFO_Y + INFO_H + PAD;
-        final int PROGRESS_BAR_H = 10;
-        final int PROGRESS_BAR_X = PROGRESS_X + 8;
-        final int PROGRESS_BAR_Y = PROGRESS_Y + (PROGRESS_H - PROGRESS_BAR_H) / 2;
-        final int PROGRESS_BAR_W = PROGRESS_W - 16;
-
-        final int OUTPUT_FRAME_W = PROGRESS_H;
-        final int OUTPUT_FRAME_H = PROGRESS_H;
-        final int OUTPUT_FRAME_X = PROGRESS_X + PROGRESS_W + PAD;
-        final int OUTPUT_FRAME_Y = PROGRESS_Y;
-        final int OUTPUT_SLOT_X = OUTPUT_FRAME_X + 5;
-        final int OUTPUT_SLOT_Y = OUTPUT_FRAME_Y + 5;
-
-        final int INVENTORY_X = OUTER;
-        final int INVENTORY_Y = MACHINE_Y + MACHINE_H + GAP;
-        final int INVENTORY_W = 196;
-        final int INVENTORY_H = 92;
-        final int PLAYER_INV_W = 172;
-        final int PLAYER_INV_H = 86;
+        final int SPLIT_GAP = GAP;
+        final int SLOT_PANEL_H = (CHILD_H - SPLIT_GAP) * 2 / 3;
+        final int SLOT_PANEL_Y = CHILD_Y;
+        final int BUTTON_PANEL_Y = SLOT_PANEL_Y + SLOT_PANEL_H + SPLIT_GAP;
+        final int BUTTON_PANEL_H = CHILD_Y + CHILD_H - BUTTON_PANEL_Y;
+        final int SLOT_X = RIGHT_X + (CHILD_W - 18) / 2;
+        final int SLOT_1_Y = SLOT_PANEL_Y + (SLOT_PANEL_H - 58) / 2;
+        final int SLOT_GAP = 20;
+        final int TOGGLE_W = 34;
+        final int TOGGLE_H = 16;
+        final int TOGGLE_X = RIGHT_X + (CHILD_W - TOGGLE_W) / 2;
+        final int TOGGLE_Y = BUTTON_PANEL_Y + (BUTTON_PANEL_H - TOGGLE_H) / 2;
 
         WidgetGroup root = new WidgetGroup(0, 0, UI_W, UI_H);
         root.setBackground(bevelPanelTexture(OasColors.BG_0, OasColors.BORDER_STRONG, OasColors.BORDER));
 
-        root.addWidget(new ImageWidget(MACHINE_X, MACHINE_Y, MACHINE_W, MACHINE_H, bevelPanelTexture(OasColors.BG_1, OasColors.BORDER_STRONG, OasColors.BORDER)));
-        root.addWidget(new ImageWidget(INVENTORY_X, INVENTORY_Y, INVENTORY_W, INVENTORY_H, bevelPanelTexture(OasColors.BG_1, OasColors.BORDER_STRONG, OasColors.BORDER)));
-        root.addWidget(new ImageWidget(INFO_X, INFO_Y, INFO_W, INFO_H, bevelPanelTexture(OasColors.BG_2, OasColors.BORDER_STRONG, OasColors.BORDER)));
-        root.addWidget(new ImageWidget(PROGRESS_X, PROGRESS_Y, PROGRESS_W, PROGRESS_H, bevelPanelTexture(OasColors.BG_2, OasColors.BORDER_STRONG, OasColors.BORDER)));
-        root.addWidget(new ImageWidget(OUTPUT_FRAME_X, OUTPUT_FRAME_Y, OUTPUT_FRAME_W, OUTPUT_FRAME_H, bevelPanelTexture(OasColors.BG_2, OasColors.BORDER_STRONG, OasColors.BORDER)));
-        root.addWidget(new ImageWidget(ENERGY_X, ENERGY_Y, ENERGY_W, ENERGY_H, bevelPanelTexture(OasColors.BG_2, OasColors.BORDER_STRONG, OasColors.BORDER)));
-        root.addWidget(new ImageWidget(PROGRESS_BAR_X - 2, PROGRESS_BAR_Y - 2, PROGRESS_BAR_W + 4, PROGRESS_BAR_H + 4, bevelPanelTexture(OasColors.BG_1, OasColors.BORDER_STRONG, OasColors.BORDER)));
+        root.addWidget(new ImageWidget(CONT_X, TOP_Y, CONT_W, CONT_H, bevelPanelTexture(OasColors.BG_1, OasColors.BORDER_STRONG, OasColors.BORDER)));
+        root.addWidget(new ImageWidget(CONT_X, BOT_Y, CONT_W, CONT_H, bevelPanelTexture(OasColors.BG_1, OasColors.BORDER_STRONG, OasColors.BORDER)));
 
-        ProgressTexture energyTexture = new ProgressTexture(
-                new ColorRectTexture(OasColors.withAlpha(0xFF4A1010, 220)),
-                new GuiTextureGroup(
-                        new GradientRectTexture(0xFFFFB3B3, 0xFFD41212, true),
-                        new StripeOverlayTexture(OasColors.withAlpha(0xFFFFFFFF, 58), 1, 3, false)
-                )
-        ).setFillDirection(ProgressTexture.FillDirection.DOWN_TO_UP);
-        ProgressWidget energyBar = new ProgressWidget(this::uiEnergyRatio, ENERGY_BAR_X, ENERGY_BAR_Y, ENERGY_BAR_W, ENERGY_BAR_H, energyTexture);
-        energyBar.setHoverTooltips(Component.literal("Energy"));
+        root.addWidget(new ImageWidget(LEFT_X, CHILD_Y, CHILD_W, CHILD_H, bevelPanelTexture(OasColors.BG_2, OasColors.BORDER_STRONG, OasColors.BORDER)));
+        root.addWidget(new ImageWidget(MID_X, CHILD_Y, MID_W, CHILD_H, bevelPanelTexture(OasColors.TERMINAL_BG, OasColors.BORDER_STRONG, OasColors.BORDER)));
+        root.addWidget(new ImageWidget(RIGHT_X, SLOT_PANEL_Y, CHILD_W, SLOT_PANEL_H, bevelPanelTexture(OasColors.BG_2, OasColors.BORDER_STRONG, OasColors.BORDER)));
+        root.addWidget(new ImageWidget(RIGHT_X, BUTTON_PANEL_Y, CHILD_W, BUTTON_PANEL_H, bevelPanelTexture(OasColors.BG_2, OasColors.BORDER_STRONG, OasColors.BORDER)));
+
+        MinerUIState state = new MinerUIState(be);
+        root.addWidget(state);
+
+        root.addWidget(new ImageWidget(ENERGY_BAR_X - 1, ENERGY_BAR_Y - 1, ENERGY_BAR_W + 2, ENERGY_BAR_H + 2, bevelPanelTexture(OasColors.BG_0, OasColors.BORDER, OasColors.BORDER)));
+        ImageWidget energyBar = new ImageWidget(ENERGY_BAR_X, ENERGY_BAR_Y, ENERGY_BAR_W, ENERGY_BAR_H,
+                () -> new EnergyBarTexture(() -> uiEnergySmooth(state), () -> energyColor(state))) {
+            @Override
+            @Environment(EnvType.CLIENT)
+            public void updateScreen() {
+                super.updateScreen();
+                setHoverTooltips(Component.literal("Energy: " + state.getEnergyStored() + " / " + state.getMaxEnergy() + " FE"));
+            }
+        };
+        energyBar.setClientSideWidget();
+        energyBar.setHoverTooltips(Component.literal("Energy: " + state.getEnergyStored() + " / " + state.getMaxEnergy() + " FE"));
         root.addWidget(energyBar);
-        root.addWidget(new ImageWidget(ENERGY_BAR_X + 1, ENERGY_BAR_Y, 1, ENERGY_BAR_H, new ColorRectTexture(OasColors.withAlpha(0xFFFFFFFF, 48))));
-        root.addWidget(new ImageWidget(ENERGY_BAR_X + ENERGY_BAR_W - 2, ENERGY_BAR_Y, 1, ENERGY_BAR_H, new ColorRectTexture(OasColors.withAlpha(0xFF000000, 64))));
 
-        ProgressTexture progressTexture = new ProgressTexture(
-                new ColorRectTexture(OasColors.withAlpha(OasColors.BG_0, 165)),
-                new GuiTextureGroup(
-                        new GradientRectTexture(0xFF7DEFFF, 0xFF21B7DF, true),
-                        new StripeOverlayTexture(OasColors.withAlpha(0xFFFFFFFF, 58), 1, 3, true)
-                )
-        ).setFillDirection(ProgressTexture.FillDirection.LEFT_TO_RIGHT);
-        ProgressWidget miningBar = new ProgressWidget(this::uiProgress01, PROGRESS_BAR_X, PROGRESS_BAR_Y, PROGRESS_BAR_W, PROGRESS_BAR_H, progressTexture);
-        miningBar.setHoverTooltips(Component.literal("Mining progress"));
-        root.addWidget(miningBar);
-        root.addWidget(new ImageWidget(PROGRESS_BAR_X, PROGRESS_BAR_Y, PROGRESS_BAR_W, 2, new ColorRectTexture(OasColors.withAlpha(0xFFFFFFFF, 38))));
-        root.addWidget(new ImageWidget(PROGRESS_BAR_X, PROGRESS_BAR_Y + PROGRESS_BAR_H - 2, PROGRESS_BAR_W, 1, new ColorRectTexture(OasColors.withAlpha(0xFF000000, 56))));
+        EnergyPercentLabel energyPercent = new EnergyPercentLabel(LEFT_X, ENERGY_BAR_Y + ENERGY_BAR_H + 6, CHILD_W, state);
+        root.addWidget(energyPercent);
 
-        SwitchWidget powerToggle = new SwitchWidget(TOGGLE_X, TOGGLE_Y, TOGGLE_W, TOGGLE_H, (clickData, pressed) -> be.setEnabled(pressed));
-        powerToggle.setTexture(rockerTexture(false), rockerTexture(true));
-        powerToggle.setHoverBorderTexture(1, OasColors.ACCENT_PRIMARY);
-        powerToggle.setSupplier(be::isEnabled);
-        powerToggle.setHoverTooltips(Component.literal("Toggle miner"));
-        root.addWidget(powerToggle);
+        LabelWidget tierLabel = terminalLabel(ROW_X, ROW_1_Y, state, s -> "tier: " + s.getTierId());
+        root.addWidget(tierLabel);
+        LabelWidget outputLabel = terminalLabel(ROW_X, ROW_1_Y + ROW_GAP, state, s -> "output: " + nodeName(s));
+        root.addWidget(outputLabel);
+        LabelWidget qualityLabel = terminalLabel(ROW_X, ROW_1_Y + 2 * ROW_GAP, state, s -> "quality: " + qualityText(s));
+        root.addWidget(qualityLabel);
+        LabelWidget rateLabel = terminalLabel(ROW_X, ROW_1_Y + 3 * ROW_GAP, state, s -> "rate: " + rateText(s));
+        root.addWidget(rateLabel);
+        LabelWidget progressLabel = terminalLabel(ROW_X, ROW_1_Y + 4 * ROW_GAP, state, s -> "progress: " + progressText(s));
+        root.addWidget(progressLabel);
 
-        WidgetGroup titleLane = new WidgetGroup(0, TITLE_Y, UI_W, TITLE_H);
-        LabelWidget title = new LabelWidget(0, 0, uiTitleComponent());
-        title.setAlign(Align.TOP_CENTER);
-        title.setDropShadow(true);
-        titleLane.addWidget(title);
-        root.addWidget(titleLane);
+        // Red blinking alert row at the end of the console: no energy / output full / miner limit hit
+        int alertY = ROW_1_Y + 5 * ROW_GAP;
+        int alertW = MID_W - 8;
+        MinerAlertWidget alertLabel = new MinerAlertWidget(ROW_X, alertY, alertW, 9, state, be);
+        root.addWidget(alertLabel);
 
-        LabelWidget nodeLabel = new LabelWidget(INFO_LABEL_X, INFO_ROW_1_Y, "Node");
-        nodeLabel.setColor(OasColors.TEXT_SECONDARY);
-        nodeLabel.setDropShadow(true);
-        root.addWidget(nodeLabel);
+        LabelWidget promptLabel = new LabelWidget(ROW_X, CHILD_Y + CHILD_H - 12, ">");
+        promptLabel.setTextProvider(() -> {
+            boolean blink = (be.getLevel() != null ? be.getLevel().getGameTime() : System.currentTimeMillis() / 50L) % 30 < 15;
+            return blink ? ">_" : "> ";
+        });
+        promptLabel.setColor(OasColors.darken(OasColors.TERMINAL_GREEN, 45));
+        promptLabel.setDropShadow(true);
+        root.addWidget(promptLabel);
 
-        LabelWidget nodeValue = new LabelWidget(INFO_VALUE_X, INFO_ROW_1_Y, () -> clip(uiNodeName(), 12));
-        nodeValue.setColor(OasColors.ACCENT_SOFT);
-        nodeValue.setDropShadow(true);
-        root.addWidget(nodeValue);
-
-        LabelWidget purityLabel = new LabelWidget(INFO_LABEL_X, INFO_ROW_2_Y, "Purity");
-        purityLabel.setColor(OasColors.TEXT_SECONDARY);
-        purityLabel.setDropShadow(true);
-        root.addWidget(purityLabel);
-
-        LabelWidget purityValue = new LabelWidget(INFO_VALUE_X, INFO_ROW_2_Y, () -> clip(uiPurityName(), 8));
-        purityValue.setColor(OasColors.ACCENT_SOFT);
-        purityValue.setDropShadow(true);
-        root.addWidget(purityValue);
-
-        LabelWidget stateLabel = new LabelWidget(INFO_LABEL_X, INFO_ROW_3_Y, "State");
-        stateLabel.setColor(OasColors.TEXT_SECONDARY);
-        stateLabel.setDropShadow(true);
-        root.addWidget(stateLabel);
-
-        LabelWidget stateValue = new LabelWidget(INFO_VALUE_X, INFO_ROW_3_Y, this::uiStatusStyled);
-        stateValue.setColor(OasColors.VANILLA_TEXT);
-        stateValue.setDropShadow(true);
-        root.addWidget(stateValue);
+        MinerToggleWidget toggle = new MinerToggleWidget(TOGGLE_X, TOGGLE_Y, be, state);
+        root.addWidget(toggle);
 
         IItemTransfer outputTransfer = be.getOutputTransfer();
-        SlotWidget outputSlot = new SlotWidget(outputTransfer, 0, OUTPUT_SLOT_X, OUTPUT_SLOT_Y, true, false);
-        outputSlot.setBackgroundTexture(SlotWidget.ITEM_SLOT_TEXTURE.copy().setColor(OasColors.withAlpha(OasColors.TEXT_MUTED, 255)));
-        outputSlot.setLocationInfo(false, false);
-        outputSlot.setCanPutItems(false);
-        outputSlot.setHoverTooltips(Component.literal("Output slot"));
-        root.addWidget(outputSlot);
+        for (int i = 0; i < CommonItemTransfer.SLOT_COUNT; i++) {
+            SlotWidget outputSlot = new SlotWidget(outputTransfer, i, SLOT_X, SLOT_1_Y + i * SLOT_GAP, true, false);
+            outputSlot.setBackgroundTexture(SlotWidget.ITEM_SLOT_TEXTURE.copy().setColor(OasColors.withAlpha(OasColors.TEXT_MUTED, 255)));
+            outputSlot.setLocationInfo(false, false);
+            outputSlot.setCanPutItems(false);
+            outputSlot.setHoverTooltips(Component.translatable("Output slot"));
+            root.addWidget(outputSlot);
+        }
 
         PlayerInventoryWidget playerInventory = new PlayerInventoryWidget(0, 0);
-        playerInventory.setSelfPosition(INVENTORY_X + (INVENTORY_W - PLAYER_INV_W) / 2, INVENTORY_Y + (INVENTORY_H - PLAYER_INV_H) / 2);
+        playerInventory.setSelfPosition(CONT_X + (CONT_W - 176) / 2 - 1, BOT_Y + (CONT_H - 72) / 2);
         root.addWidget(playerInventory);
 
         return root;
+    }
+
+    private static LabelWidget terminalLabel(int x, int y, MinerUIState state, java.util.function.Function<MinerUIState, String> text) {
+        LabelWidget label = new LabelWidget(x, y, text.apply(state));
+        label.setTextProvider(() -> text.apply(state));
+        label.setColor(OasColors.TERMINAL_GREEN);
+        label.setDropShadow(true);
+        return label;
+    }
+
+    private final class EnergyPercentLabel extends Widget {
+        private final MinerUIState state;
+        private int color = OasColors.TEXT_SECONDARY;
+
+        private EnergyPercentLabel(int x, int y, int width, MinerUIState state) {
+            super(x, y, width, 10);
+            this.state = state;
+            setClientSideWidget();
+        }
+
+        @Override
+        public void updateScreen() {
+            super.updateScreen();
+            color = energyColor(state);
+        }
+
+        @Override
+        @Environment(EnvType.CLIENT)
+        public void drawInBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+            super.drawInBackground(graphics, mouseX, mouseY, partialTicks);
+            String text = (int) Math.round(uiEnergySmooth(state) * 100) + "%";
+            Font font = Minecraft.getInstance().font;
+            Position pos = getPosition();
+            int x = pos.x + (getSize().width - font.width(text)) / 2;
+            int y = pos.y + (getSize().height - font.lineHeight) / 2;
+            graphics.drawString(font, text, x, y, color, true);
+        }
+    }
+
+    private static final class MinerAlertWidget extends Widget {
+        private final MinerUIState state;
+        private final MinerBlockEntity be;
+
+        private MinerAlertWidget(int x, int y, int w, int h, MinerUIState state, MinerBlockEntity be) {
+            super(x, y, w, h);
+            this.state = state;
+            this.be = be;
+            setClientSideWidget();
+        }
+
+        private static String alertFor(MinerStatus status) {
+            if (status == null) {
+                return null;
+            }
+            return switch (status) {
+                case NO_POWER -> "no energy";
+                case OUTPUT_FULL -> "output full";
+                case MAX_MINERS -> "miner limit hit";
+                default -> null;
+            };
+        }
+
+        @Override
+        @Environment(EnvType.CLIENT)
+        public void drawInBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+            super.drawInBackground(graphics, mouseX, mouseY, partialTicks);
+            String text = alertFor(state.getStatus());
+            if (text == null) {
+                return;
+            }
+            long t = be.getLevel() != null ? be.getLevel().getGameTime() : System.currentTimeMillis() / 50L;
+            boolean visible = (t % 20) < 10;
+            if (!visible) {
+                return;
+            }
+            Font font = Minecraft.getInstance().font;
+            Position pos = getPosition();
+            int x = pos.x;
+            int y = pos.y + (getSize().height - font.lineHeight) / 2;
+            graphics.drawString(font, text, x, y, OasColors.ERROR, true);
+        }
     }
 
     private static IGuiTexture bevelPanelTexture(int fillColor, int outerBorder, int innerBorder) {
@@ -213,78 +252,9 @@ public final class MinerScreen {
         );
     }
 
-    private static IGuiTexture rockerTexture(boolean on) {
-        int plateFill = on ? OasColors.BG_3 : OasColors.BG_2;
-        int rockerFill = on ? 0xFF6C8AA9 : 0xFF33485E;
-        int lightAlpha = on ? 36 : 60;
-        int darkAlpha = on ? 70 : 44;
-        float tilt = on ? -2.5f : 2.5f;
-        return new GuiTextureGroup(
-                bevelPanelTexture(plateFill, OasColors.BORDER_STRONG, OasColors.BORDER),
-                new ColorRectTexture(OasColors.BG_1).scale(0.76f),
-                new ColorRectTexture(OasColors.withAlpha(0xFF000000, 70)).scale(0.62f).transform(1, tilt + 4),
-                new ColorRectTexture(rockerFill).scale(0.58f).transform(0, tilt),
-                new ColorRectTexture(OasColors.withAlpha(0xFFFFFFFF, lightAlpha)).scale(0.58f).transform(0, tilt - 4),
-                new ColorRectTexture(OasColors.withAlpha(0xFF000000, darkAlpha)).scale(0.58f).transform(0, tilt + 4)
-        );
-    }
-
-    private String uiNodeName() {
-        ResourceLocation id = be.getNodeTypeId();
-        if (id == null) {
-            return "None";
-        }
-        String path = id.getPath();
-        if (path.equals("air") || path.equals("idle")) {
-            return "None";
-        }
-        return titleCase(path);
-    }
-
-    private Component uiTitleComponent() {
-        return Component.empty()
-                .append(Component.literal("Miner ").withStyle(style -> style.withColor(OasColors.TEXT_PRIMARY)))
-                .append(Component.literal(uiTierSuffix()).withStyle(style -> style.withColor(OasColors.ACCENT_PRIMARY)));
-    }
-
-    private String uiTierSuffix() {
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(be.getBlockState().getBlock());
-        String path = id == null ? "mk1" : id.getPath();
-        int mkIndex = path.lastIndexOf("_mk");
-        if (mkIndex >= 0 && mkIndex + 1 < path.length()) {
-            return titleCase(path.substring(mkIndex + 1));
-        }
-        String[] tokens = path.split("_");
-        return tokens.length == 0 ? "Mk1" : titleCase(tokens[tokens.length - 1]);
-    }
-
-    private String uiPurityName() {
-        return titleCase(be.getNodePurity().name().toLowerCase(Locale.ROOT));
-    }
-
-    private String uiStatusStyled() {
-        return be.getStatus().styled();
-    }
-
-    private double uiEnergyRatio() {
-        double actual = Math.max(0.0, Math.min(1.0, (double) be.getEnergyStored() / (double) Math.max(1, be.getMaxEnergyStored())));
-        if (actual <= 0.0) {
-            return 0.0;
-        }
-        if (actual >= 1.0) {
-            return 1.0;
-        }
-        int filledPixels = Math.max(1, Math.min(ENERGY_BAR_PIXELS, (int) Math.ceil(actual * ENERGY_BAR_PIXELS)));
-        return filledPixels / (double) ENERGY_BAR_PIXELS;
-    }
-
-    private double uiProgress01() {
-        return Math.max(0.0, Math.min(1.0, be.getProgress()));
-    }
-
     private static String clip(String value, int maxChars) {
         if (value == null || value.isEmpty()) {
-            return "None";
+            return value;
         }
         if (value.length() <= maxChars) {
             return value;
@@ -295,9 +265,73 @@ public final class MinerScreen {
         return value.substring(0, maxChars - 2) + "..";
     }
 
+    private static String nodeName(MinerUIState state) {
+        ResourceLocation id = state.getNodeTypeId();
+        if (id == null) {
+            return "none";
+        }
+        String path = id.getPath();
+        if (path.equals("air") || path.equals("idle")) {
+            return "none";
+        }
+        return clip(titleCase(path).toLowerCase(Locale.ROOT), 16);
+    }
+
+    private static String qualityText(MinerUIState state) {
+        ResourceLocation id = state.getNodeTypeId();
+        if (id == null || id.getPath().equals("air") || id.getPath().equals("idle")) {
+            return "--";
+        }
+        return (int) state.getNodeQuality() + "%%";
+    }
+
+    private static String rateText(MinerUIState state) {
+        return String.format(Locale.ROOT, "%.1f/s", state.getRatePerSecond());
+    }
+
+    private static String progressText(MinerUIState state) {
+        return (int) Math.round(Math.max(0.0, Math.min(1.0, state.getDisplayProgress())) * 100) + "%%";
+    }
+
+    private double uiEnergySmooth(MinerUIState state) {
+        double target = energyRatio(state);
+        if (!initialSnapDone) {
+            smoothEnergy = target;
+            if (state.isSynced()) {
+                initialSnapDone = true;
+            }
+        } else {
+            smoothEnergy += (target - smoothEnergy) * 0.25;
+        }
+        return smoothEnergy;
+    }
+
+    private static int energyColor(MinerUIState state) {
+        double ratio = energyRatio(state);
+        if (ratio < 0.34) {
+            return OasColors.ERROR;
+        }
+        if (ratio < 0.67) {
+            return OasColors.WARNING;
+        }
+        return OasColors.SUCCESS;
+    }
+
+    private static double energyRatio(MinerUIState state) {
+        double actual = Math.max(0.0, Math.min(1.0, (double) state.getEnergyStored() / (double) Math.max(1, state.getMaxEnergy())));
+        if (actual <= 0.0) {
+            return 0.0;
+        }
+        if (actual >= 1.0) {
+            return 1.0;
+        }
+        int filledPixels = Math.max(1, Math.min(100, (int) Math.ceil(actual * 100)));
+        return filledPixels / 100.0;
+    }
+
     private static String titleCase(String raw) {
         if (raw == null || raw.isEmpty()) {
-            return "None";
+            return "none";
         }
         String[] parts = raw.replace('-', '_').split("_");
         StringBuilder out = new StringBuilder();
@@ -313,6 +347,6 @@ public final class MinerScreen {
                 out.append(part.substring(1));
             }
         }
-        return out.isEmpty() ? "None" : out.toString();
+        return out.isEmpty() ? "none" : out.toString();
     }
 }
