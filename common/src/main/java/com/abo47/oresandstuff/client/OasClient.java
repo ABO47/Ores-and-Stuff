@@ -298,7 +298,6 @@ public final class OasClient {
                 pose.translate(rx, ry, rz);
                 BioScanEntityOverlayRenderer.render(pose, partial, minecraft.renderBuffers().bufferSource(), target, pr);
                 pose.popPose();
-                BioScanVisualRenderer.render(pose, minecraft, target, rx, ry, rz, partial, pr, now, activeBioScan.startedMs, invView, invProj);
                 RenderSystem.depthMask(false);
             }
         }

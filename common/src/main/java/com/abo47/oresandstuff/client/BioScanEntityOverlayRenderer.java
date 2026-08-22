@@ -2,6 +2,7 @@ package com.abo47.oresandstuff.client;
 
 import org.joml.Matrix4f;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -33,9 +34,10 @@ final class BioScanEntityOverlayRenderer {
         if (BioScanRenderTypes.SCAN_ENTITY_SHADER.getUniform("ScanTime") != null) {
             BioScanRenderTypes.SCAN_ENTITY_SHADER.getUniform("ScanTime").set((System.currentTimeMillis() % 1000000L) / 1000.0f);
         }
-        Matrix4f modelViewMat = new Matrix4f(poseStack.last().pose());
+        Matrix4f invModelView = new Matrix4f(poseStack.last().pose()).invert();
+        invModelView.mul(new Matrix4f(RenderSystem.getModelViewMatrix()).invert());
         if (BioScanRenderTypes.SCAN_ENTITY_SHADER.getUniform("InverseModelViewMat") != null) {
-            BioScanRenderTypes.SCAN_ENTITY_SHADER.getUniform("InverseModelViewMat").set(modelViewMat.invert());
+            BioScanRenderTypes.SCAN_ENTITY_SHADER.getUniform("InverseModelViewMat").set(invModelView);
         }
         if (BioScanRenderTypes.SCAN_ENTITY_SHADER.getUniform("ColorModulator") != null) {
             BioScanRenderTypes.SCAN_ENTITY_SHADER.getUniform("ColorModulator").set(1f, 1f, 1f, 1f);
