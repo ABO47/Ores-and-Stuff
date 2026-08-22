@@ -1,10 +1,6 @@
 package com.abo47.oresandstuff.client;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import net.minecraft.core.BlockPos;
@@ -14,26 +10,12 @@ public final class ScannerFxTypes {
     private ScannerFxTypes() {
     }
 
-    public record LayerSpec(float radiusOffset, float bandThickness, float r, float g, float b, float alphaMul, float yOffset) {
-    }
-
-    public static final LayerSpec[] WAVE_LAYERS = new LayerSpec[] {
-            new LayerSpec(0f, 12f, 0.10f, 0.80f, 0.75f, 0.55f, 0.02f),
-            new LayerSpec(-1.0f, 5f, 0.15f, 0.95f, 0.90f, 0.90f, 0.03f),
-            new LayerSpec(-2.0f, 1.2f, 0.60f, 1.00f, 1.00f, 1.40f, 0.05f),
-            new LayerSpec(-2.5f, 0.4f, 0.95f, 1.00f, 1.00f, 1.80f, 0.06f),
-    };
-
     public static class ScanPulse {
         final double originX;
         final double originY;
         final double originZ;
         final long startMs;
         final long durationMs;
-        int cachedRadiusStep = Integer.MIN_VALUE;
-        final List<PulseTile> cachedTiles = new ArrayList<>();
-        final Map<Long, Long> columnHitTime = new HashMap<>();
-        final Map<Long, Float> alphaSmoothing = new HashMap<>();
         final Set<Long> pingedNodeKeys = new HashSet<>();
 
         public ScanPulse(double originX, double originY, double originZ, long durationMs) {
@@ -50,30 +32,6 @@ public final class ScannerFxTypes {
 
         boolean done(long now) {
             return now - startMs > (long) (durationMs * 1.2f);
-        }
-    }
-
-    public static class PulseTile {
-        final int dx;
-        final int dz;
-        final float y;
-        final float shell;
-        final float noise;
-        final float yNorth;
-        final float ySouth;
-        final float yEast;
-        final float yWest;
-
-        public PulseTile(int dx, int dz, float y, float shell, float noise, float yNorth, float ySouth, float yEast, float yWest) {
-            this.dx = dx;
-            this.dz = dz;
-            this.y = y;
-            this.shell = shell;
-            this.noise = noise;
-            this.yNorth = yNorth;
-            this.ySouth = ySouth;
-            this.yEast = yEast;
-            this.yWest = yWest;
         }
     }
 

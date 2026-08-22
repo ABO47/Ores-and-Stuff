@@ -132,10 +132,6 @@ public record OreNodeType(
         return best;
     }
 
-    public QualityTier tierFor(double quality) {
-        return qualityTiers.get(tierIndexFor(quality));
-    }
-
     /**
      * Rolls the output items for one extraction: every drop entry is an
      * independent chance (0-100%); each item that hits is produced.
