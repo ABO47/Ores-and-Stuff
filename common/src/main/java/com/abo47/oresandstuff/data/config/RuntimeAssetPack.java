@@ -73,7 +73,11 @@ public final class RuntimeAssetPack {
         }
         try {
             write(packRoot.resolve("assets/oresandstuff/blockstates/miner_" + id + ".json"),
-                    "{\"variants\":{\"\":{\"model\":\"oresandstuff:block/miner_" + id + "\"}}}");
+                    "{\"variants\":{"
+                            + "\"facing=north\":{\"model\":\"oresandstuff:block/miner_" + id + "\",\"y\":0},"
+                            + "\"facing=east\":{\"model\":\"oresandstuff:block/miner_" + id + "\",\"y\":90},"
+                            + "\"facing=south\":{\"model\":\"oresandstuff:block/miner_" + id + "\",\"y\":180},"
+                            + "\"facing=west\":{\"model\":\"oresandstuff:block/miner_" + id + "\",\"y\":270}}}");
 
             Path tierDir = minersFolder.resolve(id);
             Path modelSrc = tierDir.resolve("models").resolve(tier.model() + ".json");

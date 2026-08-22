@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -373,6 +374,16 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
 
     public IItemTransfer getOutputTransfer() {
         return output;
+    }
+
+    public void dropContents(Level lvl, BlockPos at) {
+        for (int slot = 0; slot < output.getSlots(); slot++) {
+            ItemStack stack = output.getStackInSlot(slot);
+            if (!stack.isEmpty()) {
+                Containers.dropItemStack(lvl, at.getX(), at.getY(), at.getZ(), stack);
+                output.setStackInSlot(slot, ItemStack.EMPTY);
+            }
+        }
     }
 
     public int getEnergyStored() {
