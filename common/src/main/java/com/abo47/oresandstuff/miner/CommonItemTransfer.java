@@ -102,6 +102,7 @@ public class CommonItemTransfer implements IItemTransfer {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void restoreFromSnapshot(Object snapshot) {
         stacks.clear();
         stacks.addAll((List<ItemStack>) snapshot);

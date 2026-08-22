@@ -77,7 +77,6 @@ public final class BioLibraryScreen {
     private static final int ROOT_H = 260;
 
     private static final class LibraryUi {
-        private final Player player;
         private final List<BioScanLibraryPacket.Entry> allEntries;
         private String selectedEntityId = "";
         private String previewEntityId = "";
@@ -101,7 +100,6 @@ public final class BioLibraryScreen {
         private String lastClickId = "";
 
         LibraryUi(Player player, List<BioScanLibraryPacket.Entry> entries) {
-            this.player = player;
             this.allEntries = new ArrayList<>(entries);
         }
 

@@ -39,7 +39,6 @@ public final class ManualNodeMiningHandler {
             return true;
         }
         int cooldown = spec.cooldownFor(node.getQualityPercent());
-        String key = "oresandstuff_node_mine_cd";
         if (now < PlayerScanState.mineCooldown((ServerPlayer) player)) {
             return true;
         }

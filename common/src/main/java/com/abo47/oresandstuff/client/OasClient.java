@@ -13,14 +13,16 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.core.Registry;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -29,18 +31,22 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
-import com.abo47.oresandstuff.client.OasShaders;
+import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.client.screen.BioLibraryScreen;
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
-import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.content.ModItems;
 import com.abo47.oresandstuff.content.ModSounds;
-import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.item.ScannerItem;
+import com.abo47.oresandstuff.miner.MinerBlockEntity;
 import com.abo47.oresandstuff.network.BioScanInfoPacket;
 import com.abo47.oresandstuff.network.BioScanLibraryPacket;
 import com.abo47.oresandstuff.network.NetworkChannels;
 import com.abo47.oresandstuff.network.ScannerResultPacket;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class OasClient {
     private OasClient() {
@@ -54,6 +60,11 @@ public final class OasClient {
     private static ActiveBioScan activeBioScan;
     private static boolean bioUseWasDown = false;
     private static final long BIO_SCAN_REPLY_TIMEOUT_MS = 1500L;
+
+    private static final Map<Long, MinerLoopSound> minerLoops = new HashMap<>();
+    private static long lastMinerLoopScanMs = 0;
+    private static final long MINER_LOOP_SCAN_INTERVAL_MS = 500;
+    private static final double MINER_LOOP_RANGE_SQ = 20.0 * 20.0;
 
     public static void init(Minecraft mc) {
         minecraft = mc;
@@ -116,6 +127,7 @@ public final class OasClient {
 
     public static void clientTick() {
         if (minecraft == null || minecraft.player == null) return;
+        updateMinerLoopSounds();
         if (OasKeyBindings.OPEN_SETTINGS.consumeClick() && minecraft.player != null) {
             if (minecraft.screen instanceof ModSettingsScreen.SettingsContainer) {
                 minecraft.setScreen(null);
@@ -232,6 +244,78 @@ public final class OasClient {
         }
     }
 
+    private static void updateMinerLoopSounds() {
+        if (minecraft == null || minecraft.level == null || minecraft.player == null) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now - lastMinerLoopScanMs < MINER_LOOP_SCAN_INTERVAL_MS) {
+            return;
+        }
+        lastMinerLoopScanMs = now;
+        Set<Long> lit = new HashSet<>();
+        LevelChunk center = minecraft.level.getChunkAt(minecraft.player.blockPosition());
+        for (int cx = -1; cx <= 1; cx++) {
+            for (int cz = -1; cz <= 1; cz++) {
+                LevelChunk chunk = minecraft.level.getChunk(center.getPos().x + cx, center.getPos().z + cz);
+                for (Map.Entry<BlockPos, net.minecraft.world.level.block.entity.BlockEntity> e : chunk.getBlockEntities().entrySet()) {
+                    if (!(e.getValue() instanceof MinerBlockEntity)) continue;
+                    BlockPos pos = e.getKey();
+                    double dx = pos.getX() + 0.5 - minecraft.player.getX();
+                    double dy = pos.getY() + 0.5 - minecraft.player.getY();
+                    double dz = pos.getZ() + 0.5 - minecraft.player.getZ();
+                    if (dx * dx + dy * dy + dz * dz > MINER_LOOP_RANGE_SQ) continue;
+                    if (minecraft.level.getBlockState(pos).getValue(MinerBlock.LIT)) {
+                        lit.add(pos.asLong());
+                    }
+                }
+            }
+        }
+        minerLoops.keySet().removeIf(key -> {
+            if (!lit.contains(key)) {
+                minerLoops.get(key).end();
+                return true;
+            }
+            return false;
+        });
+        for (Long key : lit) {
+            if (!minerLoops.containsKey(key)) {
+                MinerLoopSound sound = new MinerLoopSound(BlockPos.of(key));
+                minerLoops.put(key, sound);
+                minecraft.getSoundManager().play(sound);
+            }
+        }
+    }
+
+    private static final class MinerLoopSound extends AbstractTickableSoundInstance {
+        private final BlockPos pos;
+
+        MinerLoopSound(BlockPos pos) {
+            super(ModSounds.MINER_LOOP, SoundSource.BLOCKS, SoundInstance.createUnseededRandom());
+            this.pos = pos;
+            this.x = pos.getX() + 0.5;
+            this.y = pos.getY() + 0.5;
+            this.z = pos.getZ() + 0.5;
+            this.looping = true;
+            this.delay = 0;
+            this.volume = 1.0F;
+            this.pitch = 1.0F;
+        }
+
+        @Override
+        public void tick() {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.level == null || !(mc.level.getBlockState(pos).getBlock() instanceof MinerBlock)
+                    || !mc.level.getBlockState(pos).getValue(MinerBlock.LIT)) {
+                stop();
+            }
+        }
+
+        void end() {
+            stop();
+        }
+    }
+
     private static EntityHitResult findBioTarget() {
         if (minecraft == null || minecraft.player == null || minecraft.level == null) return null;
         Vec3 eye = minecraft.player.getEyePosition();
@@ -250,7 +334,6 @@ public final class OasClient {
         if (pulses.isEmpty() && NodeClusterTracker.activeFlashes().isEmpty() && activeBioScan == null) return;
 
         Vec3 cameraPos = minecraft.gameRenderer.getMainCamera().getPosition();
-        Vec3 cameraLook = minecraft.player.getLookAngle().normalize();
         pose.pushPose();
         pose.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
         Matrix4f invView = new Matrix4f(pose.last().pose()).invert();

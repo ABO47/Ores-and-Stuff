@@ -2,7 +2,6 @@ package com.abo47.oresandstuff.client.ui.widget;
 
 import net.minecraft.world.entity.player.Inventory;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 

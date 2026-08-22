@@ -13,7 +13,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 

@@ -3,8 +3,6 @@ package com.abo47.oresandstuff.content;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 
-import com.abo47.oresandstuff.block.InfiniteBatteryBlock;
-import com.abo47.oresandstuff.block.OreNodeBlock;
 import com.abo47.oresandstuff.item.BioScannerItem;
 import com.abo47.oresandstuff.item.ScannerItem;
 

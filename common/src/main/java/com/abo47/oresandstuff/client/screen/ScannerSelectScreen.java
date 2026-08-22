@@ -22,7 +22,6 @@ import net.minecraft.world.item.Items;
 
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
-import com.abo47.oresandstuff.network.NetworkChannels;
 import com.abo47.oresandstuff.node.OreNodeType;
 
 /**
@@ -122,7 +121,6 @@ public class ScannerSelectScreen extends Screen {
     private void select(int idx) {
         Entry entry = entries.get(idx);
         scannerStack.getOrCreateTag().putString("SelectedType", entry.id().toString());
-        NetworkChannels.sendScannerRequest(entry.id());
         Minecraft.getInstance().setScreen(null);
     }
 
@@ -237,15 +235,6 @@ public class ScannerSelectScreen extends Screen {
         consumer.vertex(mat.pose(), cx, cy, 0.0F).color(red, green, blue, alpha).endVertex();
         consumer.vertex(mat.pose(), x0, y0, 0.0F).color(red, green, blue, alpha).endVertex();
         consumer.vertex(mat.pose(), x1, y1, 0.0F).color(red, green, blue, alpha).endVertex();
-    }
-
-    private static void quad(VertexConsumer consumer, PoseStack.Pose mat, float ax, float ay, float bx, float by, float cx0, float cy0, float dx0, float dy0, int red, int green, int blue, int alpha) {
-        consumer.vertex(mat.pose(), ax, ay, 0.0F).color(red, green, blue, alpha).endVertex();
-        consumer.vertex(mat.pose(), bx, by, 0.0F).color(red, green, blue, alpha).endVertex();
-        consumer.vertex(mat.pose(), cx0, cy0, 0.0F).color(red, green, blue, alpha).endVertex();
-        consumer.vertex(mat.pose(), ax, ay, 0.0F).color(red, green, blue, alpha).endVertex();
-        consumer.vertex(mat.pose(), cx0, cy0, 0.0F).color(red, green, blue, alpha).endVertex();
-        consumer.vertex(mat.pose(), dx0, dy0, 0.0F).color(red, green, blue, alpha).endVertex();
     }
 
     private int sliceIndexAt(double mouseX, double mouseY) {

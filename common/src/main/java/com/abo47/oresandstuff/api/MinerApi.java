@@ -6,9 +6,7 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
-import com.abo47.oresandstuff.data.config.MinerTierConfig;
 import com.abo47.oresandstuff.miner.MinerBlockEntity;
-import com.abo47.oresandstuff.miner.MinerStatus;
 
 /**
  * Server-side helpers to query miner blocks. Each handle wraps the live

@@ -7,7 +7,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -22,7 +21,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.api.MinerExtractEvent;
 import com.abo47.oresandstuff.api.MinerHandle;
@@ -31,7 +29,6 @@ import com.abo47.oresandstuff.api.OreNodeHandle;
 import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.client.miner.MinerScreen;
 import com.abo47.oresandstuff.content.ModBlockEntities;
-import com.abo47.oresandstuff.content.ModSounds;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.data.config.MinerTierConfig;
 import com.abo47.oresandstuff.energy.EnergyStorage;
@@ -39,7 +36,6 @@ import com.abo47.oresandstuff.energy.SimpleEnergyStorage;
 import com.abo47.oresandstuff.node.ExtractionRateService;
 import com.abo47.oresandstuff.node.NodeQuality;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
-import com.abo47.oresandstuff.node.OreNodeType;
 import com.abo47.oresandstuff.platform.Services;
 
 public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEntityUI {
@@ -60,7 +56,6 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
     // Caches to avoid per-tick 19³ BE scans (I HOPE IT WORKS)
     private static final int MINER_LIMIT_CACHE_TICKS = 20;
     private static final int NODE_CACHE_TICKS = 10;
-    private static final int SOUND_INTERVAL_TICKS = 80;
     private long lastMinerLimitCheckTick = Long.MIN_VALUE;
     private UUID lastLimitNodeId;
     private boolean lastLimitResult;
@@ -159,9 +154,6 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
 
         double ratePerTick = ExtractionRateService.minerItemsPerSecond(node, tier.rateMultiplier()) / 20.0;
         status = MinerStatus.RUNNING;
-        if (level.getGameTime() % SOUND_INTERVAL_TICKS == 0) {
-            level.playSound(null, worldPosition, ModSounds.MINER_LOOP, SoundSource.BLOCKS, 1.0F, 1.0F);
-        }
 
         int cycleTicks = (int) Math.min(60.0, Math.max(4.0, Math.round(20.0 / ratePerTick)));
         float step = 1.0F / cycleTicks;
@@ -175,7 +167,6 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
         }
 
         displayProgress += step;
-        boolean produced = false;
         if (displayProgress >= 1.0F) {
             displayProgress -= 1.0F;
             java.util.List<ItemStack> batch = new java.util.ArrayList<>();
@@ -184,7 +175,6 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
             }
             if (output.canFitAll(batch)) {
                 output.insertAll(batch);
-                produced = true;
                 if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
                     MiningEvents.fire(new MinerExtractEvent(serverLevel,
                             new MinerHandle(this),

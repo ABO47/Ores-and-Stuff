@@ -24,17 +24,12 @@ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
 import com.lowdragmc.lowdraglib.utils.Position;
 
-import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
-import com.abo47.oresandstuff.client.ui.render.GradientRectTexture;
 import com.abo47.oresandstuff.client.ui.render.EnergyBarTexture;
 import com.abo47.oresandstuff.client.ui.widget.PlayerInventoryWidget;
-import com.abo47.oresandstuff.data.OreNodeDataManager;
-import com.abo47.oresandstuff.data.config.MinerTierConfig;
 import com.abo47.oresandstuff.miner.CommonItemTransfer;
 import com.abo47.oresandstuff.miner.MinerBlockEntity;
 import com.abo47.oresandstuff.miner.MinerStatus;
-import com.abo47.oresandstuff.node.OreNodeType;
 
 public final class MinerScreen {
     private static final int UI_W = 221;

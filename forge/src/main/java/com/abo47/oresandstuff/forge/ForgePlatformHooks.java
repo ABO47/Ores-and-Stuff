@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -15,8 +14,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-
-import com.lowdragmc.lowdraglib.side.item.forge.ItemTransferHelperImpl;
 
 import com.abo47.oresandstuff.OresAndStuffMod;
 import com.abo47.oresandstuff.client.OasClient;
@@ -37,7 +34,6 @@ import com.abo47.oresandstuff.platform.PlatformHooks;
 import com.abo47.oresandstuff.world.ManualNodeMiningHandler;
 import com.abo47.oresandstuff.world.NodeProtectionHandler;
 
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;

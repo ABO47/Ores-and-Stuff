@@ -1,7 +1,5 @@
 package com.abo47.oresandstuff.client;
 
-import java.util.Optional;
-
 import org.joml.Matrix4f;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;

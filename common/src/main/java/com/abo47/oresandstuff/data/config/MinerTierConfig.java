@@ -166,14 +166,6 @@ public final class MinerTierConfig {
         }
     }
 
-    private static String defaultMk1Json() {
-        return tierJson(DEFAULT_TIERS.get(0));
-    }
-
-    private static MinerTier defaultMk1() {
-        return DEFAULT_TIERS.get(0);
-    }
-
     private static String tierJson(MinerTier tier) {
         JsonObject root = new JsonObject();
         root.addProperty("id", tier.id());

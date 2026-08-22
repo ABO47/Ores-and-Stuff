@@ -4,8 +4,6 @@ import net.minecraft.resources.ResourceLocation;
 
 import com.lowdragmc.lowdraglib.networking.LDLNetworking;
 
-import com.abo47.oresandstuff.OresAndStuffMod;
-
 public final class NetworkChannels {
     private NetworkChannels() {
     }
