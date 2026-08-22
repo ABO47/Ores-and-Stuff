@@ -49,6 +49,8 @@ public final class ModSettingsScreen {
     private static final int HEADER_LIST_GAP = GRID_5;
     private static final int BOTTOM_GUTTER = GRID_5;
     private static final int LIST_V_PAD = GRID_4;
+    private static final int LIST_PAD_X = GRID_4;
+    private static final int LIST_GAP = GRID_8;
     private static final int ROW_H = ROW_H_26;
     private static final int ROW_INSET = GRID_4;
     private static final int SWITCH_GAP = GRID_8;
@@ -234,7 +236,9 @@ public final class ModSettingsScreen {
             int maxStart = Math.max(0, entries.size() - rows);
             scrollValue = ScrollMath.clamp(scrollValue, maxStart);
             boolean showScroll = maxStart > 0;
-            int rowW = showScroll ? w - DragScrollBarWidget.RESERVED_WIDTH - GRID_8 : w;
+            int rowW = showScroll
+                    ? w - LIST_PAD_X * 2 - LIST_GAP - DragScrollBarWidget.RESERVED_WIDTH
+                    : w - LIST_PAD_X * 2;
 
             WidgetGroup list = new WidgetGroup(0, 0, w, h) {
                 @Override
@@ -254,18 +258,21 @@ public final class ModSettingsScreen {
             };
             panel.addWidget(list);
 
+            WidgetGroup rowsGroup = new WidgetGroup(LIST_PAD_X, 0, rowW, h);
+            list.addWidget(rowsGroup);
+
             int end = Math.min(entries.size(), scroll.value() + rows);
             int rowY = LIST_V_PAD;
             for (int i = scroll.value(); i < end; i++) {
-                renderRow(list, entries.get(i), rowY, rowW);
+                renderRow(rowsGroup, entries.get(i), rowY, rowW);
                 rowY += ROW_H;
             }
             if (showScroll) {
                 int barH = Math.max(1, rows * ROW_H);
                 int knobH = Math.max(12, Math.round((float) rows / (float) entries.size() * barH));
-                int barX = w - DragScrollBarWidget.RESERVED_WIDTH;
+                int barX = w - LIST_PAD_X - DragScrollBarWidget.RESERVED_WIDTH;
                 panel.addWidget(new DragScrollBarWidget(
-                        barX + 1,
+                        barX,
                         LIST_V_PAD,
                         DragScrollBarWidget.RESERVED_WIDTH,
                         barH,
@@ -275,8 +282,7 @@ public final class ModSettingsScreen {
                         scroll::setValue,
                         scroll::dragging,
                         scroll::setDragging,
-                        refresh,
-                        DragScrollBarWidget.WIDTH
+                        refresh
                 ));
             }
         }
