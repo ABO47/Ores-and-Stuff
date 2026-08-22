@@ -16,7 +16,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
@@ -70,14 +69,14 @@ public class ScannerItem extends Item {
 
     @Override
     public Component getName(ItemStack stack) {
-        Mode mode = getMode(stack);
-        return Component.translatable(mode == Mode.BIO ? "item.oresandstuff.bio_scanner" : "item.oresandstuff.scanner");
+        return Component.translatable("item.oresandstuff.scanner");
     }
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         Mode mode = getMode(stack);
-        tooltip.add(Component.translatable(mode == Mode.BIO ? "item.oresandstuff.bio_scanner" : "item.oresandstuff.scanner").withStyle(s -> s.withColor(0xFF8B98A8)));
+        Component modeName = Component.translatable(mode == Mode.BIO ? "item.oresandstuff.bio_scanner" : "item.oresandstuff.resource_scanner");
+        tooltip.add(Component.translatable("item.oresandstuff.scanner.mode", modeName).withStyle(s -> s.withColor(0xFF8B98A8)));
         tooltip.add(Component.translatable("key.oresandstuff.switch_scanner_mode").withStyle(s -> s.withColor(0xFF6BA8FF)));
         super.appendHoverText(stack, level, tooltip, flag);
     }
@@ -97,8 +96,9 @@ public class ScannerItem extends Item {
                 // return sidedSuccess to avoid starting use
                 return InteractionResultHolder.sidedSuccess(stack, true);
             }
-            player.startUsingItem(hand);
-            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+            // scan progress is driven by OasClient key polling; pass silently here so vanilla's
+            // held-use loop never replays the use animation during long scans
+            return InteractionResultHolder.pass(stack);
         } else {
             if (player.getCooldowns().isOnCooldown(this)) {
                 return InteractionResultHolder.fail(stack);
@@ -122,16 +122,6 @@ public class ScannerItem extends Item {
             }
             return InteractionResultHolder.sidedSuccess(stack, true);
         }
-    }
-
-    @Override
-    public int getUseDuration(ItemStack stack) {
-        return getMode(stack) == Mode.BIO ? 72000 : 0;
-    }
-
-    @Override
-    public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.NONE;
     }
 
     public static ResourceLocation getSelectedType(ItemStack stack) {
