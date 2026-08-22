@@ -81,6 +81,22 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
     }
 
     public void tickServer() {
+        tickServerInner();
+        updateLitState();
+    }
+
+    private void updateLitState() {
+        if (level == null || level.isClientSide || isRemoved()) {
+            return;
+        }
+        boolean lit = status == MinerStatus.RUNNING;
+        BlockState state = getBlockState();
+        if (state.getBlock() instanceof MinerBlock && state.getValue(MinerBlock.LIT) != lit) {
+            level.setBlock(worldPosition, state.setValue(MinerBlock.LIT, lit), 3);
+        }
+    }
+
+    private void tickServerInner() {
         if (level == null || level.isClientSide) {
             return;
         }

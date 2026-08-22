@@ -27,7 +27,9 @@ public final class ModContent {
 
     public static Block minerBlock(String tierId) {
         MinerTierConfig.ensureLoaded();
-        return MINER_BLOCKS.computeIfAbsent(tierId, id -> new MinerBlock(BlockBehaviour.Properties.of().strength(3.0F).requiresCorrectToolForDrops().sound(SoundType.METAL)));
+        return MINER_BLOCKS.computeIfAbsent(tierId, id -> new MinerBlock(BlockBehaviour.Properties.of()
+                .strength(3.0F).requiresCorrectToolForDrops().sound(SoundType.METAL)
+                .lightLevel(state -> state.getValue(MinerBlock.LIT) ? 13 : 0)));
     }
 
     public static Item minerItem(String tierId) {

@@ -66,6 +66,18 @@ public final class RuntimeAssetPack {
         }
     }
 
+    private static String minerBlockstateJson(String model) {
+        return "{\"variants\":{"
+                + "\"facing=north,lit=false\":{\"model\":\"" + model + "\",\"y\":0},"
+                + "\"facing=east,lit=false\":{\"model\":\"" + model + "\",\"y\":90},"
+                + "\"facing=south,lit=false\":{\"model\":\"" + model + "\",\"y\":180},"
+                + "\"facing=west,lit=false\":{\"model\":\"" + model + "\",\"y\":270},"
+                + "\"facing=north,lit=true\":{\"model\":\"" + model + "\",\"y\":0},"
+                + "\"facing=east,lit=true\":{\"model\":\"" + model + "\",\"y\":90},"
+                + "\"facing=south,lit=true\":{\"model\":\"" + model + "\",\"y\":180},"
+                + "\"facing=west,lit=true\":{\"model\":\"" + model + "\",\"y\":270}}}";
+    }
+
     private static void generateMinerAssets(Path packRoot, Path minersFolder, MinerTierConfig.MinerTier tier) {
         String id = tier.id();
         if ("mk1".equals(id)) {
@@ -73,11 +85,7 @@ public final class RuntimeAssetPack {
         }
         try {
             write(packRoot.resolve("assets/oresandstuff/blockstates/miner_" + id + ".json"),
-                    "{\"variants\":{"
-                            + "\"facing=north\":{\"model\":\"oresandstuff:block/miner_" + id + "\",\"y\":0},"
-                            + "\"facing=east\":{\"model\":\"oresandstuff:block/miner_" + id + "\",\"y\":90},"
-                            + "\"facing=south\":{\"model\":\"oresandstuff:block/miner_" + id + "\",\"y\":180},"
-                            + "\"facing=west\":{\"model\":\"oresandstuff:block/miner_" + id + "\",\"y\":270}}}");
+                    minerBlockstateJson("oresandstuff:block/miner_" + id));
 
             Path tierDir = minersFolder.resolve(id);
             Path modelSrc = tierDir.resolve("models").resolve(tier.model() + ".json");
