@@ -202,7 +202,16 @@ public final class OreNodeDataManager {
                 if (visual == null) {
                     visual = new ResourceLocation("minecraft", id.getPath() + "_ore");
                 }
-                tiers.add(new OreNodeType.QualityTier(min, max, nodeModel, visual));
+                List<ResourceLocation> tierDimensions = new ArrayList<>();
+                if (o.has("dimensions") && o.get("dimensions").isJsonArray()) {
+                    for (com.google.gson.JsonElement dimElement : o.getAsJsonArray("dimensions")) {
+                        ResourceLocation dim = ResourceLocation.tryParse(dimElement.getAsString());
+                        if (dim != null && !tierDimensions.contains(dim)) {
+                            tierDimensions.add(dim);
+                        }
+                    }
+                }
+                tiers.add(new OreNodeType.QualityTier(min, max, nodeModel, visual, tierDimensions));
             }
         }
         if (tiers.isEmpty()) {
@@ -212,7 +221,8 @@ public final class OreNodeDataManager {
                     ? root.get("visual_block").getAsString() : "minecraft:" + id.getPath() + "_ore");
             tiers.add(new OreNodeType.QualityTier(qualityMin, qualityMax,
                     nodeModel != null ? nodeModel : new ResourceLocation("minecraft", "block/stone"),
-                    visual != null ? visual : new ResourceLocation("minecraft", id.getPath() + "_ore")));
+                    visual != null ? visual : new ResourceLocation("minecraft", id.getPath() + "_ore"),
+                    List.of()));
         }
         return tiers;
     }

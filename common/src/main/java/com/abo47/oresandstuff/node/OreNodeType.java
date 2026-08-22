@@ -120,7 +120,8 @@ public record OreNodeType(
 
     /**
      * Index of the visual tier covering the given quality percentage, or the
-     * last tier with a lower bound below it (first tier if none).
+     * last tier with a lower bound below it (first tier if none). Dimension
+     * specific tiers are ignored.
      */
     public int tierIndexFor(double quality) {
         int best = 0;
@@ -130,6 +131,22 @@ public record OreNodeType(
             }
         }
         return best;
+    }
+
+    /**
+     * Like {@link #tierIndexFor(double)} but prefers tiers restricted to the
+     * given dimension. Falls back to any covering tier when the dimension has
+     * no dedicated look for this quality.
+     */
+    public int tierIndexFor(double quality, ResourceLocation dimension) {
+        int best = -1;
+        for (int i = 0; i < qualityTiers.size(); i++) {
+            OreNodeType.QualityTier tier = qualityTiers.get(i);
+            if (quality >= tier.min() && tier.matchesDimension(dimension)) {
+                best = i;
+            }
+        }
+        return best >= 0 ? best : tierIndexFor(quality);
     }
 
     /**
@@ -165,9 +182,14 @@ public record OreNodeType(
      * Visual tier: the quality range (in percent) a node must roll within to
      * use this look. nodeBlock is the block the main node blocks mimic
      * (rendered via its model), visualBlock is the ore block used as the
-     * decoration around the cluster.
+     * decoration around the cluster. dimensions optionally restricts the tier
+     * to specific dimensions (empty = every dimension).
      */
-    public record QualityTier(double min, double max, ResourceLocation nodeBlockModel, ResourceLocation visualBlock) {
+    public record QualityTier(double min, double max, ResourceLocation nodeBlockModel, ResourceLocation visualBlock,
+                              List<ResourceLocation> dimensions) {
+        public boolean matchesDimension(ResourceLocation dimension) {
+            return dimension == null || dimensions == null || dimensions.isEmpty() || dimensions.contains(dimension);
+        }
     }
 
     public record BiomeOverride(Integer minNodesPerChunk, Integer maxNodesPerChunk, Integer clusterRadius,

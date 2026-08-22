@@ -156,7 +156,8 @@ public final class OreNodeFeature extends Feature<NoneFeatureConfiguration> {
 
     private void placeCluster(WorldGenLevel level, BlockPos center, OreNodeType type, double quality, RandomSource random, int scatterCount, int radius, boolean surfaceSpawn) {
         ResourceLocation typeId = type.id();
-        int tierIndex = type.tierIndexFor(quality);
+        ResourceLocation dimension = level.getLevel().dimension().location();
+        int tierIndex = type.tierIndexFor(quality, dimension);
         OreNodeType.QualityTier tier = type.qualityTiers().get(tierIndex);
         Block nodeBlock = ModNodeBlocks.get(typeId, tierIndex);
         Block visualBlock = BuiltInRegistries.BLOCK.get(tier.visualBlock());
