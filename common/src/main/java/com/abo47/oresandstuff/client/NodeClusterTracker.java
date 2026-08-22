@@ -10,12 +10,12 @@ import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.Block;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.block.OreNodeBlock;
+import com.abo47.oresandstuff.content.ModSounds;
 import com.abo47.oresandstuff.node.NodeVisuals;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
 
@@ -70,7 +70,7 @@ final class NodeClusterTracker {
                     var sc = OresAndStuffConfig.scanner();
                     if (sc.scanSoundEnabled && minecraft.player != null && minecraft.level != null) {
                         minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(),
-                                SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, (float) sc.scanSoundVolume, (float) sc.scanSoundPitch, false);
+                                ModSounds.SCANNER_NODE_PING, SoundSource.PLAYERS, (float) sc.scanSoundVolume, (float) sc.scanSoundPitch, false);
                     }
                 }
             }

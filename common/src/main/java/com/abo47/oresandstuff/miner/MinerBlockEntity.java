@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,6 +31,7 @@ import com.abo47.oresandstuff.api.OreNodeHandle;
 import com.abo47.oresandstuff.block.MinerBlock;
 import com.abo47.oresandstuff.client.miner.MinerScreen;
 import com.abo47.oresandstuff.content.ModBlockEntities;
+import com.abo47.oresandstuff.content.ModSounds;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.data.config.MinerTierConfig;
 import com.abo47.oresandstuff.energy.EnergyStorage;
@@ -58,6 +60,7 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
     // Caches to avoid per-tick 19³ BE scans (I HOPE IT WORKS)
     private static final int MINER_LIMIT_CACHE_TICKS = 20;
     private static final int NODE_CACHE_TICKS = 10;
+    private static final int SOUND_INTERVAL_TICKS = 80;
     private long lastMinerLimitCheckTick = Long.MIN_VALUE;
     private UUID lastLimitNodeId;
     private boolean lastLimitResult;
@@ -156,6 +159,9 @@ public class MinerBlockEntity extends BlockEntity implements IUIHolder.BlockEnti
 
         double ratePerTick = ExtractionRateService.minerItemsPerSecond(node, tier.rateMultiplier()) / 20.0;
         status = MinerStatus.RUNNING;
+        if (level.getGameTime() % SOUND_INTERVAL_TICKS == 0) {
+            level.playSound(null, worldPosition, ModSounds.MINER_LOOP, SoundSource.BLOCKS, 1.0F, 1.0F);
+        }
 
         int cycleTicks = (int) Math.min(60.0, Math.max(4.0, Math.round(20.0 / ratePerTick)));
         float step = 1.0F / cycleTicks;

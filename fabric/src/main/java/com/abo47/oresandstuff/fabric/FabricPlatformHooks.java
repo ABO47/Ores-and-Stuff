@@ -14,6 +14,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.PreparableReloadListener.PreparationBarrier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.Level;
@@ -27,6 +28,7 @@ import com.abo47.oresandstuff.content.ModBlockEntities;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.content.ModContent;
 import com.abo47.oresandstuff.content.ModNodeBlocks;
+import com.abo47.oresandstuff.content.ModSounds;
 import com.abo47.oresandstuff.miner.InfiniteBatteryBlockEntity;
 import com.abo47.oresandstuff.miner.MinerBlockEntity;
 import com.abo47.oresandstuff.network.NetworkChannels;
@@ -75,6 +77,21 @@ public final class FabricPlatformHooks implements PlatformHooks {
         ModBlockEntities.INFINITE_BATTERY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
                 new ResourceLocation(OresAndStuffMod.MOD_ID, "infinite_battery"),
                 BlockEntityType.Builder.of(InfiniteBatteryBlockEntity::new, ModBlocks.INFINITE_BATTERY).build(null));
+        ResourceLocation minerLoopId = new ResourceLocation(OresAndStuffMod.MOD_ID, "block.miner_loop");
+        ModSounds.MINER_LOOP = Registry.register(BuiltInRegistries.SOUND_EVENT, minerLoopId,
+                SoundEvent.createVariableRangeEvent(minerLoopId));
+        ModSounds.SCANNER_SWEEP = Registry.register(BuiltInRegistries.SOUND_EVENT,
+                new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_sweep"),
+                SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_sweep")));
+        ModSounds.SCANNER_NODE_PING = Registry.register(BuiltInRegistries.SOUND_EVENT,
+                new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_node_ping"),
+                SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_node_ping")));
+        ModSounds.BIO_SCAN_TICK = Registry.register(BuiltInRegistries.SOUND_EVENT,
+                new ResourceLocation(OresAndStuffMod.MOD_ID, "item.bio_scan_tick"),
+                SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.bio_scan_tick")));
+        ModSounds.BIO_SCAN_COMPLETE = Registry.register(BuiltInRegistries.SOUND_EVENT,
+                new ResourceLocation(OresAndStuffMod.MOD_ID, "item.bio_scan_complete"),
+                SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.bio_scan_complete")));
     }
 
     @Override

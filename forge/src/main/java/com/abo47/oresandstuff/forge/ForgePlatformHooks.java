@@ -11,6 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -25,6 +26,7 @@ import com.abo47.oresandstuff.content.ModBlockEntities;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.content.ModContent;
 import com.abo47.oresandstuff.content.ModNodeBlocks;
+import com.abo47.oresandstuff.content.ModSounds;
 import com.abo47.oresandstuff.data.config.MinerTierConfig;
 import com.abo47.oresandstuff.energy.EnergyStorage;
 import com.abo47.oresandstuff.miner.InfiniteBatteryBlockEntity;
@@ -62,6 +64,13 @@ public final class ForgePlatformHooks implements PlatformHooks {
     private final RegistryObject<BlockEntityType<?>> miner;
     private final RegistryObject<BlockEntityType<?>> infiniteBattery;
 
+    private final DeferredRegister<SoundEvent> soundEvents;
+    private final RegistryObject<SoundEvent> minerLoop;
+    private final RegistryObject<SoundEvent> scannerSweep;
+    private final RegistryObject<SoundEvent> scannerNodePing;
+    private final RegistryObject<SoundEvent> bioScanTick;
+    private final RegistryObject<SoundEvent> bioScanComplete;
+
     private final List<SimpleJsonResourceReloadListener> reloadListeners = new ArrayList<>();
 
     public ForgePlatformHooks() {
@@ -71,8 +80,20 @@ public final class ForgePlatformHooks implements PlatformHooks {
         oreNode = beTypes.register("ore_node", () -> BlockEntityType.Builder.of(OreNodeBlockEntity::new, ModNodeBlocks.allArray()).build(null));
         miner = beTypes.register("miner", () -> BlockEntityType.Builder.of(MinerBlockEntity::new, ModContent.minerBlocksArray()).build(null));
         infiniteBattery = beTypes.register("infinite_battery", () -> BlockEntityType.Builder.of(InfiniteBatteryBlockEntity::new, ModBlocks.INFINITE_BATTERY).build(null));
+        soundEvents = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, OresAndStuffMod.MOD_ID);
+        minerLoop = soundEvents.register("block.miner_loop",
+                () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "block.miner_loop")));
+        scannerSweep = soundEvents.register("item.scanner_sweep",
+                () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_sweep")));
+        scannerNodePing = soundEvents.register("item.scanner_node_ping",
+                () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_node_ping")));
+        bioScanTick = soundEvents.register("item.bio_scan_tick",
+                () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.bio_scan_tick")));
+        bioScanComplete = soundEvents.register("item.bio_scan_complete",
+                () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.bio_scan_complete")));
         MinecraftForge.EVENT_BUS.addListener(this::onAddReloadListeners);
         beTypes.register(FMLJavaModLoadingContext.get().getModEventBus());
+        soundEvents.register(FMLJavaModLoadingContext.get().getModEventBus());
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onRegisterShaders);
     }
 
@@ -146,6 +167,11 @@ public final class ForgePlatformHooks implements PlatformHooks {
         ModBlockEntities.ORE_NODE = (BlockEntityType<OreNodeBlockEntity>) oreNode.get();
         ModBlockEntities.MINER = (BlockEntityType<MinerBlockEntity>) miner.get();
         ModBlockEntities.INFINITE_BATTERY = (BlockEntityType<InfiniteBatteryBlockEntity>) infiniteBattery.get();
+        ModSounds.MINER_LOOP = minerLoop.get();
+        ModSounds.SCANNER_SWEEP = scannerSweep.get();
+        ModSounds.SCANNER_NODE_PING = scannerNodePing.get();
+        ModSounds.BIO_SCAN_TICK = bioScanTick.get();
+        ModSounds.BIO_SCAN_COMPLETE = bioScanComplete.get();
     }
 
     @Override

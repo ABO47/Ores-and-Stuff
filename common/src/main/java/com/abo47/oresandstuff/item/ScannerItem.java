@@ -9,6 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -20,6 +21,7 @@ import net.minecraft.world.level.Level;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.client.screen.ScannerSelectScreen;
+import com.abo47.oresandstuff.content.ModSounds;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.network.NetworkChannels;
 import com.abo47.oresandstuff.network.NetworkServices;
@@ -111,6 +113,10 @@ public class ScannerItem extends Item {
                 return InteractionResultHolder.success(stack);
             }
             NetworkChannels.sendScannerRequest(getSelectedType(stack));
+            var scanCfg = OresAndStuffConfig.scanner();
+            if (scanCfg.scanSoundEnabled) {
+                level.playLocalSound(player.getX(), player.getY(), player.getZ(), ModSounds.SCANNER_SWEEP, SoundSource.PLAYERS, (float) scanCfg.scanSoundVolume, (float) scanCfg.scanSoundPitch, false);
+            }
             if (OresAndStuffConfig.scanner().cooldownTicks > 0) {
                 player.getCooldowns().addCooldown(this, OresAndStuffConfig.scanner().cooldownTicks);
             }

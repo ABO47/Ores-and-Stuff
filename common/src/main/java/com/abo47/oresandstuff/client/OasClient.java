@@ -15,8 +15,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -36,6 +34,7 @@ import com.abo47.oresandstuff.client.screen.BioLibraryScreen;
 import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 import com.abo47.oresandstuff.content.ModBlocks;
 import com.abo47.oresandstuff.content.ModItems;
+import com.abo47.oresandstuff.content.ModSounds;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.item.ScannerItem;
 import com.abo47.oresandstuff.network.BioScanInfoPacket;
@@ -75,14 +74,6 @@ public final class OasClient {
         pulses.clear();
         var scannerCfg = OresAndStuffConfig.scanner();
         pulses.add(new ScannerFxTypes.ScanPulse(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), scannerCfg.pulseDurationMs));
-        playConfigSound(SoundEvents.BEACON_POWER_SELECT, scannerCfg.scanSoundEnabled, scannerCfg.scanSoundVolume, scannerCfg.scanSoundPitch);
-    }
-
-    private static void playConfigSound(SoundEvent event, boolean enabled, double volume, double pitch) {
-        if (!enabled || minecraft == null || minecraft.player == null || minecraft.level == null) {
-            return;
-        }
-        minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), event, SoundSource.PLAYERS, (float) volume, (float) pitch, false);
     }
 
     public static void onBioScanInfo(BioScanInfoPacket packet) {
@@ -90,6 +81,11 @@ public final class OasClient {
         if (!activeBioScan.requestSent || activeBioScan.completed) return;
         activeBioScan.completed = true;
         activeBioScan.progress01 = 1f;
+        var sc = OresAndStuffConfig.scanner();
+        if (sc.pingSoundEnabled && minecraft.player != null && minecraft.level != null) {
+            minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(),
+                    ModSounds.BIO_SCAN_COMPLETE, SoundSource.PLAYERS, (float) sc.pingSoundVolume, 1.0F, false);
+        }
     }
 
     public static void onBioScanLibrary(BioScanLibraryPacket packet) {
@@ -133,8 +129,6 @@ public final class OasClient {
                 ScannerItem.Mode newMode = ScannerItem.toggleMode(held);
                 NetworkChannels.sendScannerModeToggle();
                 minecraft.gui.setOverlayMessage(Component.translatable(newMode == ScannerItem.Mode.BIO ? "item.oresandstuff.bio_scanner" : "item.oresandstuff.scanner"), false);
-                var scCfg = OresAndStuffConfig.scanner();
-                playConfigSound(SoundEvents.BEACON_POWER_SELECT, scCfg.scanSoundEnabled, scCfg.scanSoundVolume, scCfg.scanSoundPitch);
             }
         }
         boolean oreScannerHeld = holdingOreScanner();
@@ -200,6 +194,15 @@ public final class OasClient {
             float rate = dtMs / (float) activeBioScan.durationMs;
             if (stableLock) {
                 activeBioScan.progress01 = Mth.clamp(activeBioScan.progress01 + rate, 0f, 1f);
+                if (activeBioScan.progress01 < 1f && now - activeBioScan.lastTickMs >= 220) {
+                    activeBioScan.lastTickMs = now;
+                    var bioCfg = OresAndStuffConfig.scanner();
+                    if (bioCfg.pingSoundEnabled) {
+                        minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(),
+                                ModSounds.BIO_SCAN_TICK, SoundSource.PLAYERS,
+                                (float) bioCfg.pingSoundVolume * 0.7F, 0.85F + 0.55F * activeBioScan.progress01, false);
+                    }
+                }
             } else {
                 activeBioScan.progress01 = Mth.clamp(activeBioScan.progress01 - rate * (float) OresAndStuffConfig.bioScan().drainMultiplier, 0f, 1f);
                 if (activeBioScan.progress01 <= 0.001f) {
@@ -216,8 +219,6 @@ public final class OasClient {
                     var cdItem = findHeldScanner().isEmpty() ? ModItems.SCANNER : findHeldScanner().getItem();
                     minecraft.player.getCooldowns().addCooldown(cdItem, cooldown);
                 }
-                var sc = OresAndStuffConfig.scanner();
-                playConfigSound(SoundEvents.RESPAWN_ANCHOR_CHARGE, sc.pingSoundEnabled, sc.pingSoundVolume, sc.pingSoundPitch);
             }
             }
         } else if (bioUsePressed) {
@@ -227,8 +228,6 @@ public final class OasClient {
             var hit = findBioTarget();
             if (hit != null && hit.getEntity() instanceof LivingEntity living) {
                 activeBioScan = new ActiveBioScan(living.getUUID(), living.getId(), OresAndStuffConfig.bioScan().durationMs);
-                var sc = OresAndStuffConfig.scanner();
-                playConfigSound(SoundEvents.BEACON_POWER_SELECT, sc.pingSoundEnabled, sc.pingSoundVolume, sc.pingSoundPitch);
             }
         }
     }
@@ -365,6 +364,7 @@ public final class OasClient {
         long lastUpdateMs;
         long startedMs;
         long requestSentMs;
+        long lastTickMs;
         boolean requestSent;
         boolean locked;
         boolean completed;
@@ -375,6 +375,7 @@ public final class OasClient {
             this.startedMs = System.currentTimeMillis();
             this.durationMs = Math.max(300, durationMs);
             this.lastUpdateMs = this.startedMs;
+            this.lastTickMs = this.startedMs;
         }
     }
 
