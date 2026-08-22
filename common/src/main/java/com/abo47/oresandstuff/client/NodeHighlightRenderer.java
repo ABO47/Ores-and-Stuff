@@ -45,9 +45,11 @@ final class NodeHighlightRenderer {
             float y = fx.y + 1.015f;
 
             float huePulse = 0.5f + 0.5f * Mth.sin((float) (nowMs * 0.0035f));
-            float r = OasColors.rf(OasColors.ACCENT_PRIMARY) * (0.92f + 0.16f * huePulse);
-            float g = OasColors.gf(OasColors.ACCENT_PRIMARY) * (0.92f + 0.16f * huePulse);
-            float b = OasColors.bf(OasColors.ACCENT_PRIMARY);
+            int tint = fx.color != 0 ? fx.color : OasColors.ACCENT_PRIMARY;
+            float brighten = 0.92f + 0.16f * huePulse;
+            float r = OasColors.rf(tint) * brighten;
+            float g = OasColors.gf(tint) * brighten;
+            float b = OasColors.bf(tint);
             float x0 = fx.x, x1 = fx.x + 1f, z0 = fx.z, z1 = fx.z + 1f;
             ScannerRenderUtil.drawTopFill(bb, mat, x0, x1, z0, z1, y, r, g, b, alpha * 0.85f);
             drawNodeOuterRim(bb, mat, fx.x, fx.y, fx.z, active, y + 0.02f, r, g, b, alpha);
@@ -81,12 +83,16 @@ final class NodeHighlightRenderer {
             double sx = 0, sz = 0;
             int maxY = Integer.MIN_VALUE;
             long maxExpiry = 0L;
+            int clusterColor = 0;
 
             while (!q.isEmpty()) {
                 long k = q.poll();
                 ScannerFxTypes.FlashFx fx = flashes.get(k);
                 if (fx == null) continue;
                 count++;
+                if (clusterColor == 0 && fx.color != 0) {
+                    clusterColor = fx.color;
+                }
                 sx += fx.x + 0.5;
                 sz += fx.z + 0.5;
                 maxY = Math.max(maxY, fx.y);
@@ -111,9 +117,10 @@ final class NodeHighlightRenderer {
             float y2 = y0 + 46f;
             float w = 0.18f;
             float wTop = 0.05f;
-            float r = OasColors.rf(OasColors.ACCENT_PRIMARY);
-            float g = OasColors.gf(OasColors.ACCENT_PRIMARY);
-            float b = OasColors.bf(OasColors.ACCENT_PRIMARY);
+            int tint = clusterColor != 0 ? clusterColor : OasColors.ACCENT_PRIMARY;
+            float r = OasColors.rf(tint);
+            float g = OasColors.gf(tint);
+            float b = OasColors.bf(tint);
             float x0 = (float) cx - w, x1 = (float) cx + w, z0 = (float) cz - w, z1 = (float) cz + w;
             float x0t = (float) cx - wTop, x1t = (float) cx + wTop, z0t = (float) cz - wTop, z1t = (float) cz + wTop;
 

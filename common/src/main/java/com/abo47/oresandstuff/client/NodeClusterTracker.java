@@ -15,7 +15,9 @@ import net.minecraft.world.level.block.Block;
 
 import com.abo47.oresandstuff.OresAndStuffConfig;
 import com.abo47.oresandstuff.block.OreNodeBlock;
+import com.abo47.oresandstuff.client.theme.tokens.OasColors;
 import com.abo47.oresandstuff.content.ModSounds;
+import com.abo47.oresandstuff.data.OreNodeDataManager;
 import com.abo47.oresandstuff.node.NodeVisuals;
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
 
@@ -79,6 +81,9 @@ final class NodeClusterTracker {
 
     private static void addNodeClusterFlash(Minecraft minecraft, BlockPos center, ResourceLocation oreTypeId, long expiresAt) {
         if (minecraft == null || minecraft.level == null) return;
+        int color = OreNodeDataManager.INSTANCE.getNodeType(oreTypeId)
+                .map(com.abo47.oresandstuff.node.OreNodeType::scannerColor)
+                .orElse(OasColors.ACCENT_PRIMARY);
         Set<BlockPos> seeds = collectNodeSeeds(minecraft, center, oreTypeId, 10);
         if (seeds.isEmpty()) seeds.add(center);
 
@@ -94,7 +99,7 @@ final class NodeClusterTracker {
             cluster.add(p.immutable());
             ScannerFxTypes.FlashFx fx = ACTIVE_FLASHES.get(key);
             boolean isNew = fx == null;
-            if (isNew) ACTIVE_FLASHES.put(key, new ScannerFxTypes.FlashFx(p.getX(), p.getY(), p.getZ(), expiresAt));
+            if (isNew) ACTIVE_FLASHES.put(key, new ScannerFxTypes.FlashFx(p.getX(), p.getY(), p.getZ(), expiresAt, color));
             else fx.expiresAt = Math.max(fx.expiresAt, expiresAt);
             for (int ox = -1; ox <= 1; ox++) {
                 for (int oy = -1; oy <= 1; oy++) {

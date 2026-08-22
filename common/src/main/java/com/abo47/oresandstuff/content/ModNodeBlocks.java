@@ -31,8 +31,13 @@ public final class ModNodeBlocks {
 
     public static OreNodeBlock get(ResourceLocation typeId, int tierIndex) {
         OreNodeDataManager.INSTANCE.ensureLoaded();
+        float hardness = OreNodeDataManager.INSTANCE.getNodeType(typeId)
+                .map(t -> Math.max(0.5F, (float) t.hardness()))
+                .orElse(-1.0F);
         return NODE_BLOCKS.computeIfAbsent(key(typeId, tierIndex), k -> new OreNodeBlock(
-                BlockBehaviour.Properties.of().strength(-1.0F, 1.2F).sound(SoundType.STONE).noOcclusion()));
+                BlockBehaviour.Properties.of()
+                        .strength(hardness, 1.2F)
+                        .sound(SoundType.STONE).noOcclusion()));
     }
 
     /** The generic node block plus one block per configured (type, tier). */

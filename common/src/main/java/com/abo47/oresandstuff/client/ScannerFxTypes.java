@@ -82,12 +82,14 @@ public final class ScannerFxTypes {
         final int y;
         final int z;
         long expiresAt;
+        final int color;
 
-        public FlashFx(int x, int y, int z, long expiresAt) {
+        public FlashFx(int x, int y, int z, long expiresAt, int color) {
             this.x = x;
             this.y = y;
             this.z = z;
             this.expiresAt = expiresAt;
+            this.color = color;
         }
     }
 
