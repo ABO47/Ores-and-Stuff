@@ -64,6 +64,7 @@ public final class ForgePlatformHooks implements PlatformHooks {
     private final RegistryObject<SoundEvent> minerLoop;
     private final RegistryObject<SoundEvent> scannerSweep;
     private final RegistryObject<SoundEvent> scannerNodePing;
+    private final RegistryObject<SoundEvent> scannerModeToggle;
     private final RegistryObject<SoundEvent> bioScanTick;
     private final RegistryObject<SoundEvent> bioScanComplete;
 
@@ -83,6 +84,8 @@ public final class ForgePlatformHooks implements PlatformHooks {
                 () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_sweep")));
         scannerNodePing = soundEvents.register("item.scanner_node_ping",
                 () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_node_ping")));
+        scannerModeToggle = soundEvents.register("item.scanner_mode_toggle",
+                () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_mode_toggle")));
         bioScanTick = soundEvents.register("item.bio_scan_tick",
                 () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.bio_scan_tick")));
         bioScanComplete = soundEvents.register("item.bio_scan_complete",
@@ -166,6 +169,7 @@ public final class ForgePlatformHooks implements PlatformHooks {
         ModSounds.MINER_LOOP = minerLoop.get();
         ModSounds.SCANNER_SWEEP = scannerSweep.get();
         ModSounds.SCANNER_NODE_PING = scannerNodePing.get();
+        ModSounds.SCANNER_MODE_TOGGLE = scannerModeToggle.get();
         ModSounds.BIO_SCAN_TICK = bioScanTick.get();
         ModSounds.BIO_SCAN_COMPLETE = bioScanComplete.get();
     }

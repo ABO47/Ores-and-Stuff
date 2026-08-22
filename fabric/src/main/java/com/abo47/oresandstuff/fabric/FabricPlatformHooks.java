@@ -86,6 +86,9 @@ public final class FabricPlatformHooks implements PlatformHooks {
         ModSounds.SCANNER_NODE_PING = Registry.register(BuiltInRegistries.SOUND_EVENT,
                 new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_node_ping"),
                 SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_node_ping")));
+        ModSounds.SCANNER_MODE_TOGGLE = Registry.register(BuiltInRegistries.SOUND_EVENT,
+                new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_mode_toggle"),
+                SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.scanner_mode_toggle")));
         ModSounds.BIO_SCAN_TICK = Registry.register(BuiltInRegistries.SOUND_EVENT,
                 new ResourceLocation(OresAndStuffMod.MOD_ID, "item.bio_scan_tick"),
                 SoundEvent.createVariableRangeEvent(new ResourceLocation(OresAndStuffMod.MOD_ID, "item.bio_scan_tick")));

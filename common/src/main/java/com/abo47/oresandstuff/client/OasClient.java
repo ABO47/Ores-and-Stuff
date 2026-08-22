@@ -141,6 +141,11 @@ public final class OasClient {
                 ScannerItem.Mode newMode = ScannerItem.toggleMode(held);
                 NetworkChannels.sendScannerModeToggle();
                 minecraft.gui.setOverlayMessage(Component.translatable(newMode == ScannerItem.Mode.BIO ? "item.oresandstuff.bio_scanner" : "item.oresandstuff.scanner"), false);
+                var scCfg = OresAndStuffConfig.scanner();
+                if (scCfg.scanSoundEnabled && minecraft.level != null) {
+                    minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(),
+                            ModSounds.SCANNER_MODE_TOGGLE, SoundSource.PLAYERS, (float) scCfg.scanSoundVolume, (float) scCfg.scanSoundPitch, false);
+                }
             }
         }
         boolean oreScannerHeld = holdingOreScanner();

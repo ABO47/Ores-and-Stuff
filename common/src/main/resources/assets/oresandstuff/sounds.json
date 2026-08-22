@@ -8,6 +8,9 @@
   "item.scanner_node_ping": {
     "sounds": [ { "name": "oresandstuff:item/scanner_node_ping" } ]
   },
+  "item.scanner_mode_toggle": {
+    "sounds": [ { "name": "oresandstuff:item/scanner_mode_toggle" } ]
+  },
   "item.bio_scan_tick": {
     "sounds": [ { "name": "oresandstuff:item/bio_scan_tick" } ]
   },
