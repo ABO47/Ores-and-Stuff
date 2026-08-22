@@ -1,6 +1,5 @@
 # Ores and Stuff
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/ABO47/Ores-and-Stuff)
 [![Minecraft](https://img.shields.io/badge/minecraft-1.20.1-green)](https://www.minecraft.net/en-us/article/minecraft--java-edition-1-20-1)
 [![Forge](https://img.shields.io/badge/forge-47.4.10-orange)](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.1.html)
 [![Fabric](https://img.shields.io/badge/fabric-0.15.11-yellow)](https://modrinth.com/mod/fabric-api/version/0.92.2+1.20.1)
