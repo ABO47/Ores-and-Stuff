@@ -1,5 +1,8 @@
 package com.abo47.oresandstuff.node;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -9,6 +12,8 @@ import com.abo47.oresandstuff.block.OreNodeBlock;
 import com.abo47.oresandstuff.data.OreNodeDataManager;
 
 public final class NodeVisuals {
+    private static volatile Set<Block> visualBlockCache;
+
     private NodeVisuals() {
     }
 
@@ -36,17 +41,35 @@ public final class NodeVisuals {
         return false;
     }
 
-    /** Whether the block is a tier visual of any configured node type. */
-    public static boolean isVisualOre(Block block) {
-        if (block == null) {
-            return false;
+    /** All configured tier visual blocks across every node type (cached). */
+    public static Set<Block> visualBlocks() {
+        Set<Block> cached = visualBlockCache;
+        if (cached == null) {
+            cached = buildVisualBlockCache();
+            visualBlockCache = cached;
         }
+        return cached;
+    }
+
+    private static synchronized Set<Block> buildVisualBlockCache() {
+        if (visualBlockCache != null) {
+            return visualBlockCache;
+        }
+        Set<Block> out = new HashSet<>();
         for (OreNodeType type : OreNodeDataManager.INSTANCE.nodeTypes()) {
-            if (isVisualBlock(type.id(), block)) {
-                return true;
+            for (OreNodeType.QualityTier tier : type.qualityTiers()) {
+                Block block = BuiltInRegistries.BLOCK.get(tier.visualBlock());
+                if (block != null && block != Blocks.AIR) {
+                    out.add(block);
+                }
             }
         }
-        return false;
+        return out;
+    }
+
+    /** Whether the block is a tier visual of any configured node type. */
+    public static boolean isVisualOre(Block block) {
+        return block != null && visualBlocks().contains(block);
     }
 
     public static boolean isVanillaOre(Block block) {

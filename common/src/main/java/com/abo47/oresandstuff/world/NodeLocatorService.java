@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 import com.abo47.oresandstuff.node.OreNodeBlockEntity;
@@ -52,7 +53,7 @@ public final class NodeLocatorService {
         return results.isEmpty() ? null : results.get(0);
     }
 
-    public static OreNodeBlockEntity findAnyNodeAround(ServerLevel level, BlockPos from, int radius) {
+    public static OreNodeBlockEntity findAnyNodeAround(Level level, BlockPos from, int radius) {
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dy = -2; dy <= 2; dy++) {
                 for (int dz = -radius; dz <= radius; dz++) {

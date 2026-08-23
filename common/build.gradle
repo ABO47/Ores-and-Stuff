@@ -10,6 +10,10 @@ dependencies {
     compileOnly("dev.emi:emi-xplat-mojmap:${emi_version}:api") {
         transitive = false
     }
+
+    compileOnly("maven.modrinth:jade:${jade_version}") {
+        transitive = false
+    }
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 }
 

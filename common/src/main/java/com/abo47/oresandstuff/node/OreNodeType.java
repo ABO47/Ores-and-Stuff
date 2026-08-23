@@ -13,6 +13,7 @@ import net.minecraft.world.item.Items;
 
 public record OreNodeType(
         ResourceLocation id,
+        String displayName,
         ResourceLocation outputItem,
         double baseRatePerSecond,
         int scannerColor,
