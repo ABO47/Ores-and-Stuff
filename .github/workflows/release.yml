@@ -87,7 +87,7 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "changelog_path=$changelog" >> "$GITHUB_OUTPUT"
-          echo "release_name=Template Mod ${version}" >> "$GITHUB_OUTPUT"
+          echo "release_name=Ores and Stuff ${version}" >> "$GITHUB_OUTPUT"
 
       - name: Build both loaders
         shell: bash
