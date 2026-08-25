@@ -31,5 +31,12 @@ versionRange="[${ldlib_version},)"
 ordering="AFTER"
 side="BOTH"
 
+[[dependencies.${mod_id}]]
+modId="jade"
+mandatory=false
+versionRange="[11,)"
+ordering="AFTER"
+side="CLIENT"
+
 [[mixins]]
 config="oresandstuff.forge.mixins.json"

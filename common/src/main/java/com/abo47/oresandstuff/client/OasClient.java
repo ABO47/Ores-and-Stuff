@@ -20,6 +20,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -140,7 +141,8 @@ public final class OasClient {
             if (!held.isEmpty()) {
                 ScannerItem.Mode newMode = ScannerItem.toggleMode(held);
                 NetworkChannels.sendScannerModeToggle();
-                minecraft.gui.setOverlayMessage(Component.translatable(newMode == ScannerItem.Mode.BIO ? "item.oresandstuff.bio_scanner" : "item.oresandstuff.scanner"), false);
+                minecraft.gui.setOverlayMessage(Component.translatable("item.oresandstuff.scanner.mode",
+                        Component.translatable(newMode == ScannerItem.Mode.BIO ? "item.oresandstuff.bio_scanner" : "item.oresandstuff.resource_scanner")), false);
                 var scCfg = OresAndStuffConfig.scanner();
                 if (scCfg.scanSoundEnabled && minecraft.level != null) {
                     minecraft.level.playLocalSound(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(),
@@ -245,6 +247,7 @@ public final class OasClient {
             var hit = findBioTarget();
             if (hit != null && hit.getEntity() instanceof LivingEntity living) {
                 activeBioScan = new ActiveBioScan(living.getUUID(), living.getId(), OresAndStuffConfig.bioScan().durationMs);
+                playScanStartAnimation();
             }
         }
     }
@@ -328,6 +331,12 @@ public final class OasClient {
         Vec3 end = eye.add(look.scale(24.0));
         AABB aabb = minecraft.player.getBoundingBox().expandTowards(look.scale(24.0)).inflate(1.0);
         return ProjectileUtil.getEntityHitResult(minecraft.player, eye, end, aabb, e -> e instanceof LivingEntity && e.isAlive(), 24.0 * 24.0);
+    }
+
+    private static void playScanStartAnimation() {
+        if (minecraft == null || minecraft.player == null) return;
+        minecraft.gameRenderer.itemInHandRenderer.itemUsed(InteractionHand.MAIN_HAND);
+        minecraft.player.swing(InteractionHand.MAIN_HAND);
     }
 
     public static void renderLevel(PoseStack pose, float partialTick, Matrix4f projectionMatrix) {
@@ -417,7 +426,7 @@ public final class OasClient {
             float p = renderProgress01(activeBioScan);
             int bw = 140;
             int bx = (w - bw) / 2;
-            int by = scaledHeight - 44;
+            int by = scaledHeight - 52;
             g.fill(bx, by, bx + bw, by + 8, OasColors.withAlpha(OasColors.BG_0, 0xAA));
             g.fill(bx + 1, by + 1, bx + 1 + (int) ((bw - 2) * p), by + 7, OasColors.withAlpha(OasColors.ACCENT_PRIMARY, 255));
             String label = activeBioScan.completed ? net.minecraft.network.chat.Component.translatable("Completed").getString()

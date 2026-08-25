@@ -1,7 +1,9 @@
 {
     "itemGroup.oresandstuff.main":  "Ores \u0026 Stuff",
-    "item.oresandstuff.scanner":  "Resource Scanner",
+    "item.oresandstuff.scanner":  "Scanner",
+    "item.oresandstuff.resource_scanner":  "Resource Scanner",
     "item.oresandstuff.bio_scanner":  "Bio Scanner",
+    "item.oresandstuff.scanner.mode":  "Mode: %s",
     "block.oresandstuff.ore_node":  "Ore Node",
     "block.oresandstuff.miner_mk1":  "Miner Mk1",
     "block.oresandstuff.miner_mk2":  "Miner Mk2",

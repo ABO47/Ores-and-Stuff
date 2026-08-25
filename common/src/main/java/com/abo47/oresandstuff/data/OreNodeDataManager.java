@@ -68,6 +68,9 @@ public final class OreNodeDataManager {
         if (id == null) {
             return null;
         }
+        String displayName = root.has("name") && root.get("name").isJsonPrimitive()
+                ? root.get("name").getAsString()
+                : defaultDisplayName(id.getPath());
         String outputRaw = root.has("output_item") ? root.get("output_item").getAsString() : "minecraft:" + id.getPath() + "_ore";
         ResourceLocation output = ResourceLocation.tryParse(outputRaw);
         if (output == null) {
@@ -163,9 +166,25 @@ public final class OreNodeDataManager {
             drops = defaultDrops(output, tiers);
         }
 
-        return new OreNodeType(id, output, baseRate, color, hardness, enabled, tiers, dimensions,
+        return new OreNodeType(id, displayName, output, baseRate, color, hardness, enabled, tiers, dimensions,
                 biomes, minNodes, maxNodes, qualityMin, qualityMax, maxMiners, spacing, attempts, scanRadius, clusterRadius, scatter,
                 surfaceSpawn, minY, maxY, drops, overrides);
+    }
+
+    /** "deepslate_redstone" -> "Deepslate Redstone Node" */
+    public static String defaultDisplayName(String path) {
+        String[] parts = path.split("_");
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+        }
+        return sb.append(" Node").toString();
     }
 
     /**
@@ -446,6 +465,7 @@ public final class OreNodeDataManager {
     private static String nodeJson(DefaultNode node) {
         JsonObject root = new JsonObject();
         root.addProperty("id", node.id());
+        root.addProperty("name", defaultDisplayName(node.id().substring(node.id().indexOf(':') + 1)));
         root.addProperty("output_item", node.output());
         JsonObject drops = new JsonObject();
         drops.addProperty(node.output(), 100);

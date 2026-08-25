@@ -58,6 +58,9 @@ public final class NetworkServices {
             if (id == null) {
                 continue;
             }
+            if (type == EntityType.ARMOR_STAND) {
+                continue;
+            }
             if (bioCfg.hiddenEntities.contains(id.toString())) {
                 continue;
             }
